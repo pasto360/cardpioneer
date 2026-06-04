@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
   <style>
     /* Griglia in evidenza — 4 colonne */
     .card-grid-featured {
@@ -259,25 +260,44 @@
   function cardHTML(card, isNew) {
     const price    = '€ ' + parseFloat(card.prezzo).toFixed(2).replace('.', ',');
     const setLabel = card.lingua + ' · ' + card.set_name;
+    const sku      = esc(card.sku || '');
+    const nome     = esc(card.nome || '');
     const badge    = isNew
       ? '<span class="pcard-badge new">NEW</span>'
       : (card.condizione ? `<span class="pcard-badge">${esc(card.condizione)}</span>` : '');
+
+    // Dati prodotto serializzati in modo sicuro tramite data attribute
+    const prodData = esc(JSON.stringify({
+      sku:         card.sku,
+      nome:        card.nome,
+      set_name:    card.set_name,
+      lingua:      card.lingua,
+      condizione:  card.condizione,
+      prezzo:      parseFloat(card.prezzo),
+      immagine:    card.immagine,
+      disponibile: 99,
+    }));
+
     return `<div class="pcard">
       <div class="pcard-img">
-        <img src="${esc(card.immagine)}" alt="${esc(card.nome)}" loading="lazy" onerror="this.style.display='none'">
+        <img src="${esc(card.immagine)}" alt="${nome}" loading="lazy" onerror="this.style.display='none'">
         ${badge}
-        <span class="pcard-wish">♡</span>
-        <div class="pcard-actions"><button>Aggiungi al carrello</button></div>
+        <button class="cp-wish-btn" data-wish-sku="${sku}"
+          onclick="cpToggleWishlist('${sku}',this)" title="Aggiungi ai preferiti">♡</button>
+        <div class="pcard-actions">
+          <button onclick="addToCart(JSON.parse(this.closest('.pcard').dataset.prod))">Aggiungi al carrello</button>
+        </div>
       </div>
       <div class="pcard-body">
-        <div class="pcard-name">${esc(card.nome)}</div>
+        <div class="pcard-name">${nome}</div>
         <div class="pcard-set">${esc(setLabel)}</div>
         <div class="pcard-bottom">
           <div class="pcard-price">${price}</div>
           <div class="pcard-stars">★★★★★</div>
         </div>
       </div>
-    </div>`;
+    </div>`
+      .replace('class="pcard"', `class="pcard" data-prod="${prodData}"`);
   }
 
   async function loadFeatured() {

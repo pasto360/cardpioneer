@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
   <style>
     .market-layout{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
     .filters-panel{background:var(--white);border:1px solid var(--border);border-top:2px solid var(--yellow);border-radius:0 0 12px 12px;padding:20px;position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto}
@@ -516,12 +517,13 @@ function renderCards() {
              onerror="this.src='${esc(p.img)}'">`  
       : `<span>${esc(p.displayName.substring(0,10))}</span>`;
 
-    return `<div class="mcard${isOut?' out-of-stock':''}">
+    return `<div class="mcard${isOut?' out-of-stock':''}" data-prod="${esc(JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}))}">
       <div class="mcard-img" onclick="openLightbox('${esc(p.img||'')}','${esc(p.displayName)}')">
         ${imgHTML}${badge}${langBadge}
         ${isOut ? '<div class="mcard-sold">Esaurito</div>' : ''}
-        <span class="mcard-wish">♡</span>
-        ${!isOut ? `<div class="mcard-actions"><button onclick="event.stopPropagation();addToCartBySku('${esc(p.sku)}')">🛒 Aggiungi</button></div>` : ''}
+        <button class="cp-wish-btn" data-wish-sku="${esc(p.sku)}"
+          onclick="event.stopPropagation();cpToggleWishlist('${esc(p.sku)}',this)" title="Preferiti">♡</button>
+        ${!isOut ? `<div class="mcard-actions"><button onclick="event.stopPropagation();addToCart(JSON.parse(this.closest('.mcard').dataset.prod))">🛒 Aggiungi</button></div>` : ''}
       </div>
       <div class="mcard-body">
         <div class="mcard-set">${esc(p.setName)}</div>
