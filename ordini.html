@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I miei ordini — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <style>
+    /* Filtri stato */
+    .stato-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .stato-tab {
+      font-size:12px; font-weight:600;
+      padding:7px 16px; border:1px solid var(--border);
+      border-radius:100px; cursor:pointer;
+      background:var(--white); color:var(--muted);
+      transition:all .2s;
+    }
+    .stato-tab:hover { border-color:var(--dark); color:var(--dark); }
+    .stato-tab.active { background:var(--dark); border-color:var(--dark); color:#fff; }
+
+    /* Card ordine */
+    .ordine-card {
+      background:var(--white);
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      margin-bottom:16px;
+      transition:box-shadow .2s;
+    }
+    .ordine-card:hover { box-shadow:0 4px 20px rgba(26,10,46,.07); }
+    .ordine-header {
+      display:grid;
+      grid-template-columns:1fr auto auto auto;
+      gap:16px;
+      align-items:center;
+      padding:16px 20px;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+    }
+    .ordine-header:hover { background:#eee8ff; }
+    .ordine-num  { font-family:monospace; font-size:13px; font-weight:600; color:var(--dark); }
+    .ordine-meta { font-size:11px; color:var(--light); margin-top:2px; }
+    .ordine-importo { font-family:var(--fu); font-size:15px; font-weight:700; color:var(--pink); }
+    .ordine-toggle  { font-size:18px; color:var(--light); transition:transform .2s; user-select:none; }
+    .ordine-card.open .ordine-toggle { transform:rotate(180deg); }
+
+    /* Badge stato */
+    .badge-confermato { background:rgba(52,211,153,.12); color:#059669; border:1px solid rgba(52,211,153,.3); font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; white-space:nowrap; }
+    .badge-attesa     { background:rgba(251,191,36,.12);  color:#d97706; border:1px solid rgba(251,191,36,.3);  font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; white-space:nowrap; }
+    .badge-spedito    { background:rgba(99,102,241,.12);  color:#4f46e5; border:1px solid rgba(99,102,241,.3);  font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; white-space:nowrap; }
+    .badge-annullato  { background:rgba(248,113,113,.1);  color:#dc2626; border:1px solid rgba(248,113,113,.3); font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; white-space:nowrap; }
+
+    /* Dettaglio ordine (collassabile) */
+    .ordine-detail { display:none; padding:20px; }
+    .ordine-card.open .ordine-detail { display:block; }
+
+    /* Articoli nell'ordine */
+    .ordine-items { margin-bottom:20px; display:flex; flex-direction:column; gap:10px; }
+    .ordine-item  { display:flex; align-items:center; gap:12px; padding:10px; background:var(--bg); border-radius:8px; }
+    .ordine-item-img { width:44px; height:60px; background:#fff; border-radius:6px; overflow:hidden; flex-shrink:0; border:1px solid var(--border); }
+    .ordine-item-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .ordine-item-nome { font-size:12px; font-weight:600; color:var(--dark); margin-bottom:2px; }
+    .ordine-item-set  { font-size:10px; color:var(--muted); }
+    .ordine-item-qty  { font-size:11px; color:var(--muted); margin-top:2px; }
+    .ordine-item-price { font-family:var(--fu); font-size:12px; font-weight:700; color:var(--pink); margin-left:auto; white-space:nowrap; }
+
+    /* Riepilogo importi */
+    .ordine-totali { border-top:1px solid var(--border); padding-top:16px; }
+    .tot-row { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .tot-row.finale { font-family:var(--fu); font-size:15px; color:var(--dark); font-weight:700; margin-top:8px; padding-top:10px; border-top:1px solid var(--border); }
+    .tot-row.finale span:last-child { color:var(--pink); }
+
+    /* Indirizzo + info spedizione */
+    .ordine-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    .ordine-info-box { background:var(--bg); border-radius:8px; padding:14px; }
+    .ordine-info-label { font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    .ordine-info-val { font-size:12px; color:var(--dark); line-height:1.65; }
+
+    /* Azioni ordine */
+    .ordine-actions { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+
+    /* Bonifico istruzioni */
+    .bonifico-reminder {
+      background:rgba(245,230,66,.08); border:1px solid rgba(245,230,66,.3);
+      border-left:4px solid var(--yellow); border-radius:0 8px 8px 0;
+      padding:14px 16px; margin-bottom:16px; font-size:12px; color:var(--dark); line-height:1.7;
+    }
+
+    /* Empty state */
+    .ordini-empty { text-align:center; padding:64px 20px; }
+    .ordini-empty-icon { font-size:56px; margin-bottom:16px; }
+
+    /* Loading */
+    .ordini-loading { text-align:center; padding:48px; }
+
+    @media(max-width:700px) {
+      .ordine-header { grid-template-columns:1fr auto; }
+      .ordine-importo { display:none; }
+      .ordine-info-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Area personale</div>
+  <h1 class="cp-hero-title">I miei ordini</h1>
+  <p class="cp-hero-sub">Storico completo dei tuoi acquisti su CardPioneer.</p>
+</section>
+
+<!-- Non loggato -->
+<div id="notLoggedIn" style="display:none">
+  <section class="cp-section alt">
+    <div style="text-align:center;padding:48px 20px;max-width:480px;margin:0 auto">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="font-family:var(--fu);font-size:20px;color:var(--dark);margin-bottom:10px;letter-spacing:-0.02em">Accesso richiesto</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7">Devi essere registrato per visualizzare i tuoi ordini.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="registrati.html" class="btn-fill">Registrati</a>
+        <button onclick="document.getElementById('loginWrap').classList.toggle('open')" class="btn-outline-dark">Accedi</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Ordini -->
+<div id="ordiniContent" style="display:none">
+  <section class="cp-section alt">
+
+    <!-- Filtri stato -->
+    <div class="stato-tabs" id="statoTabs">
+      <button class="stato-tab active" data-stato="tutti"       onclick="filterStato('tutti',this)">Tutti <span id="cnt-tutti"></span></button>
+      <button class="stato-tab"        data-stato="in_attesa"   onclick="filterStato('in_attesa',this)">⏳ In attesa</button>
+      <button class="stato-tab"        data-stato="confermato"  onclick="filterStato('confermato',this)">✅ Confermati</button>
+      <button class="stato-tab"        data-stato="spedito"     onclick="filterStato('spedito',this)">🚚 Spediti</button>
+    </div>
+
+    <div id="ordiniList">
+      <div class="ordini-loading">
+        <div style="width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px"></div>
+        <p style="font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Caricamento ordini...</p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <a href="profilo.html" style="font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:6px">
+        ← Torna al profilo
+      </a>
+    </div>
+
+  </section>
+</div>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<script>
+let allOrdini   = [];
+let filtroStato = 'tutti';
+
+// ═══════════════════════════════════════
+//  CARICA ORDINI
+// ═══════════════════════════════════════
+async function loadOrdini(user) {
+  const { data, error } = await window.sb
+    .from('ordini')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    document.getElementById('ordiniList').innerHTML =
+      '<p style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">Errore nel caricamento degli ordini.</p>';
+    return;
+  }
+
+  allOrdini = data || [];
+
+  // Contatori tab
+  const cnts = { tutti: allOrdini.length };
+  allOrdini.forEach(o => { cnts[o.stato] = (cnts[o.stato]||0) + 1; });
+  const cntEl = document.getElementById('cnt-tutti');
+  if (cntEl) cntEl.textContent = allOrdini.length ? `(${allOrdini.length})` : '';
+
+  renderOrdini();
+}
+
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function renderOrdini() {
+  const list = document.getElementById('ordiniList');
+  const items = filtroStato === 'tutti'
+    ? allOrdini
+    : allOrdini.filter(o => o.stato === filtroStato);
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="ordini-empty">
+        <div class="ordini-empty-icon">📭</div>
+        <h2 style="font-family:var(--fu);font-size:18px;color:var(--dark);margin-bottom:8px;letter-spacing:-0.02em">
+          ${filtroStato === 'tutti' ? 'Nessun ordine ancora' : 'Nessun ordine in questa categoria'}
+        </h2>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px">
+          ${filtroStato === 'tutti' ? 'Sfoglia il catalogo e trova le carte che cerchi.' : ''}
+        </p>
+        ${filtroStato === 'tutti' ? '<a href="acquista.html" class="btn-fill">Vai al market</a>' : ''}
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(o => renderOrdineCard(o)).join('');
+}
+
+function renderOrdineCard(o) {
+  const dataStr  = new Date(o.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' });
+  const oraStr   = new Date(o.created_at).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  const totale   = parseFloat(o.totale).toFixed(2).replace('.',',');
+  const idShort  = o.id.substring(0,8).toUpperCase();
+
+  const badgeClass = { confermato:'badge-confermato', in_attesa:'badge-attesa', spedito:'badge-spedito', annullato:'badge-annullato' }[o.stato] || 'badge-attesa';
+  const statoLabel = { confermato:'✅ Confermato', in_attesa:'⏳ In attesa pagamento', spedito:'🚚 Spedito', annullato:'❌ Annullato' }[o.stato] || o.stato;
+
+  const items = Array.isArray(o.items) ? o.items : [];
+  const nItems = items.reduce((s,i)=>s+(i.qty||1),0);
+
+  // Articoli HTML
+  const articoliHTML = items.map(i => {
+    const tot = (parseFloat(i.prezzo||0) * (i.qty||1)).toFixed(2).replace('.',',');
+    return `<div class="ordine-item">
+      <div class="ordine-item-img">
+        <img src="${esc(i.immagine||'')}" alt="${esc(i.nome||'')}" onerror="this.style.display='none'">
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="ordine-item-nome">${esc(i.nome||'—')}</div>
+        <div class="ordine-item-set">${esc(i.set_name||'')} · ${esc(i.lingua||'')}</div>
+        ${i.condizione ? `<div class="ordine-item-qty">${esc(i.condizione)}</div>` : ''}
+        <div class="ordine-item-qty">Qta: ${i.qty||1}</div>
+      </div>
+      <div class="ordine-item-price">€ ${tot}</div>
+    </div>`;
+  }).join('');
+
+  // Totali
+  const subtot  = items.reduce((s,i)=>s+(parseFloat(i.prezzo||0)*(i.qty||1)),0);
+  const sconto  = parseFloat(o.sconto_importo||0);
+  const sped    = parseFloat(o.totale||0) - (subtot - sconto);
+
+  // Bonifico reminder
+  const bonificoHTML = o.stato === 'in_attesa' && o.pagamento === 'bonifico' ? `
+    <div class="bonifico-reminder">
+      🏦 <strong>In attesa di bonifico</strong> — Ricorda di effettuare il pagamento con causale <strong>Ordine CardPioneer #${idShort}</strong>.<br>
+      Hai dubbi? Scrivici a <a href="mailto:info@cardpioneer.it" style="color:var(--pink)">info@cardpioneer.it</a>
+    </div>` : '';
+
+  return `<div class="ordine-card" id="ord-${o.id}">
+    <div class="ordine-header" onclick="toggleOrdine('${o.id}')">
+      <div>
+        <div class="ordine-num">Ordine #${idShort}</div>
+        <div class="ordine-meta">${dataStr} alle ${oraStr} · ${nItems} articolo${nItems!==1?'i':''} · ${o.pagamento}</div>
+      </div>
+      <span class="${badgeClass}">${statoLabel}</span>
+      <div class="ordine-importo">€ ${totale}</div>
+      <div class="ordine-toggle">▾</div>
+    </div>
+
+    <div class="ordine-detail">
+      ${bonificoHTML}
+
+      <div class="ordine-info-grid">
+        <div class="ordine-info-box">
+          <div class="ordine-info-label">Spedizione a</div>
+          <div class="ordine-info-val">
+            ${esc(o.nome||'')} ${esc(o.cognome||'')}<br>
+            ${esc(o.indirizzo||'')}${o.cap ? ', '+esc(o.cap) : ''} ${esc(o.citta||'')}<br>
+            ${esc(o.nazione||'Italia')}
+            ${o.telefono ? '<br>'+esc(o.telefono) : ''}
+          </div>
+        </div>
+        <div class="ordine-info-box">
+          <div class="ordine-info-label">Dettagli ordine</div>
+          <div class="ordine-info-val">
+            <strong>ID completo:</strong><br>
+            <span style="font-family:monospace;font-size:10px;word-break:break-all">${o.id}</span><br><br>
+            <strong>Pagamento:</strong> ${esc(o.pagamento)}<br>
+            <strong>Stato:</strong> ${statoLabel}
+            ${o.codice_sconto ? `<br><strong>Sconto:</strong> ${esc(o.codice_sconto)}` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="ordine-items">${articoliHTML}</div>
+
+      <div class="ordine-totali">
+        <div class="tot-row"><span>Subtotale</span><span>€ ${subtot.toFixed(2).replace('.',',')}</span></div>
+        ${sconto > 0 ? `<div class="tot-row" style="color:#059669"><span>Sconto (${esc(o.codice_sconto||'')})</span><span>− € ${sconto.toFixed(2).replace('.',',')}</span></div>` : ''}
+        <div class="tot-row"><span>Spedizione</span><span>${sped <= 0 ? '<span style="color:#059669">Gratis</span>' : '€ '+sped.toFixed(2).replace('.',',')}</span></div>
+        <div class="tot-row finale"><span>Totale</span><span>€ ${totale}</span></div>
+      </div>
+
+      <div class="ordine-actions">
+        <a href="mailto:info@cardpioneer.it?subject=Ordine%20%23${idShort}"
+           class="btn-outline-dark" style="font-size:11px;padding:9px 18px">
+          ✉️ Contatta assistenza
+        </a>
+        ${o.stato === 'in_attesa' ? `
+        <button onclick="event.stopPropagation()"
+          style="font-size:11px;padding:9px 18px;border:1px solid rgba(248,113,113,.3);
+                 color:#dc2626;background:transparent;border-radius:8px;cursor:pointer"
+          title="Contattaci per annullare l'ordine">
+          ❌ Richiedi annullamento
+        </button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+//  TOGGLE DETTAGLIO
+// ═══════════════════════════════════════
+function toggleOrdine(id) {
+  document.getElementById('ord-' + id)?.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════
+//  FILTRO STATO
+// ═══════════════════════════════════════
+function filterStato(stato, btn) {
+  filtroStato = stato;
+  document.querySelectorAll('.stato-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOrdini();
+}
+
+// ═══════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Badge carrello
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+
+  // Aspetta auth.js
+  const check = setInterval(async () => {
+    if (!window.sb) return;
+    clearInterval(check);
+    const { data: { user } } = await window.sb.auth.getUser();
+    if (!user) {
+      document.getElementById('notLoggedIn').style.display   = 'block';
+      document.getElementById('ordiniContent').style.display = 'none';
+    } else {
+      document.getElementById('notLoggedIn').style.display   = 'none';
+      document.getElementById('ordiniContent').style.display = 'block';
+      loadOrdini(user);
+    }
+    window.sb.auth.onAuthStateChange((_, session) => {
+      if (!session?.user) {
+        document.getElementById('notLoggedIn').style.display   = 'block';
+        document.getElementById('ordiniContent').style.display = 'none';
+      }
+    });
+  }, 100);
+});
+</script>
+</body>
+</html>
