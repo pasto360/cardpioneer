@@ -9,6 +9,32 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <style>
+    /* Griglia in evidenza — 4 colonne, centrata, spazi laterali */
+    .card-grid-featured {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* Immagine più piccola */
+    .card-grid-featured .pcard-img {
+      aspect-ratio: 0.72 / 1;
+      max-height: 155px;
+    }
+
+    /* Testo più grande e leggibile */
+    .card-grid-featured .pcard-body { padding: 9px 11px 12px; }
+    .card-grid-featured .pcard-name { font-size: 12px; font-weight: 600; white-space: normal; line-height: 1.35; margin-bottom: 3px; }
+    .card-grid-featured .pcard-set  { font-size: 10px; margin-bottom: 7px; }
+    .card-grid-featured .pcard-price { font-size: 13px; }
+
+    @media (max-width: 600px) {
+      .card-grid-featured { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
@@ -130,7 +156,7 @@
     <div><p class="section-label">Selezione del giorno</p><h2 class="section-title">In evidenza</h2></div>
     <a href="acquista.html" class="section-see">Vedi tutto →</a>
   </div>
-  <div class="card-grid-5" id="featuredGrid">
+  <div class="card-grid-featured" id="featuredGrid">
     <!-- Popolato da JS dal CSV -->
   </div>
 </section>
