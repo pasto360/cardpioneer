@@ -53,6 +53,41 @@
     .mcard.out-of-stock{opacity:.55}
     .mcard-img{background:var(--bg);aspect-ratio:.72/1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;font-size:13px;color:var(--light);font-family:var(--fu);text-align:center;padding:4px}
     .mcard-img img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* ── LIGHTBOX ── */
+    #cp-lightbox {
+      position:fixed;inset:0;z-index:9999;
+      background:rgba(0,0,0,0.92);
+      display:flex;align-items:center;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity 0.25s;
+      padding:20px;
+    }
+    #cp-lightbox.open { opacity:1; pointer-events:all; }
+    #cp-lightbox img {
+      max-width:90vw;max-height:88vh;
+      object-fit:contain;border-radius:8px;
+      box-shadow:0 8px 48px rgba(0,0,0,0.6);
+      transition:transform 0.2s;
+    }
+    #cp-lightbox-close {
+      position:fixed;top:20px;right:24px;
+      font-size:32px;color:#fff;cursor:pointer;
+      background:none;border:none;line-height:1;opacity:0.7;
+      transition:opacity 0.2s;
+    }
+    #cp-lightbox-close:hover { opacity:1; }
+    #cp-lightbox-name {
+      position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      font-size:13px;color:rgba(255,255,255,0.6);
+      background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:100px;
+      white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+    }
+    #cp-lightbox-spinner {
+      position:absolute;width:36px;height:36px;
+      border:3px solid rgba(255,255,255,0.2);
+      border-top-color:#f5e642;border-radius:50%;
+      animation:spin .7s linear infinite;
+    }
     .mcard-badge{position:absolute;top:6px;left:6px;font-size:7px;font-weight:700;letter-spacing:.04em;background:var(--pink);color:#fff;padding:2px 6px;border-radius:100px;text-transform:uppercase}
     .mcard-lang{position:absolute;top:6px;right:6px;font-size:7px;font-weight:700;background:rgba(26,10,46,.65);color:#fff;padding:2px 5px;border-radius:4px}
     .mcard-wish{position:absolute;bottom:6px;right:6px;width:24px;height:24px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0;transition:opacity .2s}
@@ -463,17 +498,30 @@ function renderCards() {
       ? `<span class="mcard-qty">Esaurito</span>`
       : isLow ? `<span class="mcard-qty low">Ultimi ${p.avail}</span>`
                : `<span class="mcard-qty">Qta: ${p.avail}</span>`;
+    registerProduct(p);
+
+    // Percorso thumbnail: /images/0001.jpg → /images/thumbs/0001.jpg
+    function thumbPath(img) {
+      if (!img) return null;
+      const parts = img.split('/');
+      parts.splice(parts.length - 1, 0, 'thumbs');
+      return parts.join('/');
+    }
+
+    const thumb   = thumbPath(p.img);
     const imgHTML = p.img
-      ? `<img src="${esc(p.img)}" alt="${esc(p.displayName)}" loading="lazy"
-           onerror="this.parentElement.dataset.fb=this.parentElement.dataset.fb||1;this.remove()">`
+      ? `<img src="${esc(thumb)}" alt="${esc(p.displayName)}" loading="lazy"
+             data-no-lightbox
+             style="cursor:zoom-in"
+             onerror="this.src='${esc(p.img)}'">`  
       : `<span>${esc(p.displayName.substring(0,10))}</span>`;
 
     return `<div class="mcard${isOut?' out-of-stock':''}">
-      <div class="mcard-img">
+      <div class="mcard-img" onclick="openLightbox('${esc(p.img||'')}','${esc(p.displayName)}')">
         ${imgHTML}${badge}${langBadge}
         ${isOut ? '<div class="mcard-sold">Esaurito</div>' : ''}
         <span class="mcard-wish">♡</span>
-        ${!isOut ? `<div class="mcard-actions"><button onclick="addToCart(${JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}).replace(/"/g,'&quot;')})">🛒 Aggiungi</button></div>` : ''}
+        ${!isOut ? `<div class="mcard-actions"><button onclick="event.stopPropagation();addToCartBySku('${esc(p.sku)}')">🛒 Aggiungi</button></div>` : ''}
       </div>
       <div class="mcard-body">
         <div class="mcard-set">${esc(p.setName)}</div>
@@ -554,8 +602,57 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Boot ──
-document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')applyFilters()});
+// Mappa prodotti per SKU — usata dal pulsante aggiungi al carrello
+const productMap = {};
+
+function registerProduct(p) {
+  productMap[p.sku] = p;
+}
+
+function addToCartBySku(sku) {
+  const p = productMap[sku];
+  if (!p) return;
+  const product = {
+    sku:         p.sku,
+    nome:        p.displayName,
+    set_name:    p.setName,
+    lingua:      p.lang,
+    condizione:  p.condition,
+    prezzo:      p.price,
+    immagine:    p.img,
+    disponibile: p.avail,
+  };
+  // Chiama addToCart da carrello.html se disponibile, altrimenti gestione locale
+  if (typeof window.addToCart === 'function') {
+    window.addToCart(product);
+  } else {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cp_cart')) || [];
+      const existing = cart.find(i => i.sku === product.sku);
+      if (existing) { if (existing.qty < product.disponibile) existing.qty++; }
+      else cart.push({ ...product, qty: 1 });
+      localStorage.setItem('cp_cart', JSON.stringify(cart));
+      const tot = cart.reduce((s,i) => s+i.qty, 0);
+      const b = document.getElementById('cartBadgeNav');
+      if (b) b.textContent = tot;
+      showToast(product.nome);
+    } catch(e) { console.error(e); }
+  }
+}
+
+function showToast(nome) {
+  let t = document.getElementById('cartToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'cartToast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a0a2e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s;display:flex;align-items:center;gap:10px';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = `✅ <span><strong>${esc(nome)}</strong> aggiunto — <a href="carrello.html" style="color:#f5e642;font-weight:600">Vai al carrello</a></span>`;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
 document.addEventListener('DOMContentLoaded', () => {
   loadAll();
   // Aggiorna badge carrello
@@ -567,5 +664,50 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) {}
 });
 </script>
+<!-- LIGHTBOX -->
+<div id="cp-lightbox" onclick="closeLightbox()">
+  <button id="cp-lightbox-close" onclick="closeLightbox()">×</button>
+  <div id="cp-lightbox-spinner"></div>
+  <img id="cp-lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  <div id="cp-lightbox-name"></div>
+</div>
+
+<script>
+function openLightbox(src, name) {
+  const lb  = document.getElementById('cp-lightbox');
+  const img = document.getElementById('cp-lightbox-img');
+  const sp  = document.getElementById('cp-lightbox-spinner');
+  const nm  = document.getElementById('cp-lightbox-name');
+
+  img.style.display = 'none';
+  sp.style.display  = 'block';
+  nm.textContent    = name || '';
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const full = new window.Image();
+  full.onload = () => {
+    img.src           = src;
+    img.style.display = 'block';
+    sp.style.display  = 'none';
+  };
+  full.onerror = () => {
+    img.src           = src;
+    img.style.display = 'block';
+    sp.style.display  = 'none';
+  };
+  full.src = src;
+}
+
+function closeLightbox() {
+  document.getElementById('cp-lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => { document.getElementById('cp-lightbox-img').src = ''; }, 300);
+}
+
+// Chiudi con Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
 </body>
 </html>
