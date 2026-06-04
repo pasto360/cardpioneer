@@ -319,22 +319,35 @@ let activeType  = 'all';
 //  CARICAMENTO DA SUPABASE
 // ════════════════════════════════════════════════════════════════
 async function loadAll() {
-  // Inizializza client Supabase
-  sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+  // Usa il client globale di auth.js invece di crearne uno nuovo
+  if (!window.sb) {
+    sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    window.sb = sb;
+  } else {
+    sb = window.sb;
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   try {
-    // Carica tutti i prodotti in una sola query
-    // Supabase restituisce max 1000 righe — per cataloghi grandi usa range
     let allRows = [];
-    let from = 0;
-    const STEP = 1000;
+    let from    = 0;
+    const STEP  = 1000;
 
     while (true) {
-      const { data, error } = await sb
-        .from('prodotti')
-        .select('categoria, set_name, lingua, nome, nome_completo, condizione, sku, prezzo, disponibile, immagine')
-        .range(from, from + STEP - 1)
-        .order('nome', { ascending: true });
+      let data, error, attempts = 0;
+
+      while (attempts < 3) {
+        ({ data, error } = await sb
+          .from('prodotti')
+          .select('categoria, set_name, lingua, nome, nome_completo, condizione, sku, prezzo, disponibile, immagine')
+          .range(from, from + STEP - 1)
+          .order('nome', { ascending: true }));
+
+        if (!error || !String(error?.message || '').includes('429')) break;
+        attempts++;
+        await sleep(1000 * attempts);
+      }
 
       if (error) throw error;
       if (!data || data.length === 0) break;

@@ -193,9 +193,21 @@ function escHtml(s) {
 // ═══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   cpUpdateCartBadge();
-  // Evidenzia wishlist dopo che auth.js ha caricato la sessione
+  // Unica chiamata wishlist dopo auth — delay 1.2s per non sovraccaricare Supabase
   setTimeout(async () => {
-    await cpHighlightWishlistItems();
-    await cpUpdateWishlistBadge();
-  }, 600);
+    const user = window.getCurrentUser?.();
+    if (!user) return;                    // non loggato → nessuna query
+    const list = await cpGetWishlist();   // una sola query
+    // Evidenzia cuori
+    if (list.length) {
+      document.querySelectorAll('[data-wish-sku]').forEach(btn => {
+        if (list.includes(btn.dataset.wishSku)) {
+          btn.textContent = '♥';
+          btn.classList.add('active');
+        }
+      });
+    }
+    // Aggiorna badge wishlist
+    document.querySelectorAll('.cp-wish-badge').forEach(el => el.textContent = list.length || '0');
+  }, 1200);
 });

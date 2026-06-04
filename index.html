@@ -302,7 +302,8 @@
 
   async function loadFeatured() {
     try {
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // Usa il client globale di auth.js — evita connessioni duplicate
+      const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       // Ultime NEW_COUNT inserite (ordinate per created_at desc)
       const { data: newCards } = await sb
