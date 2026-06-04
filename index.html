@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CardPioneer — Il marketplace italiano per collezionisti Pokémon</title>
+  <meta name="description" content="Acquista e vendi carte Pokémon singole. Grading accurato, catalogo verificato, spedizioni garantite.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong> — Solo per questa settimana</div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank" rel="noopener">📘 Facebook</a>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="logo.png" alt="logo" width="20" onerror="this.style.display='none'">⚡</div>
+    Card<span>Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html" class="active">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon" title="Wishlist">♡<span class="cp-nav-badge">0</span></div>
+    <div class="cp-nav-icon" title="Carrello">🛒<span class="cp-nav-badge">0</span></div>
+    <div class="cp-login-wrap" id="loginWrap">
+      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Accedi
+      </button>
+      <div class="cp-login-dropdown">
+        <div class="cp-login-title">Accedi a CardPioneer</div>
+        <div class="cp-login-form">
+          <div class="cp-login-field"><label class="cp-login-label">Email</label><input type="email" class="cp-login-input" placeholder="tua@email.it"></div>
+          <div class="cp-login-field"><label class="cp-login-label">Password</label><input type="password" class="cp-login-input" placeholder="••••••••"></div>
+          <div class="cp-login-forgot">Password dimenticata?</div>
+          <button class="cp-login-submit">Accedi</button>
+        </div>
+        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- BANNER PROMO fuxia statico -->
+<div style="background:#e8107a;padding:10px 40px;text-align:center">
+  <span style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#fff">🎉 PROMO SETTIMANALE — Spedizione gratuita per ordini superiori a € 50</span>
+</div>
+
+
+
+<!-- HERO CON IMMAGINE DI SFONDO -->
+<section class="cp-hero-home">
+  <div class="cp-hero-inner">
+    <div>
+      <div class="cp-hero-badge"><div class="cp-hero-badge-dot"></div><span>Nuovo arrivo</span></div>
+      <h1 class="cp-hero-title">OGNI<br>CARTA<em>HA UN PREZZO.</em></h1>
+      <p class="cp-hero-sub">Acquista e vendi carte Pokémon singole. Grading verificato, spedizioni garantite in tutta Italia e Europa.</p>
+      <div class="cp-hero-btns">
+        <a href="acquista.html" class="btn-fill">Sfoglia il catalogo</a>
+        <a href="vendi.html" class="btn-ghost">Vendi le tue carte</a>
+      </div>
+      <div class="cp-hero-stats">
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">1.200+</div><div class="cp-hero-stat-l">Carte disponibili</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">100%</div><div class="cp-hero-stat-l">Grading verificato</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">IT/EU</div><div class="cp-hero-stat-l">Spedizioni</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">24h</div><div class="cp-hero-stat-l">Supporto</div></div>
+      </div>
+    </div>
+    <div class="cp-hero-cards">
+      <!-- Espansione 1: Megaevoluzione - Ombre (uscita) -->
+      <div class="cp-hero-card-mini">
+        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e);font-size:22px">🌑</div>
+        <div>
+          <div class="cp-hcm-name">Megaevoluzione — Ombre</div>
+          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 10 ott 2025</div>
+          <div class="cp-hcm-price" style="color:#a78bfa">✅ Disponibile</div>
+        </div>
+      </div>
+      <!-- Espansione 2: Megaevoluzione - Caos Nascente (uscita) -->
+      <div class="cp-hero-card-mini">
+        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#0a2e1a,#0d6e3d);font-size:22px">🌀</div>
+        <div>
+          <div class="cp-hcm-name">Megaevoluzione — Caos Nascente</div>
+          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 22 mag 2026</div>
+          <div class="cp-hcm-price" style="color:#34d399">✅ Disponibile</div>
+        </div>
+      </div>
+      <!-- Espansione 3: Megaevoluzione - Buio Pesto (prossima) -->
+      <div class="cp-hero-card-mini" style="border-color:rgba(245,230,66,0.3)">
+        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#1a1a0a,#3d3a00);font-size:22px">⚡</div>
+        <div>
+          <div class="cp-hcm-name">Megaevoluzione — Buio Pesto</div>
+          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 17 lug 2026</div>
+          <div class="cp-hcm-price" style="color:#f5e642">🔜 In arrivo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTRI SET -->
+<div class="cp-cats">
+  <a href="acquista.html" class="cp-cat active"><div class="cp-cat-icon">🌟</div><span>Tutto il market</span></a>
+  <a href="acquista.html#type=carte" class="cp-cat"><div class="cp-cat-icon">🎴</div><span>Carte singole</span></a>
+  <a href="acquista.html#type=buste" class="cp-cat"><div class="cp-cat-icon">📦</div><span>Buste nuove</span></a>
+  <a href="acquista.html#type=etb" class="cp-cat"><div class="cp-cat-icon">🎁</div><span>ETB</span></a>
+  <a href="acquista.html#type=altro" class="cp-cat"><div class="cp-cat-icon">✨</div><span>Altro</span></a>
+</div>
+
+<!-- CARTE IN EVIDENZA -->
+<section class="cp-section alt">
+  <div class="section-top">
+    <div><p class="section-label">Selezione del giorno</p><h2 class="section-title">In evidenza</h2></div>
+    <a href="acquista.html" class="section-see">Vedi tutto →</a>
+  </div>
+  <div class="card-grid-4" id="featuredGrid">
+    <!-- Popolato da JS dal CSV -->
+  </div>
+</section>
+
+<!-- PROMO BANNER VENDI -->
+<div class="cp-promo">
+  <div>
+    <p class="cp-promo-label">Offerta speciale</p>
+    <h3 class="cp-promo-title">Vendi le tue carte<br><em>in 3 semplici passi.</em></h3>
+    <p class="cp-promo-sub">Valutazione onesta, pagamento rapido entro 24h. Nessuna sorpresa, nessuna commissione nascosta.</p>
+  </div>
+  <a href="vendi.html" class="btn-fill" style="white-space:nowrap">Inizia a vendere →</a>
+</div>
+
+<!-- ACQUISTA / VENDI SPLIT -->
+<div class="cp-dark-split">
+  <div class="cp-ds-col">
+    <p class="cp-ds-label">Acquista</p>
+    <h3 class="cp-ds-title">Trova la carta che cerchi.</h3>
+    <p class="cp-ds-desc">Catalogo completo con filtri per set, rarità, condizione e lingua. Pagamento sicuro con PayPal o carta di credito.</p>
+    <a href="acquista.html" class="btn-fill">Entra nel market</a>
+  </div>
+  <div class="cp-ds-col">
+    <p class="cp-ds-label">Come vendere</p>
+    <div class="cp-step"><div class="cp-step-n">01</div><div class="cp-step-t">Compila il modulo</div><div class="cp-step-d">Inserisci i dati della carta e allega una foto fronte/retro.</div></div>
+    <div class="cp-step"><div class="cp-step-n">02</div><div class="cp-step-t">Ricevi l'offerta</div><div class="cp-step-d">Valutiamo il grading e ti confermiamo l'offerta entro 24h.</div></div>
+    <div class="cp-step"><div class="cp-step-n">03</div><div class="cp-step-t">Spedisci e incassa</div><div class="cp-step-d">Accreditiamo il saldo sul tuo profilo in 24h lavorative.</div></div>
+  </div>
+</div>
+
+<!-- TRUST -->
+<div class="cp-trust">
+  <div class="cp-trust-item"><div class="cp-trust-icon">📦</div><div class="cp-trust-num">24h</div><div class="cp-trust-label">Spedizione rapida</div></div>
+  <div class="cp-trust-item"><div class="cp-trust-icon">✅</div><div class="cp-trust-num">100%</div><div class="cp-trust-label">Grading verificato</div></div>
+  <div class="cp-trust-item"><div class="cp-trust-icon">🔒</div><div class="cp-trust-num">Sicuro</div><div class="cp-trust-label">Pagamento protetto</div></div>
+  <div class="cp-trust-item"><div class="cp-trust-icon">💬</div><div class="cp-trust-num">24/7</div><div class="cp-trust-label">Assistenza clienti</div></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo">
+        <img src="logo.png" alt="logo" width="24" style="border-radius:6px" onerror="this.style.display='none'">
+        Card<span>Pioneer</span>
+      </div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG. Acquista e vendi carte singole in modo sicuro e verificato.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="utility.html">Utility</a>
+        <a href="vendi.html">Vendi</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer" target="_blank">@cardpioneer</a>
+      </div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
+</footer>
+
+<script>
+// ── FEATURED CARDS da Supabase ──
+(function () {
+  const SUPABASE_URL = 'https://nzjwpdbljfwrspmepoqo.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs';
+  const NEW_COUNT    = 4;   // ultime 4 inserite = badge NEW
+  const RANDOM_COUNT = 4;   // 4 casuali dal resto
+
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function cardHTML(card, isNew) {
+    const price    = '€ ' + parseFloat(card.prezzo).toFixed(2).replace('.', ',');
+    const setLabel = card.set_name + ' · ' + card.lingua;
+    const badge    = isNew
+      ? '<span class="pcard-badge new">NEW</span>'
+      : (card.condizione ? `<span class="pcard-badge">${esc(card.condizione)}</span>` : '');
+    return `<div class="pcard">
+      <div class="pcard-img">
+        <img src="${esc(card.immagine)}" alt="${esc(card.nome)}" loading="lazy" onerror="this.style.display='none'">
+        ${badge}
+        <span class="pcard-wish">♡</span>
+        <div class="pcard-actions"><button>Aggiungi al carrello</button></div>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-name">${esc(card.nome)}</div>
+        <div class="pcard-set">${esc(setLabel)}</div>
+        <div class="pcard-bottom">
+          <div class="pcard-price">${price}</div>
+          <div class="pcard-stars">★★★★★</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  async function loadFeatured() {
+    try {
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Ultime NEW_COUNT inserite (ordinate per created_at desc)
+      const { data: newCards } = await sb
+        .from('prodotti')
+        .select('nome, set_name, lingua, condizione, prezzo, immagine')
+        .gt('disponibile', 0)
+        .order('created_at', { ascending: false })
+        .limit(NEW_COUNT);
+
+      // RANDOM_COUNT casuali escludendo le new (usa offset casuale)
+      const { count } = await sb
+        .from('prodotti')
+        .select('id', { count: 'exact', head: true })
+        .gt('disponibile', 0);
+
+      const total  = count || 0;
+      const offset = total > NEW_COUNT + RANDOM_COUNT
+        ? Math.floor(Math.random() * (total - NEW_COUNT - RANDOM_COUNT))
+        : 0;
+
+      const { data: poolCards } = await sb
+        .from('prodotti')
+        .select('nome, set_name, lingua, condizione, prezzo, immagine')
+        .gt('disponibile', 0)
+        .order('created_at', { ascending: true })
+        .range(offset, offset + RANDOM_COUNT * 3 - 1);
+
+      const randomCards = shuffle(poolCards || []).slice(0, RANDOM_COUNT);
+      const featured    = [...(newCards || []), ...randomCards];
+
+      const grid = document.getElementById('featuredGrid');
+      if (grid && featured.length) {
+        grid.innerHTML = featured.map((c, i) => cardHTML(c, i < NEW_COUNT)).join('');
+      }
+    } catch (e) { console.warn('Featured:', e); }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadFeatured);
+})();
+
+// ── Login dropdown ──
+document.addEventListener('click', function(e) {
+  const w = document.getElementById('loginWrap');
+  if (w && !w.contains(e.target)) w.classList.remove('open');
+});
+
+// ── Filtri categorie ──
+document.querySelectorAll('.cp-cat').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.cp-cat').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

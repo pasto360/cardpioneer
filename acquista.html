@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <style>
+    .market-layout{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
+    .filters-panel{background:var(--white);border:1px solid var(--border);border-top:2px solid var(--yellow);border-radius:0 0 12px 12px;padding:20px;position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto}
+    .filters-panel::-webkit-scrollbar{width:4px}.filters-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .filters-title{font-family:var(--fu);font-size:12px;font-weight:700;color:var(--dark);letter-spacing:-0.01em;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+    .filters-reset{font-size:10px;font-weight:500;color:var(--pink);background:none;border:none;cursor:pointer;padding:0}
+    .filter-group{margin-bottom:20px}.filter-group:last-child{margin-bottom:0}
+    .filter-label{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block}
+    .filter-options{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto}
+    .filter-options::-webkit-scrollbar{width:3px}.filter-options::-webkit-scrollbar-thumb{background:var(--border)}
+    .filter-option{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dark);cursor:pointer;padding:2px 0;line-height:1.4}
+    .filter-option input{accent-color:var(--pink);flex-shrink:0}
+    .filter-divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+    .price-inputs{display:flex;gap:6px;align-items:center}
+    .price-inputs input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--dark);background:var(--bg);outline:none}
+    .price-inputs input:focus{border-color:var(--pink)}
+    .price-inputs span{font-size:11px;color:var(--muted);flex-shrink:0}
+
+    .type-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .type-tab{font-size:12px;font-weight:600;padding:7px 16px;border:1px solid var(--border);border-radius:100px;cursor:pointer;background:var(--white);color:var(--muted);transition:all .2s;display:flex;align-items:center;gap:6px}
+    .type-tab:hover{border-color:var(--dark);color:var(--dark)}
+    .type-tab.active{background:var(--dark);border-color:var(--dark);color:#fff}
+    .type-tab.active .tab-count{background:rgba(255,255,255,.2);color:#fff}
+    .tab-count{font-size:10px;font-weight:600;background:var(--bg);color:var(--muted);padding:1px 6px;border-radius:100px}
+
+    .market-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+    .market-count{font-size:12px;color:var(--muted)}.market-count strong{color:var(--dark);font-weight:600}
+    .sort-select{font-family:'Inter',sans-serif;font-size:12px;color:var(--dark);border:1px solid var(--border);padding:7px 12px;border-radius:8px;background:var(--white);cursor:pointer;outline:none}
+    .sort-select:focus{border-color:var(--pink)}
+
+    .search-bar{display:flex;margin-bottom:20px}
+    .search-input{flex:1;padding:11px 16px;border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;font-family:'Inter',sans-serif;font-size:14px;outline:none;color:var(--dark);background:var(--white);transition:border-color .2s}
+    .search-input:focus{border-color:var(--pink)}
+    .search-btn{background:var(--pink);color:#fff;border:none;padding:11px 20px;cursor:pointer;font-family:var(--fu);font-size:10px;font-weight:700;border-radius:0 8px 8px 0;letter-spacing:-0.01em;transition:opacity .2s}
+    .search-btn:hover{opacity:.88}
+
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+
+    .mcard{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;transition:box-shadow .18s,transform .18s}
+    .mcard:hover{box-shadow:0 6px 24px rgba(26,10,46,.1);transform:translateY(-3px)}
+    .mcard:hover .mcard-actions{opacity:1;transform:translateY(0)}
+    .mcard:hover .mcard-wish{opacity:1}
+    .mcard.out-of-stock{opacity:.55}
+    .mcard-img{background:var(--bg);aspect-ratio:.72/1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;font-size:13px;color:var(--light);font-family:var(--fu);text-align:center;padding:4px}
+    .mcard-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .mcard-badge{position:absolute;top:6px;left:6px;font-size:7px;font-weight:700;letter-spacing:.04em;background:var(--pink);color:#fff;padding:2px 6px;border-radius:100px;text-transform:uppercase}
+    .mcard-lang{position:absolute;top:6px;right:6px;font-size:7px;font-weight:700;background:rgba(26,10,46,.65);color:#fff;padding:2px 5px;border-radius:4px}
+    .mcard-wish{position:absolute;bottom:6px;right:6px;width:24px;height:24px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0;transition:opacity .2s}
+    .mcard-sold{position:absolute;inset:0;background:rgba(244,240,255,.75);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .mcard-actions{position:absolute;bottom:0;left:0;right:0;background:rgba(26,10,46,.88);padding:8px;opacity:0;transform:translateY(5px);transition:all .18s}
+    .mcard-actions button{width:100%;font-family:var(--fu);font-size:8px;font-weight:700;background:var(--yellow);color:var(--dark);border:none;padding:7px;border-radius:6px;cursor:pointer}
+    .mcard-body{padding:8px 9px 10px}
+    .mcard-set{font-size:8px;color:var(--pink);font-weight:600;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mcard-name{font-size:10px;font-weight:600;color:var(--dark);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+    .mcard-full{font-size:8px;color:var(--light);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mcard-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px}
+    .mcard-price{font-family:var(--fu);font-size:11px;font-weight:700;color:var(--pink)}
+    .mcard-qty{font-size:8px;font-weight:600;color:var(--muted);background:var(--bg);padding:1px 5px;border-radius:4px;white-space:nowrap}
+    .mcard-qty.low{background:#fff3cd;color:#856404}
+
+    .market-loading{grid-column:1/-1;text-align:center;padding:60px 20px}
+    .loading-spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .market-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);font-size:13px}
+
+    .pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:28px;flex-wrap:wrap}
+    .page-btn{font-family:var(--fu);font-size:10px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--dark);cursor:pointer;transition:all .2s}
+    .page-btn:hover,.page-btn.active{border-color:var(--pink);color:var(--pink);background:rgba(232,16,122,.04)}
+    .page-btn:disabled{opacity:.3;pointer-events:none}
+    .page-ellipsis{font-size:11px;color:var(--light);padding:0 4px}
+
+    .csv-error{background:rgba(232,16,122,.04);border:1px solid rgba(232,16,122,.2);border-left:3px solid var(--pink);padding:14px 18px;font-size:13px;color:var(--dark);margin-bottom:20px;border-radius:0 8px 8px 0;display:none}
+
+    @media(max-width:900px){.market-layout{grid-template-columns:1fr}.filters-panel{position:static;max-height:none}.cards-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:500px){.cards-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html" class="active">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap">
+      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Accedi
+      </button>
+      <div class="cp-login-dropdown">
+        <div class="cp-login-title">Accedi a CardPioneer</div>
+        <div class="cp-login-form">
+          <div class="cp-login-field"><label class="cp-login-label">Email</label><input type="email" class="cp-login-input" placeholder="tua@email.it"></div>
+          <div class="cp-login-field"><label class="cp-login-label">Password</label><input type="password" class="cp-login-input" placeholder="••••••••"></div>
+          <div class="cp-login-forgot">Password dimenticata?</div>
+          <button class="cp-login-submit">Accedi</button>
+        </div>
+        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Catalogo completo</div>
+  <h1 class="cp-hero-title">Market</h1>
+  <p class="cp-hero-sub">Carte singole, buste e ETB. Tutti i set, tutte le lingue. Grading verificato.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="csv-error" id="csvError">
+    ⚠️ Impossibile caricare il catalogo. Assicurati che i file CSV siano nella cartella <code>data/</code>.
+  </div>
+
+  <!-- TABS CATEGORIA -->
+  <div class="type-tabs">
+    <button class="type-tab active" data-type="all"    onclick="setType('all',this)">Tutti <span class="tab-count" id="cnt-all">—</span></button>
+    <button class="type-tab"        data-type="carte"  onclick="setType('carte',this)">🎴 Carte singole <span class="tab-count" id="cnt-carte">—</span></button>
+    <button class="type-tab"        data-type="buste"  onclick="setType('buste',this)">📦 Buste nuove <span class="tab-count" id="cnt-buste">—</span></button>
+    <button class="type-tab"        data-type="etb"    onclick="setType('etb',this)">🎁 ETB <span class="tab-count" id="cnt-etb">—</span></button>
+    <button class="type-tab"        data-type="altro"  onclick="setType('altro',this)">✨ Altro <span class="tab-count" id="cnt-altro">—</span></button>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" class="search-input" placeholder="Cerca per nome, set, codice, condizione...">
+    <button class="search-btn" onclick="applyFilters()">Cerca</button>
+  </div>
+
+  <div class="market-layout">
+
+    <!-- FILTRI -->
+    <aside class="filters-panel">
+      <div class="filters-title">
+        Filtri
+        <button class="filters-reset" onclick="resetFilters()">Azzera tutto</button>
+      </div>
+
+      <!-- NAZIONALITÀ — sempre visibile -->
+      <div class="filter-group">
+        <span class="filter-label">Nazionalità</span>
+        <div class="filter-options" id="filterLang"></div>
+      </div>
+
+      <hr class="filter-divider">
+
+      <div class="filter-group">
+        <span class="filter-label">Serie / Set</span>
+        <div class="filter-options" id="filterSet"></div>
+      </div>
+
+      <hr class="filter-divider">
+
+      <!-- CONDIZIONE — solo per carte -->
+      <div class="filter-group" id="condGroup">
+        <span class="filter-label">Condizione</span>
+        <div class="filter-options" id="filterCond"></div>
+      </div>
+      <hr class="filter-divider" id="condDivider">
+
+      <div class="filter-group">
+        <span class="filter-label">Disponibilità</span>
+        <div class="filter-options">
+          <label class="filter-option">
+            <input type="checkbox" id="filterAvail" onchange="applyFilters()">
+            Solo disponibili
+          </label>
+        </div>
+      </div>
+
+      <hr class="filter-divider">
+
+      <div class="filter-group">
+        <span class="filter-label">Prezzo (€)</span>
+        <div class="price-inputs">
+          <input type="number" id="priceMin" placeholder="Min" min="0" step="0.01" oninput="applyFilters()">
+          <span>—</span>
+          <input type="number" id="priceMax" placeholder="Max" min="0" step="0.01" oninput="applyFilters()">
+        </div>
+      </div>
+    </aside>
+
+    <!-- GRIGLIA -->
+    <div>
+      <div class="market-header">
+        <p class="market-count" id="marketCount">— prodotti trovati</p>
+        <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+          <option value="name-asc">Nome A → Z</option>
+          <option value="name-desc">Nome Z → A</option>
+          <option value="price-asc">Prezzo crescente</option>
+          <option value="price-desc">Prezzo decrescente</option>
+          <option value="set-asc">Set A → Z</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="cardsGrid">
+        <div class="market-loading">
+          <div class="loading-spinner"></div>
+          <p style="font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Caricamento catalogo...</p>
+        </div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗
+//  ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
+//  ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
+//  ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
+//  ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
+//   ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
+//
+//  ← MODIFICA QUI per aggiungere categorie o cambiare configurazione
+// ════════════════════════════════════════════════════════════════
+
+const CONFIG = {
+
+  // ── Credenziali Supabase ──
+  SUPABASE_URL: 'https://nzjwpdbljfwrspmepoqo.supabase.co',
+  SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs',
+
+  // ── Quante carte per pagina ──
+  PER_PAGE: 40,
+
+  // ── Tab categorie — modifica solo label e icon ──
+  TABS: [
+    { type: 'all',   label: 'Tutti',          icon: ''   },
+    { type: 'carte', label: 'Carte singole',   icon: '🎴' },
+    { type: 'buste', label: 'Buste nuove',     icon: '📦' },
+    { type: 'etb',   label: 'ETB',             icon: '🎁' },
+    { type: 'altro', label: 'Altro',           icon: '✨' },
+  ],
+};
+
+// ════════════════════════════════════════════════════════════════
+//  STATO
+// ════════════════════════════════════════════════════════════════
+let sb          = null;
+let allProducts = [];
+let filtered    = [];
+let currentPage = 1;
+let activeType  = 'all';
+
+// ════════════════════════════════════════════════════════════════
+//  CARICAMENTO DA SUPABASE
+// ════════════════════════════════════════════════════════════════
+async function loadAll() {
+  // Inizializza client Supabase
+  sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+  try {
+    // Carica tutti i prodotti in una sola query
+    // Supabase restituisce max 1000 righe — per cataloghi grandi usa range
+    let allRows = [];
+    let from = 0;
+    const STEP = 1000;
+
+    while (true) {
+      const { data, error } = await sb
+        .from('prodotti')
+        .select('categoria, set_name, lingua, nome, nome_completo, condizione, sku, prezzo, disponibile, immagine')
+        .range(from, from + STEP - 1)
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < STEP) break;
+      from += STEP;
+    }
+
+    // Adatta i nomi colonna Supabase al formato usato nel frontend
+    allProducts = allRows.map(p => ({
+      cat:         p.categoria,
+      setName:     p.set_name    || '',
+      lang:        p.lingua      || 'ITA',
+      displayName: p.nome        || '',
+      nameRaw:     p.nome_completo || p.nome || '',
+      condition:   p.condizione  || '',
+      sku:         p.sku         || '',
+      price:       parseFloat(p.prezzo) || 0,
+      avail:       parseInt(p.disponibile) || 0,
+      img:         p.immagine    || null,
+      ptype:       p.categoria,   // 'carte' | 'buste' | 'etb' | 'altro'
+    }));
+
+    buildFilters();
+    updateCounts();
+    applyFilters();
+    checkHashFilter();
+
+  } catch(err) {
+    console.error('Supabase error:', err);
+    document.getElementById('csvError').style.display = 'block';
+    document.getElementById('csvError').innerHTML =
+      '⚠️ Impossibile caricare il catalogo da Supabase. Controlla la connessione.';
+    document.getElementById('cardsGrid').innerHTML =
+      '<div class="market-empty">Catalogo non disponibile.</div>';
+    document.getElementById('marketCount').textContent = '—';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CONTATORI TAB
+// ════════════════════════════════════════════════════════════════
+function updateCounts() {
+  document.getElementById('cnt-all').textContent = allProducts.length;
+  CONFIG.TABS.filter(t => t.type !== 'all').forEach(t => {
+    const el = document.getElementById('cnt-' + t.type);
+    if (el) el.textContent = allProducts.filter(p => p.ptype === t.type).length;
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  COSTRUISCE FILTRI SIDEBAR
+// ════════════════════════════════════════════════════════════════
+function buildFilters() {
+  const pool = activeType === 'all'
+    ? allProducts
+    : allProducts.filter(p => p.ptype === activeType);
+
+  // Nazionalità
+  const langs = [...new Set(pool.map(p => p.lang))].sort();
+  document.getElementById('filterLang').innerHTML = langs.map(l =>
+    `<label class="filter-option"><input type="checkbox" class="fl-cb" value="${esc(l)}" onchange="applyFilters()"> ${esc(l)}</label>`
+  ).join('');
+
+  // Set
+  const sets = [...new Set(pool.map(p => p.setName))].sort();
+  document.getElementById('filterSet').innerHTML = sets.map(s =>
+    `<label class="filter-option"><input type="checkbox" class="fs-cb" value="${esc(s)}" onchange="applyFilters()"> ${esc(s)}</label>`
+  ).join('');
+
+  // Condizione (solo carte)
+  const showCond = activeType === 'all' || activeType === 'carte';
+  document.getElementById('condGroup').style.display  = showCond ? '' : 'none';
+  document.getElementById('condDivider').style.display = showCond ? '' : 'none';
+  if (showCond) {
+    const conds = [...new Set(pool.map(p => p.condition).filter(Boolean))].sort();
+    document.getElementById('filterCond').innerHTML = conds.map(c =>
+      `<label class="filter-option"><input type="checkbox" class="fc-cb" value="${esc(c)}" onchange="applyFilters()"> ${esc(c)}</label>`
+    ).join('');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CAMBIA TIPO (click tab)
+// ════════════════════════════════════════════════════════════════
+function setType(type, btn) {
+  activeType = type;
+  document.querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.fl-cb,.fs-cb,.fc-cb').forEach(cb => cb.checked = false);
+  buildFilters();
+  applyFilters();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  APPLICA FILTRI + RICERCA + SORT
+// ════════════════════════════════════════════════════════════════
+function applyFilters() {
+  const query     = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sortVal   = document.getElementById('sortSelect').value;
+  const onlyAvail = document.getElementById('filterAvail').checked;
+  const priceMin  = parseFloat(document.getElementById('priceMin').value) || 0;
+  const priceMax  = parseFloat(document.getElementById('priceMax').value) || Infinity;
+  const selLangs  = [...document.querySelectorAll('.fl-cb:checked')].map(e=>e.value);
+  const selSets   = [...document.querySelectorAll('.fs-cb:checked')].map(e=>e.value);
+  const selConds  = [...document.querySelectorAll('.fc-cb:checked')].map(e=>e.value);
+
+  filtered = allProducts.filter(p => {
+    if (activeType !== 'all' && p.ptype !== activeType) return false;
+    if (selLangs.length  && !selLangs.includes(p.lang))         return false;
+    if (selSets.length   && !selSets.includes(p.setName))       return false;
+    if (selConds.length  && !selConds.includes(p.condition))    return false;
+    if (onlyAvail && p.avail < 1)                               return false;
+    if (p.price < priceMin || p.price > priceMax)               return false;
+    if (query) {
+      const hay = [p.displayName, p.setName, p.nameRaw, p.sku, p.condition, p.lang]
+        .join(' ').toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b) => {
+    switch(sortVal) {
+      case 'price-asc':  return a.price - b.price;
+      case 'price-desc': return b.price - a.price;
+      case 'name-desc':  return b.displayName.localeCompare(a.displayName,'it');
+      case 'set-asc':    return a.setName.localeCompare(b.setName,'it');
+      default:           return a.displayName.localeCompare(b.displayName,'it');
+    }
+  });
+
+  currentPage = 1;
+  renderCards();
+  renderPagination();
+
+  const n = filtered.length;
+  document.getElementById('marketCount').innerHTML =
+    `<strong>${n}</strong> prodotto${n!==1?'i':''} trovato${n!==1?'i':''}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER CARTE
+// ════════════════════════════════════════════════════════════════
+function renderCards() {
+  const grid  = document.getElementById('cardsGrid');
+  const start = (currentPage-1) * CONFIG.PER_PAGE;
+  const slice = filtered.slice(start, start + CONFIG.PER_PAGE);
+
+  if (!slice.length) {
+    grid.innerHTML = '<div class="market-empty">Nessun prodotto trovato con questi filtri.</div>';
+    return;
+  }
+
+  grid.innerHTML = slice.map(p => {
+    const price  = '€ ' + p.price.toFixed(2).replace('.',',');
+    const isOut  = p.avail < 1;
+    const isLow  = p.avail > 0 && p.avail <= 2;
+    const badge  = p.condition ? `<span class="mcard-badge">${esc(p.condition)}</span>` : '';
+    const langBadge = p.lang !== 'ITA' ? `<span class="mcard-lang">${esc(p.lang)}</span>` : '';
+    const qtyHTML = isOut
+      ? `<span class="mcard-qty">Esaurito</span>`
+      : isLow ? `<span class="mcard-qty low">Ultimi ${p.avail}</span>`
+               : `<span class="mcard-qty">Qta: ${p.avail}</span>`;
+    const imgHTML = p.img
+      ? `<img src="${esc(p.img)}" alt="${esc(p.displayName)}" loading="lazy"
+           onerror="this.parentElement.dataset.fb=this.parentElement.dataset.fb||1;this.remove()">`
+      : `<span>${esc(p.displayName.substring(0,10))}</span>`;
+
+    return `<div class="mcard${isOut?' out-of-stock':''}">
+      <div class="mcard-img">
+        ${imgHTML}${badge}${langBadge}
+        ${isOut ? '<div class="mcard-sold">Esaurito</div>' : ''}
+        <span class="mcard-wish">♡</span>
+        ${!isOut ? `<div class="mcard-actions"><button onclick="addToCart(${JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}).replace(/"/g,'&quot;')})">🛒 Aggiungi</button></div>` : ''}
+      </div>
+      <div class="mcard-body">
+        <div class="mcard-set">${esc(p.setName)}</div>
+        <div class="mcard-name" title="${esc(p.displayName)}">${esc(p.displayName)}</div>
+        <div class="mcard-full">${esc(p.nameRaw)}</div>
+        <div class="mcard-bottom">
+          <div class="mcard-price">${price}</div>
+          ${qtyHTML}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PAGINAZIONE
+// ════════════════════════════════════════════════════════════════
+function renderPagination() {
+  const total = Math.ceil(filtered.length / CONFIG.PER_PAGE);
+  const pag   = document.getElementById('pagination');
+  if (total <= 1) { pag.innerHTML=''; return; }
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>←</button>`;
+  for (let i=1; i<=total; i++) {
+    if (i===1||i===total||Math.abs(i-currentPage)<=2)
+      html += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if (Math.abs(i-currentPage)===3)
+      html += `<span class="page-ellipsis">…</span>`;
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>→</button>`;
+  pag.innerHTML = html;
+}
+
+function goPage(n) {
+  const total = Math.ceil(filtered.length / CONFIG.PER_PAGE);
+  if (n<1||n>total) return;
+  currentPage = n;
+  renderCards();
+  renderPagination();
+  document.querySelector('.market-layout').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RESET + HASH + UTILITY
+// ════════════════════════════════════════════════════════════════
+function resetFilters() {
+  document.querySelectorAll('.fl-cb,.fs-cb,.fc-cb').forEach(cb=>cb.checked=false);
+  document.getElementById('filterAvail').checked=false;
+  document.getElementById('priceMin').value='';
+  document.getElementById('priceMax').value='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('sortSelect').value='name-asc';
+  applyFilters();
+}
+
+function checkHashFilter() {
+  const hash = window.location.hash;
+
+  // Arriva dalla home con #type=carte|buste|etb|altro
+  if (hash.startsWith('#type=')) {
+    const type = hash.replace('#type=', '');
+    const btn  = document.querySelector(`.type-tab[data-type="${type}"]`);
+    if (btn) setType(type, btn);
+    return;
+  }
+
+  // Arriva con #set=ITA+-+Set+Base
+  if (hash.startsWith('#set=')) {
+    const val = decodeURIComponent(hash.replace('#set=','').replace(/\+/g,' '));
+    setTimeout(() => {
+      const cb = [...document.querySelectorAll('.fs-cb')].find(c=>c.value===val);
+      if (cb) { cb.checked=true; applyFilters(); }
+    }, 300);
+  }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ──
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')applyFilters()});
+document.addEventListener('DOMContentLoaded', () => {
+  loadAll();
+  // Aggiorna badge carrello
+  try {
+    const cart = JSON.parse(localStorage.getItem('cp_cart')) || [];
+    const tot  = cart.reduce((s,i) => s + i.qty, 0);
+    const badge = document.getElementById('cartBadgeNav');
+    if (badge) badge.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

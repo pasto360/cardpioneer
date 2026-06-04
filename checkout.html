@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <!-- PayPal SDK Sandbox -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AeAL4f3w2DKr52UgJnjLu_CV9beiiw5JmTBfUcA7wzvW86gUpn-ZkCWCTBpQH4sHz8NUWZHONHa7ZA59&currency=EUR&locale=it_IT"></script>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    .checkout-layout { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
+
+    .checkout-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .checkout-card-title {
+      font-family: var(--fu);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .checkout-card-title span {
+      width: 28px; height: 28px;
+      background: var(--yellow);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; color: var(--dark);
+      flex-shrink: 0;
+    }
+
+    /* Metodo pagamento */
+    .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .payment-option {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      background: var(--white);
+    }
+    .payment-option:hover { border-color: var(--pink); }
+    .payment-option.selected { border-color: var(--pink); background: rgba(232,16,122,0.04); }
+    .payment-option input { display: none; }
+    .payment-option-icon { font-size: 28px; margin-bottom: 6px; }
+    .payment-option-label { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .payment-option-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Riepilogo ordine sidebar */
+    .order-summary { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: sticky; top: 80px; }
+    .summary-title { font-family: var(--fu); font-size: 15px; color: var(--dark); margin-bottom: 16px; letter-spacing: -0.02em; }
+    .summary-items { margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .summary-item { display: flex; gap: 10px; align-items: center; }
+    .summary-item-img { width: 40px; height: 56px; background: var(--bg); border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+    .summary-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .summary-item-name  { font-size: 12px; font-weight: 600; color: var(--dark); }
+    .summary-item-set   { font-size: 10px; color: var(--muted); }
+    .summary-item-price { font-family: var(--fu); font-size: 12px; color: var(--pink); margin-left: auto; white-space: nowrap; }
+    .summary-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .summary-row.total { font-family: var(--fu); font-size: 17px; color: var(--dark); font-weight: 700; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .summary-row.total span:last-child { color: var(--pink); }
+
+    /* Pulsante bonifico */
+    #bonifico-btn {
+      width: 100%;
+      font-family: var(--fu);
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--dark);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: opacity 0.2s;
+      margin-top: 4px;
+    }
+    #bonifico-btn:hover { opacity: 0.85; }
+    #bonifico-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+    /* PayPal container */
+    #paypal-button-container { margin-top: 4px; }
+
+    /* Messaggio errore */
+    .checkout-error {
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #dc2626;
+      margin-top: 12px;
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .checkout-layout { grid-template-columns: 1fr; }
+      .order-summary { position: static; }
+      .payment-options { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Quasi fatto</div>
+  <h1 class="cp-hero-title">Checkout</h1>
+  <p class="cp-hero-sub">Inserisci i tuoi dati e scegli il metodo di pagamento.</p>
+</section>
+
+<section class="cp-section alt" id="checkoutSection">
+  <!-- Popolato da JS -->
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIGURAZIONE
+// ══════════════════════════════════════════════════════
+const EMAILJS_PUBLIC_KEY  = 'AIMSXswjcxqu6nfmF';
+const EMAILJS_SERVICE_ID  = 'service_k365rsh';
+const TEMPLATE_NEGOZIO    = 'template_m32tgaq';
+const TEMPLATE_CLIENTE    = 'template_c067axo';
+const EMAIL_NEGOZIO       = 'infocardpioneer@gmail.com';
+
+const SPEDIZIONE_SOGLIA   = 50;
+const SPEDIZIONE_COSTO    = 5.90;
+
+// Inizializza EmailJS
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+// ══════════════════════════════════════════════════════
+//  CARRELLO
+// ══════════════════════════════════════════════════════
+function getCart() {
+  try { return JSON.parse(localStorage.getItem('cp_cart')) || []; }
+  catch(e) { return []; }
+}
+
+function clearCart() {
+  localStorage.removeItem('cp_cart');
+}
+
+// Sconto attivo (popolato da verifyDiscount)
+let activeDiscount = null; // { codice, tipo, valore, sconto_importo }
+
+function calcTotals(items) {
+  const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  let sconto = 0;
+  if (activeDiscount) {
+    sconto = activeDiscount.tipo === 'percentuale'
+      ? subtotale * (activeDiscount.valore / 100)
+      : Math.min(activeDiscount.valore, subtotale);
+    sconto = Math.round(sconto * 100) / 100;
+  }
+  const subtotale_scontato = subtotale - sconto;
+  const spedizione = subtotale_scontato >= SPEDIZIONE_SOGLIA ? 0 : SPEDIZIONE_COSTO;
+  return { subtotale, sconto, subtotale_scontato, spedizione, totale: subtotale_scontato + spedizione };
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER CHECKOUT
+// ══════════════════════════════════════════════════════
+function renderCheckout() {
+  const items = getCart();
+  if (items.length === 0) {
+    window.location.href = 'carrello.html';
+    return;
+  }
+
+  const { subtotale, spedizione, totale } = calcTotals(items);
+  const user = window.getCurrentUser?.();
+
+  document.getElementById('checkoutSection').innerHTML = `
+  <div class="checkout-layout">
+
+    <!-- SINISTRA: form + pagamento -->
+    <div>
+
+      <!-- DATI SPEDIZIONE -->
+      <div class="checkout-card">
+        <div class="checkout-card-title"><span>1</span> Dati di spedizione</div>
+        <div class="cp-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome *</label>
+              <input type="text" id="chkNome" class="form-input"
+                     placeholder="Mario"
+                     value="${escHtml(user?.user_metadata?.nome || '')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cognome *</label>
+              <input type="text" id="chkCognome" class="form-input"
+                     placeholder="Rossi"
+                     value="${escHtml(user?.user_metadata?.cognome || '')}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" id="chkEmail" class="form-input"
+                   placeholder="tua@email.it"
+                   value="${escHtml(user?.email || '')}">
+            <span class="form-note">Riceverai la conferma ordine a questo indirizzo.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefono</label>
+            <input type="tel" id="chkTel" class="form-input" placeholder="+39 333 000 0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Indirizzo *</label>
+            <input type="text" id="chkIndirizzo" class="form-input" placeholder="Via Roma 1">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">CAP *</label>
+              <input type="text" id="chkCap" class="form-input" placeholder="20100" maxlength="5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Città *</label>
+              <input type="text" id="chkCitta" class="form-input" placeholder="Milano">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nazione</label>
+            <select id="chkNazione" class="form-select">
+              <option value="Italia" selected>Italia</option>
+              <option value="San Marino">San Marino</option>
+              <option value="Svizzera">Svizzera</option>
+              <option value="Francia">Francia</option>
+              <option value="Germania">Germania</option>
+              <option value="Spagna">Spagna</option>
+              <option value="Altro">Altro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (opzionale)</label>
+            <textarea id="chkNote" class="form-textarea" rows="2"
+                      placeholder="Istruzioni per la consegna, citofono ecc."></textarea>
+          </div>
+
+          <!-- CODICE SCONTO -->
+          <div class="form-group">
+            <label class="form-label">Codice sconto</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="chkCodiceSconto" class="form-input"
+                     placeholder="Inserisci il codice"
+                     style="text-transform:uppercase;letter-spacing:0.08em"
+                     oninput="this.value=this.value.toUpperCase()">
+              <button type="button" onclick="verifyDiscount()"
+                style="font-family:var(--fu);font-size:10px;font-weight:700;
+                       background:var(--dark);color:#fff;border:none;
+                       padding:0 18px;border-radius:8px;cursor:pointer;
+                       white-space:nowrap;flex-shrink:0;transition:opacity .2s"
+                id="discountBtn">
+                Applica
+              </button>
+            </div>
+            <div id="discountMsg" style="margin-top:6px;font-size:12px;display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- METODO PAGAMENTO -->
+      <div class="checkout-card">
+        <div class="checkout-card-title"><span>2</span> Metodo di pagamento</div>
+        <div class="payment-options">
+          <label class="payment-option selected" id="opt-paypal" onclick="selectPayment('paypal')">
+            <input type="radio" name="payment" value="paypal" checked>
+            <div class="payment-option-icon">🅿️</div>
+            <div class="payment-option-label">PayPal</div>
+            <div class="payment-option-sub">Pagamento immediato</div>
+          </label>
+          <label class="payment-option" id="opt-bonifico" onclick="selectPayment('bonifico')">
+            <input type="radio" name="payment" value="bonifico">
+            <div class="payment-option-icon">🏦</div>
+            <div class="payment-option-label">Bonifico</div>
+            <div class="payment-option-sub">IBAN via email</div>
+          </label>
+        </div>
+
+        <!-- Descrizione metodo selezionato -->
+        <div id="payment-desc-paypal" style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px">
+          Verrai reindirizzato su PayPal per completare il pagamento in sicurezza.
+          L'ordine viene confermato automaticamente.
+        </div>
+        <div id="payment-desc-bonifico" style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px;display:none">
+          Riceverai via email le coordinate bancarie per effettuare il bonifico.
+          L'ordine viene preparato dopo la ricezione del pagamento (1-3 giorni lavorativi).
+        </div>
+
+        <!-- Pulsante PayPal -->
+        <div id="paypal-button-container"></div>
+
+        <!-- Pulsante Bonifico -->
+        <button id="bonifico-btn" style="display:none" onclick="handleBonifico()">
+          Conferma ordine con bonifico →
+        </button>
+
+        <div id="checkout-error" class="checkout-error"></div>
+      </div>
+
+    </div>
+
+    <!-- DESTRA: riepilogo ordine -->
+    <div class="order-summary">
+      <div class="summary-title">Riepilogo ordine</div>
+      <div class="summary-items">
+        ${items.map(i => `
+          <div class="summary-item">
+            <div class="summary-item-img">
+              <img src="${escHtml(i.immagine||'')}" alt="${escHtml(i.nome)}"
+                   onerror="this.style.display='none'">
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="summary-item-name">${escHtml(i.nome)} ${i.qty > 1 ? `×${i.qty}` : ''}</div>
+              <div class="summary-item-set">${escHtml(i.set_name)} · ${escHtml(i.lingua)}</div>
+            </div>
+            <div class="summary-item-price">€ ${(i.prezzo * i.qty).toFixed(2).replace('.',',')}</div>
+          </div>`).join('')}
+      </div>
+      <hr class="summary-divider">
+      <div class="summary-row"><span>Subtotale</span><span>€ ${subtotale.toFixed(2).replace('.',',')}</span></div>
+      ${sconto > 0 ? `<div class="summary-row" style="color:#059669;font-weight:600">
+        <span>🎉 Sconto (${activeDiscount.codice})</span>
+        <span>− € ${sconto.toFixed(2).replace('.',',')}</span>
+      </div>` : ''}
+      <div class="summary-row">
+        <span>Spedizione</span>
+        <span>${spedizione === 0 ? '<span style="color:#059669;font-weight:600">Gratis</span>' : '€ ' + spedizione.toFixed(2).replace('.',',')}</span>
+      </div>
+      <div class="summary-row total"><span>Totale</span><span>€ ${totale.toFixed(2).replace('.',',')}</span></div>
+      <div style="margin-top:16px;font-size:11px;color:var(--light);text-align:center;line-height:1.6">
+        🔒 Transazione sicura<br>
+        Dati protetti con crittografia SSL
+      </div>
+    </div>
+
+  </div>`;
+
+  // Inizializza pulsante PayPal
+  initPayPal(totale, items);
+}
+
+// ══════════════════════════════════════════════════════
+//  SELEZIONE METODO PAGAMENTO
+// ══════════════════════════════════════════════════════
+let selectedPayment = 'paypal';
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.getElementById('opt-paypal').classList.toggle('selected',   method === 'paypal');
+  document.getElementById('opt-bonifico').classList.toggle('selected', method === 'bonifico');
+  document.getElementById('payment-desc-paypal').style.display   = method === 'paypal'   ? '' : 'none';
+  document.getElementById('payment-desc-bonifico').style.display = method === 'bonifico' ? '' : 'none';
+  document.getElementById('paypal-button-container').style.display = method === 'paypal'   ? '' : 'none';
+  document.getElementById('bonifico-btn').style.display            = method === 'bonifico' ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  VALIDAZIONE FORM
+// ══════════════════════════════════════════════════════
+function getFormData() {
+  return {
+    nome:      document.getElementById('chkNome')?.value.trim()     || '',
+    cognome:   document.getElementById('chkCognome')?.value.trim()  || '',
+    email:     document.getElementById('chkEmail')?.value.trim()    || '',
+    tel:       document.getElementById('chkTel')?.value.trim()      || '',
+    indirizzo: document.getElementById('chkIndirizzo')?.value.trim()|| '',
+    cap:       document.getElementById('chkCap')?.value.trim()      || '',
+    citta:     document.getElementById('chkCitta')?.value.trim()    || '',
+    nazione:   document.getElementById('chkNazione')?.value         || 'Italia',
+    note:      document.getElementById('chkNote')?.value.trim()     || '',
+  };
+}
+
+function validateForm() {
+  const d = getFormData();
+  if (!d.nome)      return 'Inserisci il nome.';
+  if (!d.cognome)   return 'Inserisci il cognome.';
+  if (!d.email || !d.email.includes('@')) return 'Inserisci una email valida.';
+  if (!d.indirizzo) return 'Inserisci l\'indirizzo di spedizione.';
+  if (!d.cap || d.cap.length < 4) return 'Inserisci un CAP valido.';
+  if (!d.citta)     return 'Inserisci la città.';
+  return null;
+}
+
+function showError(msg) {
+  const el = document.getElementById('checkout-error');
+  if (!el) return;
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent   = msg || '';
+}
+
+// ══════════════════════════════════════════════════════
+//  CODICE SCONTO
+// ══════════════════════════════════════════════════════
+async function verifyDiscount() {
+  const input  = document.getElementById('chkCodiceSconto');
+  const msg    = document.getElementById('discountMsg');
+  const btn    = document.getElementById('discountBtn');
+  const codice = input?.value.trim().toUpperCase();
+
+  if (!codice) {
+    showDiscountMsg('Inserisci un codice sconto.', 'error');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = '⏳';
+
+  try {
+    const oggi = new Date().toISOString().split('T')[0];
+    const { data, error } = await window.sb
+      .from('sconti')
+      .select('*')
+      .eq('codice', codice)
+      .eq('attivo', true)
+      .single();
+
+    if (error || !data) {
+      showDiscountMsg('Codice non valido o non attivo.', 'error');
+      activeDiscount = null;
+      btn.disabled = false; btn.textContent = 'Applica';
+      return;
+    }
+
+    // Controlla date validità
+    if (data.data_inizio && oggi < data.data_inizio) {
+      showDiscountMsg('Codice non ancora attivo.', 'error');
+      activeDiscount = null;
+      btn.disabled = false; btn.textContent = 'Applica';
+      return;
+    }
+    if (data.data_fine && oggi > data.data_fine) {
+      showDiscountMsg('Codice scaduto.', 'error');
+      activeDiscount = null;
+      btn.disabled = false; btn.textContent = 'Applica';
+      return;
+    }
+
+    // Controlla utilizzi massimi
+    if (data.uso_max !== null && data.uso_count >= data.uso_max) {
+      showDiscountMsg('Codice esaurito (utilizzi massimi raggiunti).', 'error');
+      activeDiscount = null;
+      btn.disabled = false; btn.textContent = 'Applica';
+      return;
+    }
+
+    // Sconto valido
+    activeDiscount = { codice: data.codice, tipo: data.tipo, valore: data.valore, id: data.id };
+    const items    = getCart();
+    const subtot   = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+    const importo  = data.tipo === 'percentuale'
+      ? subtot * (data.valore / 100)
+      : Math.min(data.valore, subtot);
+    const label    = data.tipo === 'percentuale'
+      ? `${data.valore}% di sconto applicato`
+      : `€ ${data.valore.toFixed(2).replace('.', ',')} di sconto applicato`;
+
+    showDiscountMsg(`🎉 ${label} — risparmio € ${importo.toFixed(2).replace('.', ',')}`, 'ok');
+    btn.textContent = '✓';
+    input.disabled  = true;
+
+    // Aggiorna riepilogo
+    renderCheckout();
+
+  } catch(e) {
+    console.error(e);
+    showDiscountMsg('Errore durante la verifica. Riprova.', 'error');
+    btn.disabled = false; btn.textContent = 'Applica';
+  }
+}
+
+function showDiscountMsg(text, type) {
+  const el = document.getElementById('discountMsg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color   = type === 'ok' ? '#059669' : '#dc2626';
+  el.textContent   = text;
+}
+
+// ══════════════════════════════════════════════════════
+//  SALVA ORDINE SU SUPABASE
+// ══════════════════════════════════════════════════════
+async function saveOrder(items, totals, formData, pagamento, paypalOrderId = null) {
+  const user = window.getCurrentUser?.();
+  const { subtotale, sconto, totale } = totals;
+
+  const ordine = {
+    user_id:        user?.id || null,
+    items:          items,
+    totale,
+    pagamento,
+    stato:          pagamento === 'paypal' ? 'confermato' : 'in_attesa',
+    nome:           formData.nome,
+    cognome:        formData.cognome,
+    email:          formData.email,
+    telefono:       formData.tel,
+    indirizzo:      formData.indirizzo,
+    cap:            formData.cap,
+    citta:          formData.citta,
+    nazione:        formData.nazione,
+    note:           formData.note,
+    paypal_order_id: paypalOrderId,
+    codice_sconto:  activeDiscount?.codice || null,
+    sconto_importo: sconto || 0,
+  };
+
+  const { data, error } = await window.sb
+    .from('ordini')
+    .insert([ordine])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+
+  // Incrementa uso_count del codice sconto
+  if (activeDiscount?.id) {
+    await window.sb
+      .from('sconti')
+      .update({ uso_count: window.sb.rpc ? undefined : null })
+      .eq('id', activeDiscount.id);
+    // Usa SQL diretto per incremento atomico
+    await window.sb.rpc('incrementa_uso_sconto', { sconto_id: activeDiscount.id }).catch(() => {
+      // fallback se la funzione RPC non esiste
+      console.warn('RPC incrementa_uso_sconto non trovata — usa SQL manuale su Supabase');
+    });
+  }
+
+  return data.id;
+}
+
+// ══════════════════════════════════════════════════════
+//  EMAIL — Notifica a te (negozio)
+// ══════════════════════════════════════════════════════
+async function sendEmailNegozio(ordineId, formData, items, totals, pagamento) {
+  const righe = items.map(i =>
+    `${i.nome} (${i.set_name} · ${i.lingua}) × ${i.qty} = € ${(i.prezzo*i.qty).toFixed(2).replace('.',',')}`
+  ).join('\n');
+
+  await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_NEGOZIO, {
+    to_email:    EMAIL_NEGOZIO,
+    ordine_id:   ordineId,
+    pagamento:   pagamento === 'paypal' ? 'PayPal ✅' : 'Bonifico bancario ⏳',
+    cliente:     `${formData.nome} ${formData.cognome}`,
+    email:       formData.email,
+    telefono:    formData.tel || '—',
+    indirizzo:   `${formData.indirizzo}, ${formData.cap} ${formData.citta} (${formData.nazione})`,
+    note:        formData.note || '—',
+    articoli:    righe,
+    subtotale:   `€ ${totals.subtotale.toFixed(2).replace('.',',')}`,
+    spedizione:  totals.spedizione === 0 ? 'Gratis' : `€ ${totals.spedizione.toFixed(2).replace('.',',')}`,
+    totale:      `€ ${totals.totale.toFixed(2).replace('.',',')}`,
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  EMAIL — Conferma al cliente
+// ══════════════════════════════════════════════════════
+async function sendEmailCliente(ordineId, formData, items, totals, pagamento) {
+  const righe = items.map(i =>
+    `• ${i.nome} (${i.set_name}) × ${i.qty} — € ${(i.prezzo*i.qty).toFixed(2).replace('.',',')}`
+  ).join('\n');
+
+  const istruzioni = pagamento === 'bonifico'
+    ? 'Ti invieremo a breve una seconda email con le coordinate bancarie per effettuare il bonifico. L\'ordine verrà preparato dopo la ricezione del pagamento (1-3 giorni lavorativi).'
+    : 'Il pagamento è stato ricevuto tramite PayPal. Il tuo ordine è confermato e verrà spedito entro 1-2 giorni lavorativi.';
+
+  await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_CLIENTE, {
+    to_email:    formData.email,
+    to_name:     formData.nome,
+    ordine_id:   ordineId,
+    pagamento:   pagamento === 'paypal' ? 'PayPal' : 'Bonifico bancario',
+    indirizzo:   `${formData.indirizzo}, ${formData.cap} ${formData.citta} (${formData.nazione})`,
+    articoli:    righe,
+    subtotale:   `€ ${totals.subtotale.toFixed(2).replace('.',',')}`,
+    spedizione:  totals.spedizione === 0 ? 'Gratis' : `€ ${totals.spedizione.toFixed(2).replace('.',',')}`,
+    totale:      `€ ${totals.totale.toFixed(2).replace('.',',')}`,
+    istruzioni,
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  PAYPAL
+// ══════════════════════════════════════════════════════
+function initPayPal(totale, items) {
+  if (typeof paypal === 'undefined') return;
+
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+
+    createOrder: (data, actions) => {
+      const err = validateForm();
+      if (err) { showError(err); return Promise.reject(err); }
+      showError(null);
+
+      const { totale: tot } = calcTotals(getCart());
+      return actions.order.create({
+        purchase_units: [{
+          amount: { value: tot.toFixed(2), currency_code: 'EUR' },
+          description: 'Ordine CardPioneer',
+        }],
+        application_context: { shipping_preference: 'NO_SHIPPING' },
+      });
+    },
+
+    onApprove: async (data, actions) => {
+      try {
+        const details  = await actions.order.capture();
+        const cartItems = getCart();
+        const totals   = calcTotals(cartItems);
+        const formData = getFormData();
+
+        const ordineId = await saveOrder(cartItems, totals, formData, 'paypal', details.id);
+        await sendEmailNegozio(ordineId, formData, cartItems, totals, 'paypal');
+        await sendEmailCliente(ordineId, formData, cartItems, totals, 'paypal');
+
+        clearCart();
+        window.location.href = `conferma.html?id=${ordineId}&metodo=paypal`;
+
+      } catch(e) {
+        console.error(e);
+        showError('Errore durante la conferma dell\'ordine. Contattaci a info@cardpioneer.it');
+      }
+    },
+
+    onError: (err) => {
+      console.error(err);
+      showError('Errore PayPal. Riprova o scegli il bonifico.');
+    },
+
+    onCancel: () => {
+      showError('Pagamento annullato. Puoi riprovare quando vuoi.');
+    },
+
+  }).render('#paypal-button-container');
+}
+
+// ══════════════════════════════════════════════════════
+//  BONIFICO
+// ══════════════════════════════════════════════════════
+async function handleBonifico() {
+  const err = validateForm();
+  if (err) { showError(err); return; }
+  showError(null);
+
+  const btn = document.getElementById('bonifico-btn');
+  btn.disabled     = true;
+  btn.textContent  = '⏳ Elaborazione...';
+
+  try {
+    const cartItems = getCart();
+    const totals    = calcTotals(cartItems);
+    const formData  = getFormData();
+
+    const ordineId = await saveOrder(cartItems, totals, formData, 'bonifico');
+    await sendEmailNegozio(ordineId, formData, cartItems, totals, 'bonifico');
+    await sendEmailCliente(ordineId, formData, cartItems, totals, 'bonifico');
+
+    clearCart();
+    window.location.href = `conferma.html?id=${ordineId}&metodo=bonifico`;
+
+  } catch(e) {
+    console.error(e);
+    showError('Errore durante l\'invio dell\'ordine. Contattaci a info@cardpioneer.it');
+    btn.disabled    = false;
+    btn.textContent = 'Conferma ordine con bonifico →';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILITY
+// ══════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Badge carrello
+  try {
+    const tot = getCart().reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e){}
+
+  // Aspetta che auth.js carichi la sessione poi renderizza
+  setTimeout(renderCheckout, 400);
+});
+</script>
+</body>
+</html>

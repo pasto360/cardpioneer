@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrello — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <style>
+    .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+
+    /* ── Tabella articoli ── */
+    .cart-table { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .cart-table-header {
+      display: grid;
+      grid-template-columns: 64px 1fr 120px 100px 44px;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-th { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .cart-item {
+      display: grid;
+      grid-template-columns: 64px 1fr 120px 100px 44px;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item:hover { background: var(--bg); }
+    .cart-item-img {
+      width: 64px; height: 88px;
+      background: var(--bg);
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cart-item-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cart-item-name { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 3px; }
+    .cart-item-set  { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .cart-item-cond { font-size: 10px; font-weight: 600; color: var(--pink); background: rgba(232,16,122,0.08); padding: 2px 7px; border-radius: 100px; display: inline-block; }
+    .cart-item-sku  { font-size: 9px; color: var(--light); margin-top: 4px; font-family: var(--font-mono, monospace); }
+
+    /* Quantità */
+    .qty-control { display: flex; align-items: center; gap: 8px; }
+    .qty-btn {
+      width: 28px; height: 28px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .qty-btn:hover { border-color: var(--pink); color: var(--pink); }
+    .qty-btn:disabled { opacity: 0.3; pointer-events: none; }
+    .qty-val { font-family: var(--fu); font-size: 13px; font-weight: 700; color: var(--dark); min-width: 20px; text-align: center; }
+
+    /* Prezzo e rimuovi */
+    .cart-item-price { font-family: var(--fu); font-size: 14px; font-weight: 700; color: var(--pink); }
+    .cart-remove {
+      width: 32px; height: 32px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--light);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .cart-remove:hover { border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.06); }
+
+    /* ── Carrello vuoto ── */
+    .cart-empty { text-align: center; padding: 64px 20px; }
+    .cart-empty-icon { font-size: 56px; margin-bottom: 16px; }
+    .cart-empty h2 { font-family: var(--fu); font-size: 20px; color: var(--dark); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .cart-empty p  { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── Riepilogo ordine ── */
+    .order-summary {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: sticky;
+      top: 80px;
+    }
+    .summary-title { font-family: var(--fu); font-size: 16px; color: var(--dark); margin-bottom: 20px; letter-spacing: -0.02em; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .summary-row.total { font-family: var(--fu); font-size: 18px; color: var(--dark); font-weight: 700; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .summary-row.total span:last-child { color: var(--pink); }
+    .summary-shipping {
+      background: rgba(52,211,153,0.08);
+      border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #059669;
+      margin: 12px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .summary-note { font-size: 11px; color: var(--light); text-align: center; margin-top: 12px; line-height: 1.5; }
+
+    /* ── Loading ── */
+    .cart-loading { text-align: center; padding: 48px; }
+    .cart-loading-spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--pink); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Login prompt ── */
+    .cart-login-prompt {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 48px 32px;
+      text-align: center;
+    }
+    .cart-login-prompt h2 { font-family: var(--fu); font-size: 18px; color: var(--dark); margin-bottom: 10px; letter-spacing: -0.02em; }
+    .cart-login-prompt p  { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.7; }
+
+    @media (max-width: 900px) {
+      .cart-layout { grid-template-columns: 1fr; }
+      .order-summary { position: static; }
+      .cart-table-header { display: none; }
+      .cart-item { grid-template-columns: 56px 1fr; grid-template-rows: auto auto auto; gap: 8px; }
+      .cart-item-qty-col { grid-column: 2; }
+      .cart-item-price-col { grid-column: 2; }
+      .cart-item-remove-col { grid-column: 1; grid-row: 1; display: flex; align-items: flex-start; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Il tuo acquisto</div>
+  <h1 class="cp-hero-title">Carrello</h1>
+  <p class="cp-hero-sub">Controlla i prodotti selezionati e procedi al checkout.</p>
+</section>
+
+<section class="cp-section alt" id="cartSection">
+  <div class="cart-loading">
+    <div class="cart-loading-spinner"></div>
+    <p style="font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">Caricamento carrello...</p>
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIGURAZIONE SPEDIZIONE
+// ══════════════════════════════════════════════════════
+const SPEDIZIONE_SOGLIA  = 50;    // € — sopra questa cifra spedizione gratis
+const SPEDIZIONE_COSTO   = 5.90;  // € — costo spedizione sotto soglia
+const SPEDIZIONE_LABEL   = 'Spedizione standard (3-5 giorni)';
+
+// ══════════════════════════════════════════════════════
+//  STATO CARRELLO
+//  Il carrello viene salvato in localStorage per tutti
+//  (loggati e non). Struttura:
+//  [ { sku, nome, set_name, lingua, condizione,
+//      prezzo, immagine, qty } ]
+// ══════════════════════════════════════════════════════
+const CART_KEY = 'cp_cart';
+
+function getCart() {
+  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+  catch(e) { return []; }
+}
+
+function saveCart(items) {
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  updateCartBadge();
+}
+
+function updateCartBadge() {
+  const total = getCart().reduce((s, i) => s + i.qty, 0);
+  document.querySelectorAll('#cartBadgeNav, .cp-nav-badge[data-cart]').forEach(el => {
+    el.textContent = total;
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  AGGIUNGE AL CARRELLO (chiamato da acquista.html)
+// ══════════════════════════════════════════════════════
+window.addToCart = function(product) {
+  const cart    = getCart();
+  const existing = cart.find(i => i.sku === product.sku);
+  if (existing) {
+    if (existing.qty < product.disponibile) existing.qty++;
+  } else {
+    cart.push({ ...product, qty: 1 });
+  }
+  saveCart(cart);
+  showCartToast(product.nome);
+};
+
+function showCartToast(nome) {
+  let toast = document.getElementById('cartToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'cartToast';
+    toast.style.cssText = `position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;
+      padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s;display:flex;align-items:center;gap:10px`;
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `✅ <span><strong>${escHtml(nome)}</strong> aggiunto al carrello — <a href="carrello.html" style="color:var(--yellow);font-weight:600">Vai al carrello</a></span>`;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER CARRELLO
+// ══════════════════════════════════════════════════════
+function renderCart() {
+  const section = document.getElementById('cartSection');
+  const items   = getCart();
+
+  if (items.length === 0) {
+    section.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <h2>Il carrello è vuoto</h2>
+        <p>Non hai ancora aggiunto nessun prodotto.<br>Sfoglia il catalogo e trova le carte che cerchi.</p>
+        <a href="acquista.html" class="btn-fill">Vai al market</a>
+      </div>`;
+    return;
+  }
+
+  const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  const spedizione = subtotale >= SPEDIZIONE_SOGLIA ? 0 : SPEDIZIONE_COSTO;
+  const totale     = subtotale + spedizione;
+
+  section.innerHTML = `
+    <div class="cart-layout">
+
+      <!-- ARTICOLI -->
+      <div>
+        <div class="cart-table">
+          <div class="cart-table-header">
+            <div class="cart-th"></div>
+            <div class="cart-th">Prodotto</div>
+            <div class="cart-th">Quantità</div>
+            <div class="cart-th">Prezzo</div>
+            <div class="cart-th"></div>
+          </div>
+          <div id="cartItems">
+            ${items.map(item => renderItem(item)).join('')}
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <a href="acquista.html" style="font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:6px">
+            ← Continua lo shopping
+          </a>
+        </div>
+      </div>
+
+      <!-- RIEPILOGO -->
+      <div class="order-summary">
+        <div class="summary-title">Riepilogo ordine</div>
+
+        <div class="summary-row">
+          <span>Subtotale (${items.reduce((s,i)=>s+i.qty,0)} articoli)</span>
+          <span>€ ${subtotale.toFixed(2).replace('.',',')}</span>
+        </div>
+        <div class="summary-row">
+          <span>${SPEDIZIONE_LABEL}</span>
+          <span>${spedizione === 0 ? '<span style="color:#059669;font-weight:600">Gratis</span>' : '€ ' + spedizione.toFixed(2).replace('.',',')}</span>
+        </div>
+
+        ${spedizione > 0 ? `
+        <div class="summary-shipping">
+          📦 Aggiungi <strong>€ ${(SPEDIZIONE_SOGLIA - subtotale).toFixed(2).replace('.',',')}</strong> per la spedizione gratuita
+        </div>` : `
+        <div class="summary-shipping">
+          🎉 Hai la <strong>spedizione gratuita!</strong>
+        </div>`}
+
+        <div class="summary-row total">
+          <span>Totale</span>
+          <span>€ ${totale.toFixed(2).replace('.',',')}</span>
+        </div>
+
+        <a href="checkout.html" class="btn-fill" style="display:block;text-align:center;margin-top:20px;padding:14px;font-size:12px">
+          Procedi al checkout →
+        </a>
+
+        <div class="summary-note">
+          🔒 Pagamento sicuro via PayPal o Bonifico<br>
+          Accettato anche per utenti non registrati
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+        <div style="display:flex;gap:8px;justify-content:center">
+          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg"
+               alt="PayPal" style="height:20px;border-radius:3px" onerror="this.style.display='none'">
+          <span style="font-size:11px;color:var(--light);line-height:20px">PayPal · Bonifico bancario</span>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+function renderItem(item) {
+  const totItem = (item.prezzo * item.qty).toFixed(2).replace('.', ',');
+  return `
+    <div class="cart-item" id="item-${escHtml(item.sku)}">
+      <div class="cart-item-img">
+        <img src="${escHtml(item.immagine||'')}" alt="${escHtml(item.nome)}"
+             onerror="this.style.display='none'">
+      </div>
+      <div>
+        <div class="cart-item-name">${escHtml(item.nome)}</div>
+        <div class="cart-item-set">${escHtml(item.set_name)} · ${escHtml(item.lingua)}</div>
+        ${item.condizione ? `<span class="cart-item-cond">${escHtml(item.condizione)}</span>` : ''}
+        <div class="cart-item-sku">${escHtml(item.sku)}</div>
+      </div>
+      <div class="cart-item-qty-col">
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('${escHtml(item.sku)}', -1)" ${item.qty<=1?'disabled':''}>−</button>
+          <span class="qty-val">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty('${escHtml(item.sku)}', +1)" ${item.qty>=(item.disponibile||99)?'disabled':''}>+</button>
+        </div>
+      </div>
+      <div class="cart-item-price-col">
+        <div class="cart-item-price">€ ${totItem}</div>
+        ${item.qty > 1 ? `<div style="font-size:10px;color:var(--light);margin-top:2px">€ ${item.prezzo.toFixed(2).replace('.',',')} cad.</div>` : ''}
+      </div>
+      <div class="cart-item-remove-col">
+        <button class="cart-remove" onclick="removeItem('${escHtml(item.sku)}')" title="Rimuovi">×</button>
+      </div>
+    </div>`;
+}
+
+// ── Modifica quantità ──
+function changeQty(sku, delta) {
+  const cart = getCart();
+  const item = cart.find(i => i.sku === sku);
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  saveCart(cart);
+  renderCart();
+}
+
+// ── Rimuovi articolo ──
+function removeItem(sku) {
+  const cart = getCart().filter(i => i.sku !== sku);
+  saveCart(cart);
+  renderCart();
+}
+
+// ── Utility ──
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  updateCartBadge();
+  renderCart();
+});
+</script>
+</body>
+</html>

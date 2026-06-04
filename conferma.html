@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordine confermato — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <style>
+    .conferma-wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 56px 20px;
+      text-align: center;
+    }
+    .conferma-icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    .conferma-title {
+      font-family: var(--fu);
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--dark);
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .conferma-title em { font-style: normal; color: var(--pink); }
+    .conferma-sub {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .conferma-id {
+      font-family: var(--font-mono, monospace);
+      font-size: 13px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 20px;
+      display: inline-block;
+      color: var(--muted);
+      margin-bottom: 36px;
+      letter-spacing: 0.04em;
+    }
+    .conferma-steps {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 36px;
+      text-align: left;
+    }
+    .conferma-step {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .conferma-step:last-child { border-bottom: none; padding-bottom: 0; }
+    .conferma-step-num {
+      width: 32px; height: 32px;
+      background: var(--yellow);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--fu);
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--dark);
+      flex-shrink: 0;
+    }
+    .conferma-step-title { font-size: 14px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+    .conferma-step-desc  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* Bonifico specifico */
+    .bonifico-box {
+      background: rgba(245,230,66,0.08);
+      border: 1px solid rgba(245,230,66,0.3);
+      border-left: 4px solid var(--yellow);
+      border-radius: 0 10px 10px 0;
+      padding: 18px 20px;
+      text-align: left;
+      margin-bottom: 36px;
+    }
+    .bonifico-box h3 { font-family: var(--fu); font-size: 14px; color: var(--dark); margin-bottom: 10px; letter-spacing: -0.01em; }
+    .bonifico-box p  { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+    .conferma-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-section alt" id="confermaSection">
+  <div class="conferma-wrap">
+    <div class="cart-loading">
+      <div class="cart-loading-spinner" style="width:32px;height:32px;border:2px solid #ede8f8;border-top-color:#e8107a;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px"></div>
+      <p style="font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Caricamento...</p>
+    </div>
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div></div>
+</footer>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { id: p.get('id'), metodo: p.get('metodo') || 'paypal' };
+}
+
+function renderPaypal(ordineId) {
+  return `
+    <div class="conferma-wrap">
+      <span class="conferma-icon">🎉</span>
+      <h1 class="conferma-title">Ordine <em>confermato!</em></h1>
+      <p class="conferma-sub">
+        Il tuo pagamento è stato ricevuto. Ti abbiamo inviato una email di conferma con il riepilogo dell'ordine.
+      </p>
+      <div class="conferma-id">Ordine #${ordineId}</div>
+
+      <div class="conferma-steps">
+        <div class="conferma-step">
+          <div class="conferma-step-num">✅</div>
+          <div>
+            <div class="conferma-step-title">Pagamento ricevuto</div>
+            <div class="conferma-step-desc">Il pagamento via PayPal è stato elaborato con successo.</div>
+          </div>
+        </div>
+        <div class="conferma-step">
+          <div class="conferma-step-num">2</div>
+          <div>
+            <div class="conferma-step-title">Preparazione ordine</div>
+            <div class="conferma-step-desc">Il tuo ordine viene preparato entro 1-2 giorni lavorativi.</div>
+          </div>
+        </div>
+        <div class="conferma-step">
+          <div class="conferma-step-num">3</div>
+          <div>
+            <div class="conferma-step-title">Spedizione</div>
+            <div class="conferma-step-desc">Riceverai una email con il codice di tracciamento non appena il pacco viene spedito.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conferma-btns">
+        <a href="acquista.html" class="btn-fill">Continua lo shopping</a>
+        <a href="index.html" class="btn-outline-dark">Torna alla home</a>
+      </div>
+    </div>`;
+}
+
+function renderBonifico(ordineId) {
+  return `
+    <div class="conferma-wrap">
+      <span class="conferma-icon">📧</span>
+      <h1 class="conferma-title">Ordine <em>ricevuto!</em></h1>
+      <p class="conferma-sub">
+        Abbiamo ricevuto il tuo ordine. Ti abbiamo inviato una email con le istruzioni per completare il pagamento tramite bonifico.
+      </p>
+      <div class="conferma-id">Ordine #${ordineId}</div>
+
+      <div class="bonifico-box">
+        <h3>📬 Controlla la tua email</h3>
+        <p>
+          Riceverai a breve le coordinate bancarie (IBAN) per effettuare il bonifico.<br><br>
+          <strong>Causale da usare:</strong> Ordine CardPioneer #${ordineId}<br><br>
+          L'ordine verrà preparato e spedito dopo la ricezione del pagamento
+          (solitamente 1-3 giorni lavorativi dalla data del bonifico).
+        </p>
+      </div>
+
+      <div class="conferma-steps">
+        <div class="conferma-step">
+          <div class="conferma-step-num">✅</div>
+          <div>
+            <div class="conferma-step-title">Ordine registrato</div>
+            <div class="conferma-step-desc">Il tuo ordine è stato salvato con successo.</div>
+          </div>
+        </div>
+        <div class="conferma-step">
+          <div class="conferma-step-num">2</div>
+          <div>
+            <div class="conferma-step-title">Effettua il bonifico</div>
+            <div class="conferma-step-desc">Usa le coordinate bancarie ricevute via email. Inserisci nella causale: Ordine #${ordineId}</div>
+          </div>
+        </div>
+        <div class="conferma-step">
+          <div class="conferma-step-num">3</div>
+          <div>
+            <div class="conferma-step-title">Conferma e spedizione</div>
+            <div class="conferma-step-desc">Appena riceviamo il pagamento prepariamo e spediamo il tuo ordine.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conferma-btns">
+        <a href="acquista.html" class="btn-fill">Continua lo shopping</a>
+        <a href="index.html" class="btn-outline-dark">Torna alla home</a>
+      </div>
+
+      <p style="font-size:12px;color:var(--light);margin-top:24px">
+        Hai domande? Scrivici a <a href="mailto:info@cardpioneer.it" style="color:var(--pink)">info@cardpioneer.it</a>
+      </p>
+    </div>`;
+}
+
+function renderNotFound() {
+  return `
+    <div class="conferma-wrap">
+      <span class="conferma-icon">❓</span>
+      <h1 class="conferma-title">Ordine non trovato</h1>
+      <p class="conferma-sub">Non riusciamo a trovare i dettagli di questo ordine.<br>Se hai completato un acquisto controlla la tua email.</p>
+      <div class="conferma-btns">
+        <a href="acquista.html" class="btn-fill">Vai al market</a>
+        <a href="contatti.html" class="btn-outline-dark">Contattaci</a>
+      </div>
+    </div>`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const { id, metodo } = getParams();
+  const section = document.getElementById('confermaSection');
+
+  if (!id) {
+    section.innerHTML = renderNotFound();
+    return;
+  }
+
+  if (metodo === 'bonifico') {
+    section.innerHTML = renderBonifico(id);
+  } else {
+    section.innerHTML = renderPaypal(id);
+  }
+});
+</script>
+</body>
+</html>

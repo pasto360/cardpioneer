@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il mio profilo — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <style>
+    .profilo-layout { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: start; }
+
+    /* Sidebar */
+    .profilo-sidebar {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: sticky;
+      top: 80px;
+    }
+    .profilo-avatar {
+      background: var(--dark);
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .avatar-circle {
+      width: 72px; height: 72px;
+      background: var(--yellow);
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--fu);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--dark);
+    }
+    .avatar-name  { font-family: var(--fu); font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .avatar-email { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+    .profilo-nav { padding: 8px 0; }
+    .profilo-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .profilo-nav-item:hover { background: var(--bg); color: var(--dark); }
+    .profilo-nav-item.active { background: var(--bg); color: var(--dark); border-left-color: var(--pink); font-weight: 600; }
+    .profilo-nav-icon { font-size: 16px; flex-shrink: 0; }
+    .profilo-nav-divider { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+
+    /* Pannelli */
+    .profilo-panel { display: none; }
+    .profilo-panel.active { display: block; }
+    .panel-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-family: var(--fu);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Badge stato */
+    .badge-confermato { background: rgba(52,211,153,0.12); color: #059669; border: 1px solid rgba(52,211,153,0.3); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .badge-attesa     { background: rgba(251,191,36,0.12); color: #d97706; border: 1px solid rgba(251,191,36,0.3); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .badge-spedito    { background: rgba(99,102,241,0.12); color: #4f46e5; border: 1px solid rgba(99,102,241,0.3); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+
+    /* Ordini preview */
+    .ordine-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .ordine-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .ordine-id   { font-family: monospace; font-size: 12px; color: var(--muted); }
+    .ordine-data { font-size: 11px; color: var(--light); margin-top: 2px; }
+    .ordine-tot  { font-family: var(--fu); font-size: 14px; font-weight: 700; color: var(--pink); }
+
+    /* Messaggio feedback */
+    .save-msg { font-size: 12px; padding: 8px 14px; border-radius: 8px; margin-top: 12px; display: none; }
+    .save-msg.ok  { background: rgba(52,211,153,0.1); color: #059669; border: 1px solid rgba(52,211,153,0.2); }
+    .save-msg.err { background: rgba(248,113,113,0.1); color: #dc2626; border: 1px solid rgba(248,113,113,0.2); }
+
+    /* Password strength */
+    .pwd-strength { display: flex; gap: 4px; margin-top: 6px; }
+    .pwd-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; transition: background 0.2s; }
+
+    @media (max-width: 900px) {
+      .profilo-layout { grid-template-columns: 1fr; }
+      .profilo-sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Area personale</div>
+  <h1 class="cp-hero-title">Il mio profilo</h1>
+  <p class="cp-hero-sub">Gestisci i tuoi dati, visualizza gli ordini e le preferenze.</p>
+</section>
+
+<!-- Redirect se non loggato -->
+<div id="notLoggedIn" style="display:none">
+  <section class="cp-section alt">
+    <div style="text-align:center;padding:48px 20px;max-width:480px;margin:0 auto">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="font-family:var(--fu);font-size:20px;color:var(--dark);margin-bottom:10px;letter-spacing:-0.02em">Accesso richiesto</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7">
+        Devi essere registrato e aver effettuato l'accesso per visualizzare il tuo profilo.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="registrati.html" class="btn-fill">Registrati</a>
+        <button onclick="document.getElementById('loginWrap').classList.toggle('open')" class="btn-outline-dark">Accedi</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Profilo (visibile solo se loggato) -->
+<div id="profiloContent" style="display:none">
+  <section class="cp-section alt">
+    <div class="profilo-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="profilo-sidebar">
+        <div class="profilo-avatar">
+          <div class="avatar-circle" id="avatarInitials">?</div>
+          <div class="avatar-name"  id="avatarName">—</div>
+          <div class="avatar-email" id="avatarEmail">—</div>
+        </div>
+        <nav class="profilo-nav">
+          <div class="profilo-nav-item active" onclick="showPanel('dati')">
+            <span class="profilo-nav-icon">👤</span> Dati personali
+          </div>
+          <div class="profilo-nav-item" onclick="showPanel('ordini')">
+            <span class="profilo-nav-icon">📦</span> I miei ordini
+          </div>
+          <div class="profilo-nav-item" onclick="showPanel('sicurezza')">
+            <span class="profilo-nav-icon">🔒</span> Sicurezza
+          </div>
+          <hr class="profilo-nav-divider">
+          <div class="profilo-nav-item" onclick="handleLogout()" style="color:var(--pink)">
+            <span class="profilo-nav-icon">🚪</span> Esci
+          </div>
+        </nav>
+      </aside>
+
+      <!-- PANNELLI -->
+      <div>
+
+        <!-- DATI PERSONALI -->
+        <div class="profilo-panel active" id="panel-dati">
+          <div class="panel-card">
+            <div class="panel-title">👤 Dati personali</div>
+            <div class="cp-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Nome</label>
+                  <input type="text" id="pNome" class="form-input" placeholder="Mario">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Cognome</label>
+                  <input type="text" id="pCognome" class="form-input" placeholder="Rossi">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="pEmail" class="form-input" disabled
+                       style="opacity:.6;cursor:not-allowed">
+                <span class="form-note">L'email non può essere modificata.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Telefono</label>
+                <input type="tel" id="pTel" class="form-input" placeholder="+39 333 000 0000">
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                <input type="checkbox" id="pNewsletter" style="accent-color:var(--pink)">
+                <label for="pNewsletter" style="font-size:13px;color:var(--muted);cursor:pointer">
+                  Voglio ricevere newsletter e offerte speciali
+                </label>
+              </div>
+              <div class="save-msg" id="dataSaveMsg"></div>
+              <div style="margin-top:16px">
+                <button class="btn-fill" onclick="saveDati()" style="font-size:11px;padding:12px 24px">
+                  Salva modifiche
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- INDIRIZZO DEFAULT -->
+          <div class="panel-card">
+            <div class="panel-title">📍 Indirizzo di spedizione predefinito</div>
+            <div class="cp-form">
+              <div class="form-group">
+                <label class="form-label">Indirizzo</label>
+                <input type="text" id="pIndirizzo" class="form-input" placeholder="Via Roma 1">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">CAP</label>
+                  <input type="text" id="pCap" class="form-input" placeholder="20100" maxlength="5">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Città</label>
+                  <input type="text" id="pCitta" class="form-input" placeholder="Milano">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nazione</label>
+                <select id="pNazione" class="form-select">
+                  <option value="Italia" selected>Italia</option>
+                  <option value="San Marino">San Marino</option>
+                  <option value="Svizzera">Svizzera</option>
+                  <option value="Francia">Francia</option>
+                  <option value="Germania">Germania</option>
+                  <option value="Spagna">Spagna</option>
+                  <option value="Altro">Altro</option>
+                </select>
+              </div>
+              <div class="save-msg" id="addrSaveMsg"></div>
+              <div style="margin-top:16px">
+                <button class="btn-fill" onclick="saveIndirizzo()" style="font-size:11px;padding:12px 24px">
+                  Salva indirizzo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ORDINI -->
+        <div class="profilo-panel" id="panel-ordini">
+          <div class="panel-card">
+            <div class="panel-title">📦 I miei ordini</div>
+            <div id="ordiniList">
+              <div class="cart-loading" style="padding:32px;text-align:center">
+                <div style="width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px"></div>
+                <p style="font-size:11px;color:var(--muted)">Caricamento ordini...</p>
+              </div>
+            </div>
+            <div style="margin-top:16px;text-align:center">
+              <a href="ordini.html" class="btn-outline-dark" style="font-size:12px">
+                Vedi tutti gli ordini →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SICUREZZA -->
+        <div class="profilo-panel" id="panel-sicurezza">
+          <div class="panel-card">
+            <div class="panel-title">🔒 Cambia password</div>
+            <div class="cp-form">
+              <div class="form-group">
+                <label class="form-label">Nuova password</label>
+                <input type="password" id="pNewPwd" class="form-input"
+                       placeholder="Minimo 8 caratteri"
+                       oninput="checkPwdStrength(this.value)">
+                <div class="pwd-strength">
+                  <div class="pwd-bar" id="pb1"></div>
+                  <div class="pwd-bar" id="pb2"></div>
+                  <div class="pwd-bar" id="pb3"></div>
+                  <div class="pwd-bar" id="pb4"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Conferma nuova password</label>
+                <input type="password" id="pConfPwd" class="form-input" placeholder="Ripeti la password">
+              </div>
+              <div class="save-msg" id="pwdSaveMsg"></div>
+              <div style="margin-top:16px">
+                <button class="btn-fill" onclick="savePassword()" style="font-size:11px;padding:12px 24px">
+                  Aggiorna password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card" style="border-color:rgba(248,113,113,0.3)">
+            <div class="panel-title" style="color:#dc2626">⚠️ Zona pericolosa</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+              La cancellazione dell'account è definitiva. Tutti i tuoi dati verranno rimossi.<br>
+              Gli ordini esistenti rimarranno nei nostri archivi per obblighi fiscali.
+            </p>
+            <button onclick="confirmDelete()"
+              style="font-size:12px;font-weight:600;background:transparent;color:#dc2626;
+                     border:1px solid rgba(248,113,113,0.4);padding:10px 20px;
+                     border-radius:8px;cursor:pointer">
+              Elimina account
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+<script>
+// ═══════════════════════════════════════
+//  NAVIGAZIONE PANNELLI
+// ═══════════════════════════════════════
+function showPanel(name) {
+  document.querySelectorAll('.profilo-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.profilo-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('panel-' + name)?.classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'ordini') loadOrdini();
+}
+
+// ═══════════════════════════════════════
+//  INIT — carica dati utente
+// ═══════════════════════════════════════
+async function initProfilo(user) {
+  if (!user) {
+    document.getElementById('notLoggedIn').style.display   = 'block';
+    document.getElementById('profiloContent').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('notLoggedIn').style.display    = 'none';
+  document.getElementById('profiloContent').style.display = 'block';
+
+  const m = user.user_metadata || {};
+  const nome    = m.nome    || '';
+  const cognome = m.cognome || '';
+  const initials = ((nome[0] || '') + (cognome[0] || '')).toUpperCase() || '?';
+
+  // Sidebar
+  document.getElementById('avatarInitials').textContent = initials;
+  document.getElementById('avatarName').textContent     = `${nome} ${cognome}`.trim() || 'Utente';
+  document.getElementById('avatarEmail').textContent    = user.email;
+
+  // Form dati
+  document.getElementById('pNome').value       = nome;
+  document.getElementById('pCognome').value    = cognome;
+  document.getElementById('pEmail').value      = user.email;
+  document.getElementById('pTel').value        = m.telefono    || '';
+  document.getElementById('pNewsletter').checked = m.newsletter || false;
+
+  // Indirizzo
+  document.getElementById('pIndirizzo').value  = m.indirizzo   || '';
+  document.getElementById('pCap').value        = m.cap         || '';
+  document.getElementById('pCitta').value      = m.citta       || '';
+  if (m.nazione) document.getElementById('pNazione').value = m.nazione;
+
+  // Badge carrello
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+//  SALVA DATI PERSONALI
+// ═══════════════════════════════════════
+async function saveDati() {
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) return;
+
+  const updates = {
+    nome:       document.getElementById('pNome').value.trim(),
+    cognome:    document.getElementById('pCognome').value.trim(),
+    telefono:   document.getElementById('pTel').value.trim(),
+    newsletter: document.getElementById('pNewsletter').checked,
+    full_name:  `${document.getElementById('pNome').value.trim()} ${document.getElementById('pCognome').value.trim()}`.trim(),
+  };
+
+  const { error } = await window.sb.auth.updateUser({ data: updates });
+  showMsg('dataSaveMsg', error ? 'Errore nel salvataggio.' : 'Dati salvati con successo!', !error);
+
+  // Aggiorna sidebar
+  const initials = ((updates.nome[0]||'')+(updates.cognome[0]||'')).toUpperCase();
+  document.getElementById('avatarInitials').textContent = initials || '?';
+  document.getElementById('avatarName').textContent     = `${updates.nome} ${updates.cognome}`.trim();
+}
+
+// ═══════════════════════════════════════
+//  SALVA INDIRIZZO
+// ═══════════════════════════════════════
+async function saveIndirizzo() {
+  const { error } = await window.sb.auth.updateUser({
+    data: {
+      indirizzo: document.getElementById('pIndirizzo').value.trim(),
+      cap:       document.getElementById('pCap').value.trim(),
+      citta:     document.getElementById('pCitta').value.trim(),
+      nazione:   document.getElementById('pNazione').value,
+    }
+  });
+  showMsg('addrSaveMsg', error ? 'Errore nel salvataggio.' : 'Indirizzo salvato!', !error);
+}
+
+// ═══════════════════════════════════════
+//  CAMBIA PASSWORD
+// ═══════════════════════════════════════
+function checkPwdStrength(val) {
+  const bars   = ['pb1','pb2','pb3','pb4'];
+  const colors = ['#f87171','#fbbf24','#a78bfa','#34d399'];
+  let score = 0;
+  if (val.length >= 8)           score++;
+  if (/[A-Z]/.test(val))         score++;
+  if (/[0-9]/.test(val))         score++;
+  if (/[^A-Za-z0-9]/.test(val))  score++;
+  bars.forEach((id, i) => {
+    document.getElementById(id).style.background = i < score ? colors[score-1] : 'var(--border)';
+  });
+}
+
+async function savePassword() {
+  const pwd  = document.getElementById('pNewPwd').value;
+  const conf = document.getElementById('pConfPwd').value;
+  if (pwd.length < 8)   { showMsg('pwdSaveMsg', 'La password deve essere di almeno 8 caratteri.', false); return; }
+  if (!/[A-Z]/.test(pwd)) { showMsg('pwdSaveMsg', 'Inserisci almeno una lettera maiuscola.', false); return; }
+  if (!/[0-9]/.test(pwd)) { showMsg('pwdSaveMsg', 'Inserisci almeno un numero.', false); return; }
+  if (pwd !== conf)       { showMsg('pwdSaveMsg', 'Le password non coincidono.', false); return; }
+
+  const { error } = await window.sb.auth.updateUser({ password: pwd });
+  showMsg('pwdSaveMsg', error ? 'Errore: ' + error.message : 'Password aggiornata con successo!', !error);
+  if (!error) { document.getElementById('pNewPwd').value = ''; document.getElementById('pConfPwd').value = ''; }
+}
+
+// ═══════════════════════════════════════
+//  ELIMINA ACCOUNT
+// ═══════════════════════════════════════
+function confirmDelete() {
+  if (!confirm('Sei sicuro di voler eliminare il tuo account? Questa operazione è definitiva.')) return;
+  const code = prompt('Per confermare scrivi: ELIMINA');
+  if (code !== 'ELIMINA') { alert('Operazione annullata.'); return; }
+  alert('Richiesta inviata. Contattaci a info@cardpioneer.it per completare la cancellazione.');
+}
+
+// ═══════════════════════════════════════
+//  CARICA ULTIMI ORDINI
+// ═══════════════════════════════════════
+async function loadOrdini() {
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) return;
+
+  const { data, error } = await window.sb
+    .from('ordini')
+    .select('id, created_at, totale, stato, pagamento, items')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const list = document.getElementById('ordiniList');
+  if (error || !data?.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">
+      Nessun ordine ancora. <a href="acquista.html" style="color:var(--pink)">Inizia a fare acquisti →</a>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = data.map(o => {
+    const data_str = new Date(o.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+    const n_items  = Array.isArray(o.items) ? o.items.reduce((s,i)=>s+(i.qty||1),0) : '—';
+    const badge    = o.stato === 'confermato' ? 'badge-confermato' :
+                     o.stato === 'spedito'    ? 'badge-spedito'    : 'badge-attesa';
+    const stato_lbl = o.stato === 'confermato' ? 'Confermato' :
+                      o.stato === 'spedito'    ? 'Spedito'    : 'In attesa';
+    return `<div class="ordine-row">
+      <div>
+        <div class="ordine-id">#${o.id.substring(0,8).toUpperCase()}</div>
+        <div class="ordine-data">${data_str} · ${n_items} articolo${n_items!==1?'i':''} · ${o.pagamento}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="${badge}">${stato_lbl}</span>
+        <div class="ordine-tot">€ ${parseFloat(o.totale).toFixed(2).replace('.',',')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent  = text;
+  el.style.display = 'block';
+  el.className    = 'save-msg ' + (ok ? 'ok' : 'err');
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+// ═══════════════════════════════════════
+//  BOOT — aspetta auth.js
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Aspetta che auth.js inizializzi la sessione
+  const check = setInterval(async () => {
+    if (!window.sb) return;
+    clearInterval(check);
+    const { data: { user } } = await window.sb.auth.getUser();
+    initProfilo(user);
+    window.sb.auth.onAuthStateChange((_, session) => {
+      initProfilo(session?.user || null);
+    });
+  }, 100);
+});
+</script>
+</body>
+</html>
