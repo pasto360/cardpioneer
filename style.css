@@ -67,7 +67,7 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
 }
 .cp-logo img { display: block; flex-shrink: 0; }
-.cp-logo span { color: var(--pink); }
+.cp-logo span { color: #ff6b1a; }
 .cp-nav-links { display: flex; gap: 0; }
 .cp-nav-links a {
   font-size: 12px;
