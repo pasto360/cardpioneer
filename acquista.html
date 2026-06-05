@@ -505,13 +505,12 @@ function renderCards() {
   grid.innerHTML = slice.map(p => {
     const price  = '€ ' + p.price.toFixed(2).replace('.',',');
     const isOut  = p.avail < 1;
-    const isLow  = p.avail > 0 && p.avail <= 2;
     const badge  = p.condition ? `<span class="mcard-badge">${esc(p.condition)}</span>` : '';
-    const langBadge = p.lang !== 'ITA' ? `<span class="mcard-lang">${esc(p.lang)}</span>` : '';
+    const langBadge = `<span class="mcard-lang">${esc(p.lang)}</span>`;
     const qtyHTML = isOut
       ? `<span class="mcard-qty">Esaurito</span>`
-      : isLow ? `<span class="mcard-qty low">Ultimi ${p.avail}</span>`
-               : `<span class="mcard-qty">Qta: ${p.avail}</span>`;
+    const qtyHTML = isOut ? `<span class="mcard-qty">Esaurito</span>` : '';
+    const qtyHTML = isOut ? `<span class="mcard-qty">Esaurito</span>` : '';
     registerProduct(p);
 
     // Percorso thumbnail: /images/0001.jpg → /images/thumbs/0001.jpg
@@ -540,8 +539,8 @@ function renderCards() {
       </div>
       <div class="mcard-body">
         <div class="mcard-set">${esc(p.setName)}</div>
-        <div class="mcard-name" title="${esc(p.displayName)}">${esc(p.displayName)}</div>
-        <div class="mcard-full">${esc(p.nameRaw)}</div>
+        <div class="mcard-name">${esc(p.displayName)} <span style="font-weight:400;color:var(--light);font-size:8px">${esc(p.nameRaw.split(' - ')[0]||'')} </span></div>
+        <div class="mcard-full">${esc(p.nameRaw.split(' - ').slice(1).join(' - '))}</div>
         <div class="mcard-bottom">
           <div class="mcard-price">${price}</div>
           ${qtyHTML}
