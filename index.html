@@ -276,7 +276,7 @@
       lingua:      card.lingua,
       condizione:  card.condizione,
       prezzo:      parseFloat(card.prezzo),
-      immagine:    IMG_BASE + (card.immagine || ''),
+      immagine:    IMG_BASE + (card.immagine || '').replace(/^\//, ''),
       disponibile: 99,
     }));
 
