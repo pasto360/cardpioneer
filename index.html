@@ -279,13 +279,13 @@
     }));
 
     return `<div class="pcard">
-      <div class="pcard-img">
+      <div class="pcard-img" onclick="openLightbox('${esc(card.immagine)}','${esc(card.set_name + ' — ' + card.nome + ' — ' + (card.nome_completo||''))}')" style="cursor:zoom-in">
         <img src="${esc(card.immagine)}" alt="${nome}" loading="lazy" onerror="this.style.display='none'">
         ${badge}
         <button class="cp-wish-btn" data-wish-sku="${sku}"
-          onclick="cpToggleWishlist('${sku}',this)" title="Aggiungi ai preferiti">♡</button>
+          onclick="event.stopPropagation();cpToggleWishlist('${sku}',this)" title="Aggiungi ai preferiti">♡</button>
         <div class="pcard-actions">
-          <button onclick="addToCart(JSON.parse(this.closest('.pcard').dataset.prod))">Aggiungi al carrello</button>
+          <button onclick="event.stopPropagation();addToCart(JSON.parse(this.closest('.pcard').dataset.prod))">Aggiungi al carrello</button>
         </div>
       </div>
       <div class="pcard-body">
@@ -307,7 +307,7 @@
       // Ultime NEW_COUNT inserite (ordinate per created_at desc)
       const { data: newCards } = await sb
         .from('prodotti')
-        .select('nome, set_name, lingua, condizione, prezzo, immagine')
+        .select('nome, set_name, lingua, condizione, prezzo, immagine, nome_completo, sku')
         .gt('disponibile', 0)
         .order('created_at', { ascending: false })
         .limit(NEW_COUNT);
@@ -325,7 +325,7 @@
 
       const { data: poolCards } = await sb
         .from('prodotti')
-        .select('nome, set_name, lingua, condizione, prezzo, immagine')
+        .select('nome, set_name, lingua, condizione, prezzo, immagine, nome_completo, sku')
         .gt('disponibile', 0)
         .order('created_at', { ascending: true })
         .range(offset, offset + RANDOM_COUNT * 3 - 1);
@@ -357,5 +357,36 @@ document.querySelectorAll('.cp-cat').forEach(btn => {
   });
 });
 </script>
+<!-- LIGHTBOX -->
+<div id="cp-lightbox" onclick="closeLightbox()" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;padding:20px">
+  <button onclick="closeLightbox()" style="position:fixed;top:20px;right:24px;font-size:32px;color:#fff;cursor:pointer;background:none;border:none;line-height:1;opacity:0.7">×</button>
+  <div id="cp-lightbox-spinner" style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#f5e642;border-radius:50%;animation:spin .7s linear infinite"></div>
+  <img id="cp-lightbox-img" src="" alt="" style="display:none;max-width:90vw;max-height:88vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 48px rgba(0,0,0,0.6)" onclick="event.stopPropagation()">
+  <div id="cp-lightbox-name" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:100px;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script>
+function openLightbox(src, name) {
+  const lb  = document.getElementById('cp-lightbox');
+  const img = document.getElementById('cp-lightbox-img');
+  const sp  = document.getElementById('cp-lightbox-spinner');
+  const nm  = document.getElementById('cp-lightbox-name');
+  img.style.display = 'none'; sp.style.display = 'block';
+  nm.textContent = name || '';
+  lb.style.opacity = '1'; lb.style.pointerEvents = 'all';
+  document.body.style.overflow = 'hidden';
+  const full = new Image();
+  full.onload = full.onerror = () => { img.src = src; img.style.display = 'block'; sp.style.display = 'none'; };
+  full.src = src;
+}
+function closeLightbox() {
+  const lb = document.getElementById('cp-lightbox');
+  lb.style.opacity = '0'; lb.style.pointerEvents = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => { document.getElementById('cp-lightbox-img').src = ''; }, 300);
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
+</script>
+
 </body>
 </html>
