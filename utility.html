@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ — CardPioneer</title>
+  <meta name="description" content="Domande frequenti sulle carte Pokémon: valore, rarità, conservazione, grading e molto altro.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .faq-wrap { max-width: 760px; }
+
+    .faq-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .faq-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .faq-item.open { box-shadow: 0 4px 20px rgba(26,10,46,.07); }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+    }
+    .faq-question:hover { background: var(--bg); }
+    .faq-item.open .faq-question { background: var(--bg); border-bottom: 1px solid var(--border); }
+
+    .faq-num {
+      font-family: var(--fu);
+      font-size: 11px;
+      font-weight: 900;
+      color: rgba(232,16,122,.35);
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+    .faq-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      flex: 1;
+      line-height: 1.4;
+    }
+    .faq-arrow {
+      font-size: 18px;
+      color: var(--light);
+      flex-shrink: 0;
+      transition: transform .2s;
+    }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--pink); }
+
+    .faq-answer {
+      display: none;
+      padding: 18px 22px 20px;
+    }
+    .faq-item.open .faq-answer { display: block; }
+    .faq-answer p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+    .faq-answer p:last-child { margin-bottom: 0; }
+    .faq-answer ul {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .faq-answer ul li {
+      font-size: 13px;
+      color: var(--muted);
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .faq-answer ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--pink);
+      font-size: 11px;
+    }
+
+    /* Categorie */
+    .faq-cats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .faq-cat {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      cursor: pointer;
+      background: var(--white);
+      color: var(--muted);
+      transition: all .2s;
+    }
+    .faq-cat:hover { border-color: var(--dark); color: var(--dark); }
+    .faq-cat.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html" class="active">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Domande frequenti</div>
+  <h1 class="cp-hero-title">Tutto quello che <em>vuoi sapere</em></h1>
+  <p class="cp-hero-sub">Risposte alle domande più comuni sul mondo delle carte Pokémon — valore, rarità, conservazione e molto altro.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="faq-wrap">
+
+    <div class="faq-list" id="faqList">
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">01</span>
+          <span class="faq-text">Qual è la carta Pokémon più rara?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Tra le carte più rare mai prodotte ci sono:</p>
+          <ul>
+            <li>Pikachu Illustrator — premiata in un concorso artistico giapponese del 1998, esistono pochissimi esemplari</li>
+            <li>Promo da torneo — distribuite in quantità limitatissime solo ai partecipanti</li>
+            <li>Prime edizioni vintage — le prime stampe del Set Base e dei set originali</li>
+          </ul>
+          <p>La rarità dipende principalmente dalla quantità stampata e dalla reperibilità attuale sul mercato.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">02</span>
+          <span class="faq-text">Qual è la carta Pokémon più costosa?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Alcune carte hanno raggiunto prezzi record nelle aste internazionali, superando centinaia di migliaia di euro. Le versioni più rare di Pikachu e Charizard sono storicamente tra le più costose mai vendute.</p>
+          <p>Il Pikachu Illustrator in condizione PSA 10 ha superato i 5 milioni di dollari all'asta nel 2022, stabilendo il record mondiale per una carta Pokémon.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">03</span>
+          <span class="faq-text">Come faccio a capire quanto vale una carta Pokémon?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Il valore di una carta dipende da diversi fattori combinati:</p>
+          <ul>
+            <li>Condizioni di conservazione (grading)</li>
+            <li>Rarità e tiratura</li>
+            <li>Lingua — inglese, italiana, giapponese</li>
+            <li>Domanda attuale del mercato</li>
+            <li>Gradazione professionale PSA, BGS o simili</li>
+          </ul>
+          <p>Il modo più affidabile per stimare il prezzo reale è confrontare le vendite recenti su piattaforme come eBay, filtrando per "venduto" per vedere i prezzi effettivamente pagati.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">04</span>
+          <span class="faq-text">Come faccio a vendere le mie carte Pokémon?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Hai diverse opzioni per vendere le tue carte:</p>
+          <ul>
+            <li>Venderle singolarmente su marketplace online per massimizzare il valore</li>
+            <li>Venderle in lotto per smaltire velocemente grandi quantità</li>
+            <li>Affidarti a negozi specializzati come CardPioneer per una valutazione professionale</li>
+            <li>Usare piattaforme di aste online per carte rare di alto valore</li>
+          </ul>
+          <p>Le carte rare e ben conservate si vendono molto più facilmente e a prezzi migliori. Se vuoi vendere le tue carte a noi, visita la sezione <a href="vendi.html" style="color:var(--pink);font-weight:600">Vendi</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">05</span>
+          <span class="faq-text">Quanto pesa una carta Pokémon?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Una singola carta Pokémon pesa circa <strong>1,7–1,8 grammi</strong>. Questo dato è utile per calcolare i costi di spedizione quando si inviano più carte insieme.</p>
+          <p>Per questo motivo alcune persone pesano le bustine ancora sigillate cercando di individuare carte rare — le carte holo e speciali possono avere un peso leggermente diverso rispetto alle comuni. Tuttavia questa pratica non è affidabile e scoraggiata dalla community.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">06</span>
+          <span class="faq-text">Come riconoscere una carta Pokémon falsa?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>I segnali più comuni di una carta contraffatta sono:</p>
+          <ul>
+            <li>Colori diversi dall'originale — spesso più chiari o saturi</li>
+            <li>Materiali scadenti — carta più sottile o più rigida del normale</li>
+            <li>Effetto holo strano o assente dove dovrebbe esserci</li>
+            <li>Font errati o testo con errori ortografici</li>
+            <li>Retro con colori o pattern diversi dall'originale</li>
+          </ul>
+          <p>Le carte originali hanno una qualità di stampa molto precisa e uniforme. In caso di dubbio, confronta la carta con immagini certificate su database come Bulbapedia o Pokéllector.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">07</span>
+          <span class="faq-text">Cosa significa PSA 10?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>PSA (Professional Sports Authenticator) è una delle più importanti aziende di grading al mondo. Certifica l'autenticità e le condizioni delle carte collezionabili con un voto da 1 a 10.</p>
+          <p>Il voto <strong>PSA 10 Gem Mint</strong> indica una carta praticamente perfetta: angoli nitidissimi, superficie senza difetti, centratura eccellente e nessun segno di usura. È il voto più alto e raro, che può aumentare significativamente il valore di una carta.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">08</span>
+          <span class="faq-text">Conviene collezionare carte Pokémon oggi?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Molte persone collezionano carte Pokémon per ragioni diverse:</p>
+          <ul>
+            <li>Passione per il franchise e nostalgia</li>
+            <li>Piacere estetico delle illustrazioni</li>
+            <li>Investimento — alcune carte hanno aumentato molto il loro valore nel tempo</li>
+          </ul>
+          <p>Il mercato Pokémon TCG continua a essere molto forte a livello globale. Le carte vintage di qualità hanno dimostrato di mantenere e aumentare il loro valore nel lungo periodo. Come ogni investimento, è importante informarsi bene prima di acquistare con finalità speculative.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">09</span>
+          <span class="faq-text">Quali carte Pokémon potrebbero aumentare di valore?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Le categorie di carte più seguite dai collezionisti e investitori sono generalmente:</p>
+          <ul>
+            <li>Carte vintage — Set Base, Jungle, Fossil, prime edizioni</li>
+            <li>Promo limitate — distribuite in eventi speciali o tornei</li>
+            <li>Chase card moderne — le più rare di ogni nuova espansione</li>
+            <li>Carte di Pokémon iconici — Charizard, Pikachu, Mewtwo, Eevee</li>
+          </ul>
+          <p>Nessuna previsione è certa nel mercato collezionistico, ma le carte in ottima condizione di personaggi popolari hanno storicamente mantenuto il valore meglio di altre.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">10</span>
+          <span class="faq-text">Quali sono le carte Pokémon più ricercate?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Le carte più cercate dai collezionisti di tutto il mondo includono tipicamente:</p>
+          <ul>
+            <li>Charizard in tutte le sue versioni rare</li>
+            <li>Pikachu — soprattutto le promo e le illustrazioni speciali</li>
+            <li>Mewtwo — vintage e versioni moderne rare</li>
+            <li>Eeveelutions rare — Umbreon, Espeon, Sylveon in full art</li>
+            <li>Full art e alternate art delle espansioni moderne</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">11</span>
+          <span class="faq-text">Meglio comprare box sigillati o singole carte?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Dipende dall'obiettivo:</p>
+          <ul>
+            <li><strong>Box sigillati</strong> — hanno potenziale di rivalutazione nel lungo periodo, soprattutto se conservati integri. L'emozione dell'apertura è parte dell'esperienza, ma il valore delle singole carte estratte raramente supera il costo del box</li>
+            <li><strong>Singole carte</strong> — ti permettono di acquistare esattamente quello che vuoi senza affidarti alla fortuna. Più efficiente se cerchi carte specifiche per collezione o gioco</li>
+          </ul>
+          <p>Per chi inizia a collezionare, acquistare singole carte su marketplace come CardPioneer è spesso la scelta più intelligente ed economica.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">12</span>
+          <span class="faq-text">Come conservare correttamente le carte Pokémon?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Per mantenere il valore delle carte nel tempo è fondamentale una buona conservazione:</p>
+          <ul>
+            <li>Sleeve protettive — da mettere subito su ogni carta di valore</li>
+            <li>Binder rigidi con tasche — per organizzare e proteggere la collezione</li>
+            <li>Top loader rigidi — per le carte più preziose</li>
+            <li>Ambiente asciutto e lontano dalla luce diretta — umidità e UV deteriorano la carta</li>
+            <li>Evitare sbalzi di temperatura — possono causare ondulazioni</li>
+          </ul>
+          <p>Anche una carta in condizioni NM può scendere a EX o GD se conservata male. Investi in materiali di protezione adeguati fin dall'inizio.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">13</span>
+          <span class="faq-text">Qual è la differenza tra carte Pokémon italiane e inglesi?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>Le differenze principali sono:</p>
+          <ul>
+            <li><strong>Mercato</strong> — le carte inglesi hanno un mercato internazionale molto più ampio e liquido, facilitando acquisto e vendita a livello globale</li>
+            <li><strong>Domanda locale</strong> — le carte italiane sono sempre più ricercate dai collezionisti italiani, creando una nicchia interessante</li>
+            <li><strong>Prezzo</strong> — le versioni inglesi tendono ad avere prezzi di riferimento più alti per la maggiore domanda globale</li>
+            <li><strong>Nostalgia</strong> — molti collezionisti italiani cercano le versioni nella lingua con cui hanno giocato da bambini</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">14</span>
+          <span class="faq-text">Che cos'è una chase card nel Pokémon TCG?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>La chase card è la carta più desiderata di un'espansione — quella che i giocatori e i collezionisti "inseguono" (to chase) aprendo bustine o cercando sul mercato secondario.</p>
+          <p>Le caratteristiche tipiche di una chase card:</p>
+          <ul>
+            <li>Molto rara — spesso 1 su molte centinaia di bustine</li>
+            <li>Difficile da trovare anche sul mercato secondario</li>
+            <li>Spesso molto costosa rispetto alle altre carte del set</li>
+            <li>Illustrazione particolarmente bella o personaggio molto popolare</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-num">15</span>
+          <span class="faq-text">Vale la pena gradare una carta Pokémon?</span>
+          <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          <p>La gradazione professionale (PSA, BGS, CGC) può valere la pena in certi casi specifici:</p>
+          <ul>
+            <li>La carta è rara e in ottime condizioni (NM o Mint)</li>
+            <li>Il valore attuale della carta supera i costi di gradazione</li>
+            <li>Vuoi vendere la carta a un prezzo premium garantito</li>
+            <li>Vuoi proteggere permanentemente una carta molto pregiata</li>
+          </ul>
+          <p>Per carte di basso valore non conviene — i costi di grading (dai 15€ in su per carta) supererebbero il beneficio ottenuto. Per carte rare in condizione eccellente, una gradazione PSA 10 può moltiplicare significativamente il valore.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="info-box" style="margin-top:36px">
+      Non hai trovato risposta alla tua domanda? Scrivici a <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a> — risponderemo entro 24 ore.
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="utility.html">FAQ</a>
+        <a href="vendi.html">Vendi</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer">@cardpioneer</a>
+      </div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
+</footer>
+
+<script>
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  // Chiudi tutti
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  // Apri quello cliccato (se era chiuso)
+  if (!isOpen) item.classList.add('open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Badge carrello
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+  // Apri prima domanda di default
+  document.querySelector('.faq-item')?.classList.add('open');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classificazione carte — CardPioneer</title>
+  <meta name="description" content="Guida completa alla classificazione delle condizioni delle carte Pokémon TCG usata da CardPioneer.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .legal-wrap { max-width: 860px; }
+
+    /* Grading cards */
+    .grade-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    .grade-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .grade-card:hover { box-shadow: 0 6px 24px rgba(26,10,46,.08); }
+    .grade-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .grade-badge {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 100px;
+      letter-spacing: .04em;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .grade-MT { background: #3b82f6; }
+    .grade-MN { background: #16a34a; }
+    .grade-EX { background: #4ade80; color: #1a1a1a !important; }
+    .grade-GD { background: #ca8a04; }
+    .grade-OL { background: #ea580c; }
+    .grade-PL { background: #db2777; }
+    .grade-PO { background: #7f1d1d; }
+
+    .grade-name { font-family: var(--fu); font-size: 15px; font-weight: 700; color: var(--dark); letter-spacing: -.02em; }
+    .grade-sub  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .grade-body { padding: 18px 22px; }
+    .grade-body p { font-size: 13px; color: var(--muted); line-height: 1.75; margin-bottom: 10px; }
+    .grade-body p:last-child { margin-bottom: 0; }
+    .grade-points {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .grade-points li {
+      font-size: 12px;
+      color: var(--muted);
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .grade-points li::before { content: '—'; position: absolute; left: 0; color: var(--pink); font-size: 11px; }
+
+    /* Scala visiva */
+    .scale-bar {
+      display: flex;
+      gap: 4px;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    .scale-item {
+      flex: 1;
+      min-width: 60px;
+      text-align: center;
+    }
+    .scale-color {
+      height: 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .scale-label { font-family: var(--fu); font-size: 10px; font-weight: 700; color: var(--dark); }
+    .scale-desc  { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+    /* Tavola sigle */
+    .sigla-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    .sigla-table th { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .sigla-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--dark); }
+    .sigla-table tr:last-child td { border-bottom: none; }
+    .sigla-table tr:hover td { background: var(--bg); }
+
+    h2 { font-family: var(--fu); font-size: 20px; color: var(--dark); letter-spacing: -.03em; margin: 40px 0 16px; padding-top: 40px; border-top: 1px solid var(--border); }
+    h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    h3 { font-family: var(--fu); font-size: 14px; color: var(--dark); letter-spacing: -.02em; margin: 24px 0 10px; }
+    p  { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html" class="active">Classificazione</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Guida alle condizioni</div>
+  <h1 class="cp-hero-title">Classificazione <em>carte</em></h1>
+  <p class="cp-hero-sub">Il sistema di grading usato da CardPioneer per valutare e descrivere le condizioni di ogni carta. Trasparenza e standardizzazione per acquisti sicuri.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="legal-wrap">
+
+    <p>Ogni carta presente nel nostro catalogo viene valutata individualmente da un esaminatore esperto e classificata secondo lo standard internazionale utilizzato nel mercato secondario delle carte collezionabili. La condizione è indicata chiaramente in ogni scheda prodotto con la relativa sigla colorata.</p>
+
+    <!-- SCALA VISIVA -->
+    <div class="scale-bar">
+      <div class="scale-item"><div class="scale-color" style="background:#3b82f6"></div><div class="scale-label">MT</div><div class="scale-desc">Mint</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#16a34a"></div><div class="scale-label">MN</div><div class="scale-desc">Near Mint</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#4ade80"></div><div class="scale-label">EX</div><div class="scale-desc">Excellent</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#ca8a04"></div><div class="scale-label">GD</div><div class="scale-desc">Good</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#ea580c"></div><div class="scale-label">OL</div><div class="scale-desc">Okay/Light Played</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#db2777"></div><div class="scale-label">PL</div><div class="scale-desc">Played</div></div>
+      <div class="scale-item"><div class="scale-color" style="background:#7f1d1d"></div><div class="scale-label">PO</div><div class="scale-desc">Poor</div></div>
+    </div>
+
+    <!-- GRADING CARDS -->
+    <h2>Le condizioni nel dettaglio</h2>
+
+    <div class="grade-grid">
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-MT">MT</span>
+          <div><div class="grade-name">Mint</div><div class="grade-sub">Condizione perfetta</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta è in condizioni perfette, praticamente come appena uscita dal pacchetto. È la condizione più rara e pregiata per le carte usate.</p>
+          <ul class="grade-points">
+            <li>Nessun segno di usura visibile a occhio nudo</li>
+            <li>Angoli perfettamente nitidi, senza alcun arrotondamento</li>
+            <li>Superficie priva di graffi, righe o macchie</li>
+            <li>Bordi integri e perfettamente definiti</li>
+            <li>Centratura eccellente, margini uniformi su tutti i lati</li>
+            <li>Nessuna piega, ondulazione o deformazione</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-MN">MN</span>
+          <div><div class="grade-name">Near Mint</div><div class="grade-sub">Quasi perfetta</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta è in ottime condizioni, con usura minima o assente. È la condizione standard per le carte mai giocate o conservate con cura.</p>
+          <ul class="grade-points">
+            <li>Usura minima e non immediatamente evidente</li>
+            <li>Angoli leggermente ammorbiditi, appena percettibili</li>
+            <li>Eventuale graffietto molto leggero sulla superficie</li>
+            <li>Bordi puliti con minime imperfezioni microscopiche</li>
+            <li>Centratura buona, piccoli difetti tollerati</li>
+            <li>Nessuna piega visibile</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-EX">EX</span>
+          <div><div class="grade-name">Excellent</div><div class="grade-sub">Ottima condizione</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta mostra segni d'uso leggeri ma è ancora in ottima condizione. Ideale per collezionisti che cercano un buon equilibrio tra qualità e prezzo.</p>
+          <ul class="grade-points">
+            <li>Piccola usura agli angoli visibile da vicino</li>
+            <li>Qualche graffietto superficiale sulla fronte o sul retro</li>
+            <li>Bordi con lieve sbiadimento o microscopiche rientranze</li>
+            <li>Centratura nella media, margini accettabili</li>
+            <li>Nessuna piega marcata, possibile lieve ondulazione</li>
+            <li>Lucidità ancora presente</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-GD">GD</span>
+          <div><div class="grade-name">Good</div><div class="grade-sub">Buona condizione</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta presenta usura moderata, chiaramente visibile. Adatta per il gioco competitivo con bustina protettiva o per completare collezioni.</p>
+          <ul class="grade-points">
+            <li>Usura agli angoli evidente, arrotondamento marcato</li>
+            <li>Graffi visibili sulla superficie</li>
+            <li>Bordi con sbiadimento o piccole scheggiature</li>
+            <li>Possibile lieve piega o ondulazione</li>
+            <li>Centratura nella media o leggermente sbilanciata</li>
+            <li>Lucidità ridotta su alcune zone</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-OL">OL</span>
+          <div><div class="grade-name">Okay / Light Played</div><div class="grade-sub">Leggermente giocata</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta è stata usata regolarmente ma mantiene la sua integrità strutturale. Consigliata per uso in gioco, non per collezione di pregio.</p>
+          <ul class="grade-points">
+            <li>Usura agli angoli significativa e immediata</li>
+            <li>Graffi multipli ben visibili su fronte e retro</li>
+            <li>Bordi con sbiadimento diffuso o scheggiature</li>
+            <li>Possibile piega leggera o creases</li>
+            <li>Centratura potenzialmente sbilanciata</li>
+            <li>Superficie opacizzata per usura</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-PL">PL</span>
+          <div><div class="grade-name">Played</div><div class="grade-sub">Molto giocata</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta mostra segni evidenti di uso intensivo. Il valore collezionistico è basso, ma rimane funzionale per il gioco.</p>
+          <ul class="grade-points">
+            <li>Angoli molto arrotondati o danneggiati</li>
+            <li>Graffi profondi e diffusi su tutta la superficie</li>
+            <li>Pieghe visibili o creases marcati</li>
+            <li>Bordi deteriorati con sbiadimento esteso</li>
+            <li>Possibile macchiatura o sporco superficiale</li>
+            <li>Centratura spesso sbilanciata</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grade-card">
+        <div class="grade-header">
+          <span class="grade-badge grade-PO">PO</span>
+          <div><div class="grade-name">Poor</div><div class="grade-sub">Condizione scarsa</div></div>
+        </div>
+        <div class="grade-body">
+          <p>La carta è in condizioni molto scadenti. Viene venduta esclusivamente per completare collezioni o come carta da gioco. Non ha valore collezionistico.</p>
+          <ul class="grade-points">
+            <li>Danni strutturali evidenti: pieghe severe, strappi, lacerazioni</li>
+            <li>Angoli gravemente deteriorati o mancanti</li>
+            <li>Macchie, scritte o danni da umidità</li>
+            <li>Superficie gravemente graffiata o abrasa</li>
+            <li>Bordi significativamente danneggiati</li>
+            <li>Carta potenzialmente ondulata o deformata</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAVOLA SIGLE -->
+    <h2>Tabella riepilogativa</h2>
+    <table class="sigla-table">
+      <thead>
+        <tr><th>Sigla</th><th>Nome esteso</th><th>Descrizione sintetica</th><th>Adatta per</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="grade-badge grade-MT" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">MT</span></td><td>Mint</td><td>Perfetta, come nuova</td><td>Collezione di pregio, investimento</td></tr>
+        <tr><td><span class="grade-badge grade-MN" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">MN</span></td><td>Near Mint</td><td>Quasi perfetta, minima usura</td><td>Collezione, investimento</td></tr>
+        <tr><td><span class="grade-badge grade-EX" style="font-size:11px;padding:3px 10px;border-radius:100px;background:#4ade80;color:#1a1a1a">EX</span></td><td>Excellent</td><td>Ottima, leggera usura</td><td>Collezione, gioco con bustina</td></tr>
+        <tr><td><span class="grade-badge grade-GD" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">GD</span></td><td>Good</td><td>Buona, usura moderata</td><td>Gioco competitivo con bustina</td></tr>
+        <tr><td><span class="grade-badge grade-OL" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">OL</span></td><td>Okay / Light Played</td><td>Leggeri danni, funzionale</td><td>Gioco casual</td></tr>
+        <tr><td><span class="grade-badge grade-PL" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">PL</span></td><td>Played</td><td>Molto usata, danni visibili</td><td>Solo gioco</td></tr>
+        <tr><td><span class="grade-badge grade-PO" style="font-size:11px;padding:3px 10px;border-radius:100px;color:#fff">PO</span></td><td>Poor</td><td>Condizioni scadenti</td><td>Completare collezioni</td></tr>
+      </tbody>
+    </table>
+
+    <!-- NOTE AGGIUNTIVE -->
+    <h2>Come valutiamo le carte</h2>
+
+    <h3>Processo di valutazione</h3>
+    <p>Ogni carta viene esaminata manualmente da un valutatore esperto in condizioni di buona illuminazione. La valutazione tiene conto di quattro fattori principali: <strong>angoli</strong>, <strong>bordi</strong>, <strong>superficie</strong> e <strong>centratura</strong>. In caso di dubbio tra due condizioni adiacenti, viene sempre assegnata la condizione inferiore a tutela dell'acquirente.</p>
+
+    <h3>Fotografie dei prodotti</h3>
+    <p>Ogni carta è fotografata individualmente ad alta risoluzione. Le immagini nel market mostrano l'esatta carta che riceverai. Cliccando sulla foto nel market è possibile visualizzare l'immagine in alta definizione per valutare personalmente le condizioni prima dell'acquisto.</p>
+
+    <h3>Garanzia di soddisfazione</h3>
+    <p>Se al ricevimento la carta non corrisponde alla condizione descritta, ti preghiamo di contattarci entro 7 giorni con fotografie. Valuteremo ogni caso singolarmente e, se confermato, provvederemo a rimborso o sostituzione. La soddisfazione del cliente è la nostra priorità.</p>
+
+    <div class="info-box" style="margin-top:28px">
+      Per qualsiasi dubbio sulla classificazione di una carta specifica non esitare a contattarci: <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="vendi.html">Vendi</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer">@cardpioneer</a>
+      </div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
