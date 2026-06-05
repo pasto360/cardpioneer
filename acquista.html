@@ -45,7 +45,7 @@
     .search-btn{background:var(--pink);color:#fff;border:none;padding:11px 20px;cursor:pointer;font-family:var(--fu);font-size:10px;font-weight:700;border-radius:0 8px 8px 0;letter-spacing:-0.01em;transition:opacity .2s}
     .search-btn:hover{opacity:.88}
 
-    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 
     .mcard{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;transition:box-shadow .18s,transform .18s}
     .mcard:hover{box-shadow:0 6px 24px rgba(26,10,46,.1);transform:translateY(-3px)}
@@ -246,13 +246,22 @@
     <div>
       <div class="market-header">
         <p class="market-count" id="marketCount">— prodotti trovati</p>
-        <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button onclick="cpCacheClear();loadAll()" title="Ricarica catalogo da Supabase"
+            style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);
+                   padding:6px 10px;border-radius:8px;cursor:pointer;transition:all .2s"
+            onmouseover="this.style.borderColor='var(--pink)';this.style.color='var(--pink)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            🔄 Aggiorna
+          </button>
+          <select class="sort-select" id="sortSelect" onchange="applyFilters()">
           <option value="name-asc">Nome A → Z</option>
           <option value="name-desc">Nome Z → A</option>
           <option value="price-asc">Prezzo crescente</option>
           <option value="price-desc">Prezzo decrescente</option>
           <option value="set-asc">Set A → Z</option>
-        </select>
+          </select>
+        </div>
       </div>
       <div class="cards-grid" id="cardsGrid">
         <div class="market-loading">
@@ -294,7 +303,11 @@ const CONFIG = {
   SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs',
 
   // ── Quante carte per pagina ──
-  PER_PAGE: 40,
+  PER_PAGE: 28,
+
+  // ── Cache prodotti (riduce query Supabase) ──
+  CACHE_KEY:     'cp_prodotti_cache',
+  CACHE_MINUTES: 30,  // minuti validità cache
 
   // ── Tab categorie — modifica solo label e icon ──
   TABS: [
@@ -318,14 +331,51 @@ let activeType  = 'all';
 // ════════════════════════════════════════════════════════════════
 //  CARICAMENTO DA SUPABASE
 // ════════════════════════════════════════════════════════════════
+// ── Cache helpers ──
+function cpCacheSave(data) {
+  try {
+    localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({
+      ts: Date.now(),
+      data
+    }));
+  } catch(e) { /* localStorage pieno → ignora */ }
+}
+
+function cpCacheLoad() {
+  try {
+    const raw = localStorage.getItem(CONFIG.CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CONFIG.CACHE_MINUTES * 60 * 1000) return null;
+    return data;
+  } catch(e) { return null; }
+}
+
+function cpCacheClear() {
+  localStorage.removeItem(CONFIG.CACHE_KEY);
+}
+
 async function loadAll() {
-  // Usa il client globale di auth.js invece di crearne uno nuovo
   if (!window.sb) {
     sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
     window.sb = sb;
   } else {
     sb = window.sb;
   }
+
+  // ── Prova la cache prima ──
+  const cached = cpCacheLoad();
+  if (cached) {
+    console.log(`[Cache] ${cached.length} prodotti da cache locale`);
+    allProducts = cached;
+    buildFilters();
+    updateCounts();
+    applyFilters();
+    checkHashFilter();
+    return;
+  }
+
+  console.log('[Cache] Cache mancante o scaduta — carico da Supabase...');
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -368,8 +418,12 @@ async function loadAll() {
       price:       parseFloat(p.prezzo) || 0,
       avail:       parseInt(p.disponibile) || 0,
       img:         p.immagine    || null,
-      ptype:       p.categoria,   // 'carte' | 'buste' | 'etb' | 'altro'
+      ptype:       p.categoria,
     }));
+
+    // Salva in cache per i prossimi 30 minuti
+    cpCacheSave(allProducts);
+    console.log(`[Cache] ${allProducts.length} prodotti salvati in cache`);
 
     buildFilters();
     updateCounts();
@@ -380,7 +434,7 @@ async function loadAll() {
     console.error('Supabase error:', err);
     document.getElementById('csvError').style.display = 'block';
     document.getElementById('csvError').innerHTML =
-      '⚠️ Impossibile caricare il catalogo da Supabase. Controlla la connessione.';
+      '⚠️ Impossibile caricare il catalogo. <button onclick="cpCacheClear();loadAll()" style="color:var(--pink);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline">Riprova</button>';
     document.getElementById('cardsGrid').innerHTML =
       '<div class="market-empty">Catalogo non disponibile.</div>';
     document.getElementById('marketCount').textContent = '—';
