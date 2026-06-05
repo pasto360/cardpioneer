@@ -242,6 +242,8 @@
 (function () {
   const SUPABASE_URL = 'https://nzjwpdbljfwrspmepoqo.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs';
+  // Su GitHub Pages: 'cardpioneer/' — su Aruba con dominio: ''
+  const IMG_BASE = 'cardpioneer/';
   const NEW_COUNT    = 4;   // ultime 4 inserite = badge NEW
   const RANDOM_COUNT = 4;   // 4 casuali dal resto
 
@@ -274,7 +276,7 @@
       lingua:      card.lingua,
       condizione:  card.condizione,
       prezzo:      parseFloat(card.prezzo),
-      immagine:    card.immagine,
+      immagine:    IMG_BASE + (card.immagine || ''),
       disponibile: 99,
     }));
 

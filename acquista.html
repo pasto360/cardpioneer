@@ -315,7 +315,10 @@ const CONFIG = {
   // ── Quante carte per pagina ──
   PER_PAGE: 12,
 
-  // ── Cache prodotti (riduce query Supabase) ──
+  // ── Percorso base immagini ──
+  // Su GitHub Pages: 'cardpioneer/' (nome del repository)
+  // Su Aruba con dominio proprio: '' (stringa vuota)
+  IMG_BASE: 'cardpioneer/',
   CACHE_KEY:     'cp_prodotti_cache',
   CACHE_MINUTES: 30,  // minuti validità cache
 
@@ -427,7 +430,7 @@ async function loadAll() {
       sku:         p.sku         || '',
       price:       parseFloat(p.prezzo) || 0,
       avail:       parseInt(p.disponibile) || 0,
-      img:         p.immagine    || null,
+      img:         p.immagine ? CONFIG.IMG_BASE + p.immagine : null,
       ptype:       p.categoria,
     }));
 
