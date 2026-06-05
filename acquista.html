@@ -313,7 +313,7 @@ const CONFIG = {
   SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs',
 
   // ── Quante carte per pagina ──
-  PER_PAGE: 28,
+  PER_PAGE: 12,
 
   // ── Cache prodotti (riduce query Supabase) ──
   CACHE_KEY:     'cp_prodotti_cache',
@@ -590,9 +590,7 @@ function renderCard(p) {
 
     const thumb   = thumbPath(p.img);
     const imgHTML = p.img
-      ? `<img src="${esc(thumb)}" alt="${esc(p.displayName)}" loading="lazy"
-             data-no-lightbox style="cursor:zoom-in"
-             onerror="if(this.src!=='${esc(p.img)}')this.src='${esc(p.img)}';else this.style.display='none'">`  
+      ? `<img src="${esc(thumb)}" alt="${esc(p.displayName)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`  
       : `<span>${esc(p.displayName.substring(0,10))}</span>`;
 
     return `<div class="mcard${isOut?' out-of-stock':''}" data-prod="${esc(JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}))}">
