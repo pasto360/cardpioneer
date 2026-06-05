@@ -129,6 +129,7 @@
     @media(max-width:900px){.market-layout{grid-template-columns:1fr}.filters-panel{position:static;max-height:none}.cards-grid{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:500px){.cards-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
+  <link rel="icon" href="images/logo.png" type="image/png">
 </head>
 <body>
 
@@ -579,9 +580,6 @@ function renderCards() {
     const condClass = p.condition ? `cond-${p.condition.toUpperCase().replace(/[^A-Z]/g,'')}` : '';
     const badge  = p.condition ? `<span class="mcard-badge ${condClass}">${esc(p.condition)}</span>` : '';
     const langBadge = `<span class="mcard-lang">${esc(p.lang)}</span>`;
-    const qtyHTML = isOut
-      ? `<span class="mcard-qty">Esaurito</span>`
-    const qtyHTML = isOut ? `<span class="mcard-qty">Esaurito</span>` : '';
     const qtyHTML = isOut ? `<span class="mcard-qty">Esaurito</span>` : '';
     registerProduct(p);
 
