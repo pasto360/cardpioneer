@@ -577,8 +577,6 @@ function renderCards() {
   }
 
   grid.innerHTML = slice.map(p => renderCard(p)).join('');
-  // Avvia lazy loading sulle nuove immagini
-  if (window.cpObserveLazy) window.cpObserveLazy();
 }
 
 function renderCard(p) {
@@ -592,9 +590,9 @@ function renderCard(p) {
 
     const thumb   = thumbPath(p.img);
     const imgHTML = p.img
-      ? `<img data-src="${esc(thumb)}" data-fallback="${esc(p.img)}" alt="${esc(p.displayName)}"
-             class="lazy-img" data-no-lightbox
-             style="cursor:zoom-in;background:var(--bg)">`  
+      ? `<img src="${esc(thumb)}" alt="${esc(p.displayName)}" loading="lazy"
+             data-no-lightbox style="cursor:zoom-in"
+             onerror="if(this.src!=='${esc(p.img)}')this.src='${esc(p.img)}';else this.style.display='none'">`  
       : `<span>${esc(p.displayName.substring(0,10))}</span>`;
 
     return `<div class="mcard${isOut?' out-of-stock':''}" data-prod="${esc(JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}))}">
@@ -790,46 +788,6 @@ function closeLightbox() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 </script>
 
-<!-- LAZY LOADER — carica immagini solo quando entrano nel viewport -->
-<script>
-(function() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const img = entry.target;
-      const src = img.dataset.src;
-      if (!src) return;
-
-      img.src = src;
-      img.onload = () => { img.style.background = 'none'; };
-      img.onerror = () => {
-        const fallback = img.dataset.fallback;
-        if (fallback && fallback !== src) {
-          img.src = fallback;
-          img.onerror = () => { img.style.display = 'none'; };
-        } else {
-          img.style.display = 'none';
-        }
-      };
-      observer.unobserve(img);
-    });
-  }, {
-    rootMargin: '200px 0px', // inizia a caricare 200px prima che entri nel viewport
-    threshold: 0
-  });
-
-  // Osserva le immagini già nel DOM e quelle future
-  function observeAll() {
-    document.querySelectorAll('img.lazy-img[data-src]').forEach(img => {
-      observer.observe(img);
-    });
-  }
-
-  // Chiamato dopo ogni renderCards()
-  window.cpObserveLazy = observeAll;
-  document.addEventListener('DOMContentLoaded', observeAll);
-})();
-</script>
 
 </body>
 </html>
