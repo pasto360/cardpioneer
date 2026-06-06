@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Come funziona — CardPioneer</title>
+  <meta name="description" content="Scopri come acquistare e vendere carte Pokémon su CardPioneer. Guida completa all'identificazione delle carte.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .cf-wrap { max-width: 860px; }
+
+    /* Step cards */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    .steps-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .steps-card-header {
+      background: var(--dark);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .steps-card-header.pink { background: var(--pink); }
+    .steps-card-icon { font-size: 28px; }
+    .steps-card-title { font-family: var(--fu); font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -.02em; }
+    .steps-card-sub   { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 2px; }
+    .steps-card-body  { padding: 22px 24px; }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .step:last-child { border-bottom: none; padding-bottom: 0; }
+    .step-n {
+      font-family: var(--fu);
+      font-size: 13px;
+      font-weight: 900;
+      color: rgba(232,16,122,.35);
+      flex-shrink: 0;
+      min-width: 24px;
+      padding-top: 1px;
+    }
+    .step-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .step-text strong { color: var(--dark); font-weight: 600; }
+    .step-text a { color: var(--pink); }
+
+    /* Caratteristiche */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin: 24px 0 40px;
+    }
+    .char-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .char-sigla {
+      font-family: var(--fu);
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--pink);
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+    }
+    .char-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+    /* Identificazione */
+    .id-table { width: 100%; border-collapse: collapse; margin: 20px 0 32px; }
+    .id-table th { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .id-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--dark); vertical-align: top; line-height: 1.6; }
+    .id-table tr:last-child td { border-bottom: none; }
+    .id-table td:first-child { font-weight: 600; color: var(--pink); white-space: nowrap; }
+
+    h2 { font-family: var(--fu); font-size: 20px; color: var(--dark); letter-spacing: -.03em; margin: 48px 0 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+    h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    h3 { font-family: var(--fu); font-size: 14px; color: var(--dark); letter-spacing: -.02em; margin: 28px 0 12px; }
+    p  { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 14px; }
+
+    @media (max-width: 700px) {
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html" class="active">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Guida al marketplace</div>
+  <h1 class="cp-hero-title">Come <em>funziona</em></h1>
+  <p class="cp-hero-sub">CardPioneer permette di acquistare e vendere carte da collezione singolarmente. Acquisto e vendita sono operazioni totalmente separate.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="cf-wrap">
+
+    <!-- ACQUISTO / VENDITA -->
+    <div class="steps-grid">
+
+      <!-- ACQUISTO -->
+      <div class="steps-card">
+        <div class="steps-card-header">
+          <span class="steps-card-icon">🛒</span>
+          <div>
+            <div class="steps-card-title">Acquisto</div>
+            <div class="steps-card-sub">Trova e compra le carte che cerchi</div>
+          </div>
+        </div>
+        <div class="steps-card-body">
+          <div class="step"><span class="step-n">01</span><span class="step-text">Entra nel <a href="acquista.html"><strong>market</strong></a> e sfoglia tutte le carte disponibili.</span></div>
+          <div class="step"><span class="step-n">02</span><span class="step-text">Usa il modulo di ricerca o scorri l'archivio. Usa i <strong>filtri</strong> per velocizzare la ricerca.</span></div>
+          <div class="step"><span class="step-n">03</span><span class="step-text">Seleziona la carta: troverai immagine, caratteristiche e prezzo.</span></div>
+          <div class="step"><span class="step-n">04</span><span class="step-text"><strong>Aggiungi al carrello</strong> le carte che desideri.</span></div>
+          <div class="step"><span class="step-n">05</span><span class="step-text">Concludi l'acquisto dal carrello seguendo le istruzioni di checkout.</span></div>
+          <div class="step"><span class="step-n">06</span><span class="step-text">Pagamento via <strong>PayPal</strong> o <strong>Bonifico bancario</strong>. Attenzione alle commissioni di ogni sistema.</span></div>
+          <div class="step"><span class="step-n">07</span><span class="step-text">Confermato l'ordine, CardPioneer provvederà a inviarti le carte acquistate.</span></div>
+        </div>
+      </div>
+
+      <!-- VENDITA -->
+      <div class="steps-card">
+        <div class="steps-card-header pink">
+          <span class="steps-card-icon">💰</span>
+          <div>
+            <div class="steps-card-title">Vendita</div>
+            <div class="steps-card-sub">Vendi le tue carte a CardPioneer</div>
+          </div>
+        </div>
+        <div class="steps-card-body">
+          <div class="step"><span class="step-n">01</span><span class="step-text">Vai alla sezione <a href="vendi.html"><strong>Vendi</strong></a> e compila tutti i campi per identificare le carte che vuoi vendere.</span></div>
+          <div class="step"><span class="step-n">02</span><span class="step-text">Scatta una foto e aggiungila nell'apposito campo.</span></div>
+          <div class="step"><span class="step-n">03</span><span class="step-text">Seleziona le <strong>caratteristiche</strong> e il <strong>grado di conservazione</strong> della carta. Consulta le pagine <a href="classificazione.html">Classificazione</a> in caso di dubbi.</span></div>
+          <div class="step"><span class="step-n">04</span><span class="step-text">Premi <strong>Invia</strong> dopo aver accettato i termini di condizione.</span></div>
+          <div class="step"><span class="step-n">05</span><span class="step-text">CardPioneer valuterà la selezione. Se accettata riceverai una <strong>mail di conferma</strong> e potrai spedire le carte.</span></div>
+          <div class="step"><span class="step-n">06</span><span class="step-text">Al ricevimento verifichiamo caratteristiche e condizioni. Se tutto corrisponde, il <strong>saldo viene accreditato</strong> sul tuo profilo.</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="info-box">
+      Hai difficoltà? Contatta l'assistenza clienti a <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+    </div>
+
+    <!-- IDENTIFICAZIONE -->
+    <h2>Identificazione delle carte</h2>
+    <p>Identificare correttamente le carte è essenziale, soprattutto per i collezionisti. Ogni singola carta è identificata dalla combinazione di questi elementi:</p>
+
+    <table class="id-table">
+      <thead><tr><th>Elemento</th><th>Descrizione</th></tr></thead>
+      <tbody>
+        <tr><td>Serie / Espansione</td><td>Nome della raccolta che contiene un numero definito di carte (es. Set Base, Jungle, Scarlet &amp; Violet...)</td></tr>
+        <tr><td>Nazionalità</td><td>Mercato di riferimento e lingua dei testi sulla carta (ITA, ENG, JP...)</td></tr>
+        <tr><td>Nome</td><td>Il nome del Pokémon raffigurato, indicato in alto a sinistra della carta</td></tr>
+        <tr><td>Numero nella serie</td><td>Numero della carta all'interno del set, leggibile in basso solitamente a sinistra (es. 7/131)</td></tr>
+        <tr><td>Codice univoco</td><td>Non riportato sulla carta — identifica una specifica carta indipendentemente dalle caratteristiche (es. PRE7)</td></tr>
+        <tr><td>Caratteristiche</td><td>Specificità grafiche della carta: comune, holo, reverse, prima edizione ecc.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- CARATTERISTICHE -->
+    <h2>Caratteristiche delle carte</h2>
+    <p>Le caratteristiche indicano le specificità grafiche di ogni carta. Una stessa carta può esistere in versioni diverse.</p>
+
+    <div class="char-grid">
+      <div class="char-item">
+        <div class="char-sigla">C — Comune</div>
+        <div class="char-desc">Tipologia principale, nella maggior parte dei casi senza caratteristiche grafiche particolari. Nelle prime serie può presentare iridescenze pur essendo classificata comune.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">H — Holo</div>
+        <div class="char-desc">Si riconosce dall'immagine o dallo sfondo dell'immagine con grafica iridescente. L'iridescenza deve essere all'interno della seconda cornice della carta.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">R — Reverse / Foil</div>
+        <div class="char-desc">L'iridescenza si trova sullo sfondo principale della carta (dove ci sono le scritte) mentre l'immagine rimane normale.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">1 — Prima edizione</div>
+        <div class="char-desc">Indica la prima edizione della carta, presente nelle prime serie. È una piccola icona in basso a sinistra dell'immagine o nella parte bassa della carta.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">UPC — Ultra Premium Collection</div>
+        <div class="char-desc">La carta fa parte di una Pokémon Ultra Premium Collection. Ha una grafica leggermente diversa dalla comune, riconoscibile solo per confronto diretto.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">S — Shadowless</div>
+        <div class="char-desc">Caratteristica presente solo nel Set Base inglese. Consiste nella mancanza dell'ombra attorno all'immagine del Pokémon.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">L / L1 / Ln — Logo</div>
+        <div class="char-desc">Carta con simbolo, scritta o stemma aggiuntivo. Solitamente realizzata per eventi speciali come tornei o ricorrenze. Se prodotta per più eventi viene numerata (L1, L2...).</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">P — Prerelease Stamp</div>
+        <div class="char-desc">Versione rilasciata prima della data ufficiale. Si riconosce per la scritta olografica "PRERELEASE" nell'angolo dell'immagine.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">RI — Ristampa</div>
+        <div class="char-desc">Carta ristampata in un set successivo rispetto all'originale. Può differire leggermente dalla versione originale.</div>
+      </div>
+      <div class="char-item">
+        <div class="char-sigla">SIL — Silver</div>
+        <div class="char-desc">Carta con una grande porzione in argento cangiante. Relativamente rara e facilmente riconoscibile per la caratteristica grafica argentata.</div>
+      </div>
+    </div>
+
+    <!-- ESEMPI -->
+    <h2>Esempi di identificazione</h2>
+
+    <h3>Esempio 1 — Carta comune moderna</h3>
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:24px;align-items:start;margin-bottom:24px">
+      <img src="images/esempio1.jpg" alt="Esempio carta comune — Cottonee PRE7"
+           style="width:140px;border-radius:10px;box-shadow:0 4px 16px rgba(26,10,46,.12)">
+      <table class="id-table">
+        <tbody>
+          <tr><td>Serie</td><td>Scarlatto e Violetto — Evoluzioni Prismatiche (logo PRE in basso a sinistra)</td></tr>
+          <tr><td>Nazionalità</td><td>Italia (indicata anche nel logo con IT)</td></tr>
+          <tr><td>Nome</td><td>Cottonee</td></tr>
+          <tr><td>Numero</td><td>007/131</td></tr>
+          <tr><td>Codice univoco</td><td>PRE7</td></tr>
+          <tr><td>Caratteristiche</td><td>Nessun segno iridescente né grafica differente → <strong>Comune (C)</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Esempio 2 — Carta con logo evento o Promo</h3>
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:24px;align-items:start;margin-bottom:24px">
+      <img src="images/esempio2.jpg" alt="Esempio carta con logo — Il disegno di Felicity GE98"
+           style="width:140px;border-radius:10px;box-shadow:0 4px 16px rgba(26,10,46,.12)">
+      <table class="id-table">
+        <tbody>
+          <tr><td>Serie</td><td>Diamante e Perla — Incontri leggendari</td></tr>
+          <tr><td>Nazionalità</td><td>Italia</td></tr>
+          <tr><td>Nome</td><td>Il disegno di Felicity</td></tr>
+          <tr><td>Numero</td><td>98/106</td></tr>
+          <tr><td>Codice univoco</td><td>GE98</td></tr>
+          <tr><td>Caratteristiche</td><td>Presenza di simbolo al centro realizzato per differenziale la carta a seguito di un evento ufficiale o una Promo → <strong>Logo (L)</strong>. La carta è cangiante nella parte del testo ma non viene indicata come Reverse in quanto non esistono altre tipologie.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-box" style="margin-top:32px">
+      Non trovi la caratteristica della tua carta nell'elenco? <a href="mailto:info@cardpioneer.it">Inviaci una mail</a> descrivendo le particolarità e allegando una fotografia. Provvederemo a verificare e aggiorneremo il database.
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="utility.html">FAQ</a>
+        <a href="vendi.html">Vendi</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer">@cardpioneer</a>
+      </div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
