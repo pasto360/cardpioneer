@@ -310,6 +310,7 @@
       const { data: newCards } = await sb
         .from('prodotti')
         .select('nome, set_name, lingua, condizione, prezzo, immagine, nome_completo, sku')
+        .eq('categoria', 'carte')
         .gt('disponibile', 0)
         .order('created_at', { ascending: false })
         .limit(NEW_COUNT);
@@ -318,6 +319,7 @@
       const { count } = await sb
         .from('prodotti')
         .select('id', { count: 'exact', head: true })
+        .eq('categoria', 'carte')
         .gt('disponibile', 0);
 
       const total  = count || 0;
@@ -328,6 +330,7 @@
       const { data: poolCards } = await sb
         .from('prodotti')
         .select('nome, set_name, lingua, condizione, prezzo, immagine, nome_completo, sku')
+        .eq('categoria', 'carte')
         .gt('disponibile', 0)
         .order('created_at', { ascending: true })
         .range(offset, offset + RANDOM_COUNT * 3 - 1);
