@@ -559,14 +559,14 @@ function applyFilters() {
 // ════════════════════════════════════════════════════════════════
 //  RENDER CARTE
 // ════════════════════════════════════════════════════════════════
-// Percorso thumbnail: images/0001.jpg → images/thumbs/0001.jpg
-// Le thumbnail sono versioni ridotte 300×420px per il caricamento veloce
-// Le immagini originali HD restano in images/ e vengono caricate solo dal lightbox
+// Percorso thumbnail — per ora usa le originali
+// Quando carichi le vere thumbnail in images/thumbs/ riattiva il codice commentato
 function thumbPath(img) {
   if (!img) return null;
-  const parts = img.split('/');
-  parts.splice(parts.length - 1, 0, 'thumbs');
-  return parts.join('/');
+  return img; // usa immagine originale
+  // const parts = img.split('/');
+  // parts.splice(parts.length - 1, 0, 'thumbs');
+  // return parts.join('/');
 }
 
 function renderCards() {
