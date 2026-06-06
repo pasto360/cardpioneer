@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Policy — CardPioneer</title>
+  <meta name="description" content="Informativa sull'uso dei cookie e tecnologie di tracciamento su CardPioneer.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .legal-wrap { max-width: 760px; }
+    .legal-wrap h2 { font-family: var(--fu); font-size: 17px; color: var(--dark); margin: 36px 0 12px; letter-spacing: -.02em; padding-top: 36px; border-top: 1px solid var(--border); }
+    .legal-wrap h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    .legal-wrap h3 { font-family: var(--fu); font-size: 13px; color: var(--dark); margin: 20px 0 8px; letter-spacing: -.01em; }
+    .legal-wrap p  { font-size: 13px; color: var(--muted); line-height: 1.85; margin-bottom: 12px; }
+    .legal-wrap ul { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+    .legal-wrap ul li { font-size: 13px; color: var(--muted); line-height: 1.7; padding-left: 16px; position: relative; }
+    .legal-wrap ul li::before { content: '—'; position: absolute; left: 0; color: var(--pink); font-size: 11px; }
+    .legal-wrap a { color: var(--pink); }
+    .cookie-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+    .cookie-table th { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .cookie-table td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--dark); font-size: 12px; vertical-align: top; line-height: 1.5; }
+    .cookie-table tr:last-child td { border-bottom: none; }
+    .badge-tecnico { background: rgba(52,211,153,.12); color: #059669; border: 1px solid rgba(52,211,153,.3); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+    .badge-terze   { background: rgba(232,16,122,.08); color: #e8107a; border: 1px solid rgba(232,16,122,.2); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+    .badge-funz    { background: rgba(245,230,66,.15); color: #92400e; border: 1px solid rgba(245,230,66,.4); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Trasparenza</div>
+  <h1 class="cp-hero-title">Cookie Policy</h1>
+  <p class="cp-hero-sub">Informativa sull'uso dei cookie e tecnologie di tracciamento ai sensi del D.Lgs. 196/2003 e del Regolamento UE 2016/679. Ultimo aggiornamento: novembre 2025.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="legal-wrap">
+
+    <h2 style="margin-top:0;border-top:none;padding-top:0">Cosa sono i cookie</h2>
+    <p>I cookie sono piccoli file di testo che i siti web salvano sul tuo dispositivo quando li visiti. Vengono usati per far funzionare correttamente il sito, ricordare le tue preferenze e raccogliere informazioni statistiche sull'utilizzo. Oltre ai cookie tradizionali, questo sito utilizza il <strong>localStorage</strong> del browser per salvare dati locali come il carrello e le preferenze di sessione.</p>
+
+    <h2>Cookie tecnici (necessari)</h2>
+    <p>Questi cookie e dati locali sono indispensabili per il funzionamento del sito. <strong>Non richiedono consenso</strong> ai sensi del Provvedimento del Garante dell'8 maggio 2014.</p>
+
+    <table class="cookie-table">
+      <thead>
+        <tr><th>Nome</th><th>Fornitore</th><th>Finalità</th><th>Durata</th><th>Tipo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>sb-*</code></td>
+          <td>Supabase</td>
+          <td>Gestione sessione utente (login e autenticazione)</td>
+          <td>1 anno</td>
+          <td><span class="badge-tecnico">Tecnico</span></td>
+        </tr>
+        <tr>
+          <td><code>cp_cart</code></td>
+          <td>CardPioneer (localStorage)</td>
+          <td>Salvataggio contenuto carrello</td>
+          <td>Fino a svuotamento</td>
+          <td><span class="badge-tecnico">Tecnico</span></td>
+        </tr>
+        <tr>
+          <td><code>cp_prodotti_cache</code></td>
+          <td>CardPioneer (localStorage)</td>
+          <td>Cache catalogo prodotti per ridurre le richieste al server (30 minuti)</td>
+          <td>30 minuti</td>
+          <td><span class="badge-funz">Funzionale</span></td>
+        </tr>
+        <tr>
+          <td><code>cp_cookie_consent</code></td>
+          <td>CardPioneer (localStorage)</td>
+          <td>Memorizzazione della scelta sul consenso cookie</td>
+          <td>Permanente</td>
+          <td><span class="badge-tecnico">Tecnico</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Cookie di terze parti (richiedono consenso)</h2>
+    <p>Questi cookie vengono installati da servizi esterni. Sono attivati <strong>solo dopo il tuo consenso</strong> esplicito tramite il banner cookie.</p>
+
+    <table class="cookie-table">
+      <thead>
+        <tr><th>Nome</th><th>Fornitore</th><th>Finalità</th><th>Durata</th><th>Tipo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>_gcl_aw</code><br><code>_gcl_dc</code></td>
+          <td>Google Ads<br>(ID: AW-18020745433)</td>
+          <td>Tracciamento conversioni campagne pubblicitarie Google Ads</td>
+          <td>90 giorni</td>
+          <td><span class="badge-terze">Pubblicità</span></td>
+        </tr>
+        <tr>
+          <td><code>__paypal_storage__</code></td>
+          <td>PayPal</td>
+          <td>Funzionamento del pulsante PayPal e prevenzione frodi durante il checkout</td>
+          <td>Sessione</td>
+          <td><span class="badge-terze">Terze parti</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Come gestire i cookie</h2>
+    <p>Puoi gestire o disabilitare i cookie in qualsiasi momento tramite le impostazioni del tuo browser:</p>
+    <ul>
+      <li><a href="https://support.google.com/chrome/answer/95647" target="_blank">Google Chrome</a></li>
+      <li><a href="https://support.mozilla.org/it/kb/protezione-antitracciamento-avanzata-firefox-desktop" target="_blank">Mozilla Firefox</a></li>
+      <li><a href="https://support.apple.com/it-it/guide/safari/sfri11471/mac" target="_blank">Safari</a></li>
+      <li><a href="https://support.microsoft.com/it-it/windows/eliminare-e-gestire-i-cookie-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank">Microsoft Edge</a></li>
+    </ul>
+    <p>Disabilitare i cookie tecnici potrebbe compromettere il funzionamento del sito — potresti non riuscire ad accedere al tuo account o al carrello.</p>
+    <p>Per rinunciare al tracciamento di Google Ads: <a href="https://adssettings.google.com" target="_blank">adssettings.google.com</a></p>
+
+    <h2>Revoca del consenso</h2>
+    <p>Puoi revocare il consenso ai cookie non tecnici in qualsiasi momento cliccando il pulsante qui sotto. Il banner verrà mostrato nuovamente e potrai effettuare una nuova scelta.</p>
+    <button onclick="localStorage.removeItem('cp_cookie_consent');location.reload()"
+      class="btn-outline-dark" style="margin:8px 0 16px;cursor:pointer">
+      Revoca consenso cookie
+    </button>
+
+    <h2>Contatti</h2>
+    <p>Per qualsiasi domanda sull'uso dei cookie: <a href="mailto:privacy@cardpioneer.it">privacy@cardpioneer.it</a><br>
+    LADEGU SRLS — Via Morazzone 21, 22100 Como (CO)</p>
+
+    <div class="info-box" style="margin-top:24px">
+      Per informazioni più dettagliate sul trattamento dei dati personali consulta la nostra <a href="privacy.html">Privacy Policy</a>.
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

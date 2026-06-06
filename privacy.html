@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CardPioneer</title>
+  <meta name="description" content="Informativa sul trattamento dei dati personali di CardPioneer ai sensi del GDPR.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .legal-wrap { max-width: 760px; }
+    .legal-wrap h2 { font-family: var(--fu); font-size: 17px; color: var(--dark); margin: 36px 0 12px; letter-spacing: -.02em; padding-top: 36px; border-top: 1px solid var(--border); }
+    .legal-wrap h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    .legal-wrap h3 { font-family: var(--fu); font-size: 13px; color: var(--dark); margin: 20px 0 8px; letter-spacing: -.01em; }
+    .legal-wrap p  { font-size: 13px; color: var(--muted); line-height: 1.85; margin-bottom: 12px; }
+    .legal-wrap ul { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+    .legal-wrap ul li { font-size: 13px; color: var(--muted); line-height: 1.7; padding-left: 16px; position: relative; }
+    .legal-wrap ul li::before { content: '—'; position: absolute; left: 0; color: var(--pink); font-size: 11px; }
+    .legal-wrap a { color: var(--pink); }
+    .toc { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--pink); padding: 20px 24px; margin-bottom: 36px; border-radius: 0 8px 8px 0; }
+    .toc-title { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .toc ol { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 5px; counter-reset: toc; }
+    .toc ol li { counter-increment: toc; }
+    .toc ol li a { font-size: 13px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+    .toc ol li a:hover { color: var(--pink); }
+    .toc ol li a::before { content: counter(toc, decimal-leading-zero); font-family: monospace; font-size: 10px; color: var(--pink); min-width: 22px; }
+    .tag-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+    .tag-table th { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .tag-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--dark); font-size: 12px; }
+    .tag-table tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Tutela dei dati personali</div>
+  <h1 class="cp-hero-title">Privacy Policy</h1>
+  <p class="cp-hero-sub">Informativa sul trattamento dei dati personali ai sensi del D.Lgs. 196/2003 e del Regolamento UE 2016/679 (GDPR). Edizione: novembre 2025.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="legal-wrap">
+
+    <div class="info-box">
+      <strong>Titolare del trattamento:</strong> LADEGU SRLS — Via Morazzone 21, 22100 Como (CO) — P.IVA 04255650139<br>
+      Email: <a href="mailto:privacy@cardpioneer.it">privacy@cardpioneer.it</a>
+    </div>
+
+    <div class="toc">
+      <div class="toc-title">Indice</div>
+      <ol>
+        <li><a href="#dati">Dati raccolti</a></li>
+        <li><a href="#finalita">Finalità del trattamento</a></li>
+        <li><a href="#base">Base giuridica</a></li>
+        <li><a href="#terze-parti">Servizi di terze parti</a></li>
+        <li><a href="#comunicazione">Comunicazione a terzi</a></li>
+        <li><a href="#conservazione">Conservazione dei dati</a></li>
+        <li><a href="#diritti">Diritti dell'interessato</a></li>
+        <li><a href="#newsletter">Newsletter</a></li>
+        <li><a href="#minori">Minori</a></li>
+        <li><a href="#sicurezza">Sicurezza</a></li>
+        <li><a href="#modifiche">Modifiche</a></li>
+        <li><a href="#contatti-privacy">Contatti</a></li>
+      </ol>
+    </div>
+
+    <h2 id="dati">Dati raccolti</h2>
+    <h3>Dati forniti direttamente dall'utente</h3>
+    <ul>
+      <li><strong>Dati comuni:</strong> nome, cognome, indirizzo email, indirizzo di spedizione, telefono — utilizzati per registrazione, acquisti, spedizioni e assistenza.</li>
+      <li><strong>Preferenze:</strong> raccolti tramite la compilazione volontaria di questionari o impostazioni del profilo.</li>
+      <li><strong>Fotografie:</strong> immagini caricate per la proposta di vendita di carte a CardPioneer.</li>
+    </ul>
+
+    <h3>Dati raccolti automaticamente</h3>
+    <ul>
+      <li><strong>Dati di navigazione:</strong> preferenze espresse durante la navigazione, pagine visitate, durata della visita, indirizzo IP, browser e sistema operativo.</li>
+      <li><strong>Dati di sessione:</strong> informazioni di autenticazione necessarie per mantenere la sessione utente attiva.</li>
+      <li><strong>Cookie e tecnologie similari:</strong> per informazioni dettagliate consulta la <a href="cookie.html">Cookie Policy</a>.</li>
+    </ul>
+
+    <h2 id="finalita">Finalità del trattamento</h2>
+    <ul>
+      <li>Gestione dell'account utente e accesso ai servizi</li>
+      <li>Esecuzione degli ordini di acquisto e vendita</li>
+      <li>Comunicazioni relative agli ordini (conferme, aggiornamenti, spedizioni)</li>
+      <li>Assistenza clienti e risposta alle richieste</li>
+      <li>Prevenzione di frodi e rischi relativi al credito</li>
+      <li>Adempimento di obblighi legali e fiscali</li>
+      <li>Analisi statistica del traffico e miglioramento del servizio</li>
+      <li>Invio di comunicazioni promozionali — solo con consenso esplicito</li>
+      <li>Marketing personalizzato basato sul profilo utente — solo previo consenso</li>
+    </ul>
+
+    <h2 id="base">Base giuridica</h2>
+    <ul>
+      <li><strong>Esecuzione contrattuale</strong> (art. 6 par. 1 lett. b GDPR) — per gestire registrazione e ordini</li>
+      <li><strong>Obbligo legale</strong> (art. 6 par. 1 lett. c GDPR) — per conservazione dati fiscali</li>
+      <li><strong>Legittimo interesse</strong> (art. 6 par. 1 lett. f GDPR) — per sicurezza del sito e prevenzione frodi</li>
+      <li><strong>Consenso</strong> (art. 6 par. 1 lett. a GDPR) — per comunicazioni promozionali e cookie non essenziali</li>
+    </ul>
+
+    <h2 id="terze-parti">Servizi di terze parti</h2>
+    <p>CardPioneer utilizza i seguenti servizi di terze parti che trattano dati personali:</p>
+    <table class="tag-table">
+      <thead><tr><th>Servizio</th><th>Finalità</th><th>Privacy Policy</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Supabase</strong></td><td>Database, autenticazione utenti, archiviazione dati</td><td><a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a></td></tr>
+        <tr><td><strong>PayPal</strong></td><td>Elaborazione pagamenti online</td><td><a href="https://www.paypal.com/it/legalhub/privacy-full" target="_blank">paypal.com/privacy</a></td></tr>
+        <tr><td><strong>EmailJS</strong></td><td>Invio email transazionali (conferme ordine)</td><td><a href="https://www.emailjs.com/legal/privacy-policy/" target="_blank">emailjs.com/privacy</a></td></tr>
+        <tr><td><strong>Google Ads</strong></td><td>Tracciamento conversioni campagne pubblicitarie</td><td><a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="comunicazione">Comunicazione a terzi</h2>
+    <p>Il Titolare del trattamento non cede i dati a terzi per finalità commerciali proprie. I dati vengono comunicati esclusivamente a:</p>
+    <ul>
+      <li>Dipendenti e collaboratori del Titolare per l'evasione di ordini e servizi</li>
+      <li>Corrieri e spedizionieri per la consegna degli ordini</li>
+      <li>Fornitori di servizi tecnici elencati nella sezione precedente</li>
+      <li>Autorità competenti in caso di obbligo di legge</li>
+    </ul>
+    <p>Tali soggetti non possono utilizzare i dati per scopi propri e sono soggetti a obblighi di riservatezza equivalenti.</p>
+    <p>Ogni qualvolta sia necessario trasferire dati al di fuori dello Spazio Economico Europeo, il Titolare si assicura che avvenga in conformità alla normativa applicabile.</p>
+
+    <h2 id="conservazione">Conservazione dei dati</h2>
+    <ul>
+      <li><strong>Dati account:</strong> per tutta la durata del rapporto contrattuale + 12 mesi dopo la cancellazione</li>
+      <li><strong>Dati ordini e fatture:</strong> 10 anni (obbligo fiscale D.P.R. 600/1973)</li>
+      <li><strong>Dati di navigazione:</strong> massimo 12 mesi</li>
+      <li><strong>Fotografie carte per vendita:</strong> 6 mesi dalla conclusione della trattativa</li>
+      <li><strong>In generale:</strong> entro i termini stabiliti dalla normativa vigente, con massimo di 10 anni dalla cessazione del rapporto</li>
+    </ul>
+
+    <h2 id="diritti">Diritti dell'interessato</h2>
+    <p>Ai sensi del GDPR l'utente ha il diritto di:</p>
+    <ul>
+      <li><strong>Accesso</strong> — ottenere conferma del trattamento e copia dei dati</li>
+      <li><strong>Rettifica</strong> — correggere dati inesatti o incompleti</li>
+      <li><strong>Cancellazione</strong> — richiedere la cancellazione ("diritto all'oblio")</li>
+      <li><strong>Limitazione</strong> — limitare il trattamento in determinate circostanze</li>
+      <li><strong>Portabilità</strong> — ricevere i dati in formato strutturato</li>
+      <li><strong>Opposizione</strong> — opporsi al trattamento basato su legittimo interesse</li>
+      <li><strong>Revoca del consenso</strong> — in qualsiasi momento, senza pregiudizio per il trattamento precedente</li>
+    </ul>
+    <p>Per esercitare questi diritti: <a href="mailto:privacy@cardpioneer.it">privacy@cardpioneer.it</a>. Risposta entro 30 giorni.</p>
+    <p>Per ulteriori informazioni sui tuoi diritti: <a href="https://commission.europa.eu/law/law-topic/data-protection/reform/rights-citizens/my-rights/what-are-my-rights_it" target="_blank">commissione europea — diritti dei cittadini</a>.</p>
+    <p>In caso di violazione dei tuoi dati è possibile presentare reclamo al <strong>Garante per la Protezione dei Dati Personali</strong> — <a href="https://www.garanteprivacy.it" target="_blank">garanteprivacy.it</a>.</p>
+
+    <h2 id="newsletter">Newsletter e comunicazioni commerciali</h2>
+    <p>Se ti iscrivi alla newsletter, saranno usati solo i dati strettamente necessari per inviarti comunicazioni via email sulla base del tuo consenso. Puoi annullare l'iscrizione in qualsiasi momento scrivendo a <a href="mailto:privacy@cardpioneer.it">privacy@cardpioneer.it</a>.</p>
+    <p>Il tuo indirizzo email potrà essere usato per comunicazioni commerciali personalizzate basate sui tuoi acquisti, con possibilità di opposizione in qualsiasi momento.</p>
+
+    <h2 id="minori">Minori</h2>
+    <p>CardPioneer non vende prodotti a minori. Se hai meno di 18 anni puoi utilizzare i servizi solo con il coinvolgimento di un genitore o tutore. L'utente è responsabile dell'uso del proprio account e delle proprie credenziali.</p>
+
+    <h2 id="sicurezza">Sicurezza</h2>
+    <p>CardPioneer utilizza sistemi e dispositivi atti a garantire la sicurezza e la privacy dei clienti: cifratura delle password, comunicazioni HTTPS, accesso ai dati limitato al personale autorizzato, autenticazione sicura tramite Supabase Auth. Il trattamento dei dati può includere processi decisionali automatizzati finalizzati a migliorare la gestione del sito e l'esperienza di navigazione.</p>
+
+    <h2 id="modifiche">Modifiche alla Privacy Policy</h2>
+    <p>Quando la presente informativa viene aggiornata, verrà inviata una mail informativa. Le nuove condizioni si considerano accettate automaticamente dagli utenti iscritti che continuano a utilizzare il servizio. La versione vigente è sempre disponibile su questa pagina.</p>
+
+    <h2 id="contatti-privacy">Contatti</h2>
+    <p>Per domande, chiarimenti o richieste riguardanti il trattamento dei dati personali:<br>
+    <a href="mailto:privacy@cardpioneer.it">privacy@cardpioneer.it</a><br>
+    LADEGU SRLS — Via Morazzone 21, 22100 Como (CO)</p>
+
+    <div class="info-box" style="margin-top:32px">
+      Per informazioni sull'uso dei cookie consulta la nostra <a href="cookie.html">Cookie Policy</a>.
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

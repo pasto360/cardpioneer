@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termini e Condizioni — CardPioneer</title>
+  <meta name="description" content="Termini generali, condizioni di acquisto e vendita di CardPioneer.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <style>
+    .legal-wrap { max-width: 760px; }
+    .legal-wrap h2 { font-family: var(--fu); font-size: 17px; color: var(--dark); margin: 36px 0 12px; letter-spacing: -.02em; padding-top: 36px; border-top: 1px solid var(--border); }
+    .legal-wrap h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    .legal-wrap h3 { font-family: var(--fu); font-size: 13px; color: var(--dark); margin: 20px 0 8px; letter-spacing: -.01em; }
+    .legal-wrap p  { font-size: 13px; color: var(--muted); line-height: 1.85; margin-bottom: 12px; }
+    .legal-wrap ul { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+    .legal-wrap ul li { font-size: 13px; color: var(--muted); line-height: 1.7; padding-left: 16px; position: relative; }
+    .legal-wrap ul li::before { content: '—'; position: absolute; left: 0; color: var(--pink); font-size: 11px; }
+    .legal-wrap a { color: var(--pink); }
+    .art-num { font-family: var(--fu); font-size: 11px; font-weight: 900; color: var(--pink); letter-spacing: .04em; margin-bottom: 4px; }
+    .toc { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--pink); padding: 20px 24px; margin-bottom: 36px; border-radius: 0 8px 8px 0; }
+    .toc-title { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .toc ol { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 5px; counter-reset: toc; }
+    .toc ol li { counter-increment: toc; }
+    .toc ol li a { font-size: 13px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+    .toc ol li a:hover { color: var(--pink); }
+    .toc ol li a::before { content: counter(toc, decimal-leading-zero); font-family: monospace; font-size: 10px; color: var(--pink); min-width: 22px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Documenti legali</div>
+  <h1 class="cp-hero-title">Termini e Condizioni</h1>
+  <p class="cp-hero-sub">Condizioni generali di acquisto e vendita di CardPioneer. Ultimo aggiornamento: novembre 2025.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="legal-wrap">
+
+    <div class="info-box">
+      L'utente dichiara di aver letto e accettato le condizioni generali per ogni servizio erogato dal sito. Il Sito è di proprietà esclusiva di <strong>LADEGU SRLS</strong> — Via Morazzone 21, 22100 Como — P.IVA 04255650139.
+    </div>
+
+    <div class="toc">
+      <div class="toc-title">Indice</div>
+      <ol>
+        <li><a href="#premesse">Premesse e definizioni</a></li>
+        <li><a href="#servizi">Servizi</a></li>
+        <li><a href="#registrazione">Registrazione</a></li>
+        <li><a href="#copyright">Diritti di proprietà e copyright</a></li>
+        <li><a href="#utilizzo">Condizioni di utilizzo</a></li>
+        <li><a href="#pagamenti">Pagamenti e fatturazione</a></li>
+        <li><a href="#resi">Resi e rimborsi</a></li>
+        <li><a href="#spedizioni">Spedizioni</a></li>
+        <li><a href="#modifiche">Modifiche ai termini</a></li>
+        <li><a href="#legge">Legge applicabile e giurisdizione</a></li>
+        <li><a href="#contatti">Contatti</a></li>
+      </ol>
+    </div>
+
+    <h2 id="premesse">Premesse e definizioni</h2>
+    <p>Per <strong>"Sito"</strong> si intende l'insieme delle pagine web che costituiscono la piattaforma relativa al dominio www.cardpioneer.it.</p>
+    <p>Per <strong>"Utente"</strong> si intende la persona fisica o giuridica che si registra presso la piattaforma. Tale può essere definito anche "cliente", "acquirente" o "venditore".</p>
+    <p>Per <strong>"contratto"</strong> si intende l'insieme di regole qui riportate e che si intendono accettate dal Cliente all'atto del suo acquisto o vendita.</p>
+    <p>Le presenti condizioni si applicano alle funzioni e ai servizi di www.cardpioneer.it, alla vendita e all'acquisto, come meglio specificato nei successivi articoli.</p>
+
+    <h2 id="servizi">1 — Servizi</h2>
+    <p>Il Sito è una piattaforma internet di compravendita nella quale vengono offerte, vendute e acquistate carte collezionabili da gioco e prodotti affini. Il Sito agisce in qualità di acquirente e venditore.</p>
+    <ul>
+      <li><strong>Servizio di acquisto:</strong> l'utente può acquistare le carte disponibili nell'area dedicata del sito, previa registrazione.</li>
+      <li><strong>Servizio di vendita:</strong> l'utente può vendere al Sito le proprie carte collezionabili secondo le disponibilità nell'area dedicata, previa registrazione.</li>
+    </ul>
+    <p>Le carte da gioco collezionabili si intendono quelle ufficiali, prodotte sotto licenza e secondo gli standard della casa madre. Per i diritti Pokémon: <a href="https://www.pokemon.com/it/note-legali/informazioni-legali" target="_blank">pokemon.com/it/note-legali</a>.</p>
+
+    <h2 id="registrazione">2 — Registrazione</h2>
+    <p>La registrazione è obbligatoria per accedere ai servizi di acquisto e vendita e per accedere all'area personale. Consiste nell'inserimento di dati anagrafici, indirizzo di spedizione e email, oltre alla creazione di username e password.</p>
+    <p>La registrazione si completa con la ricezione di una mail di conferma. Eseguita la registrazione l'utente avrà accesso alla propria area personale per la gestione dei servizi e dei dati.</p>
+    <p>La registrazione implica l'accettazione delle condizioni del servizio e della <a href="privacy.html">politica della privacy</a>.</p>
+
+    <h2 id="copyright">3 — Diritti di proprietà e copyright</h2>
+    <p>I testi e le immagini contenuti nel sito sono di proprietà esclusiva del Sito, ad eccezione di quelli esplicitamente dichiarati. Non sono di proprietà del sito le immagini dei prodotti in acquisto e in vendita che non contengono la filigrana con il marchio del sito.</p>
+
+    <h3>3.1 Immagini caricate dagli utenti</h3>
+    <p>Le fotografie caricate dall'utente per la stima o vendita di un prodotto diventano di proprietà del Sito, che le potrà utilizzare solo all'interno della propria piattaforma e relativi social. Il Sito non si ritiene responsabile qualora terzi copiassero tali immagini dalla piattaforma.</p>
+    <p>Il Sito potrà modificare le immagini al solo scopo di migliorarne l'interazione sulla piattaforma (ridimensionamento, aggiunta filigrana, taglio contorni) senza alterarne il contenuto.</p>
+
+    <h2 id="utilizzo">4 — Condizioni di utilizzo</h2>
+
+    <h3>4.1 Maggiore età</h3>
+    <p>I servizi del sito sono dedicati agli utenti maggiorenni (oltre i 18 anni). La registrazione è vietata a utenti con età inferiore. Il Sito si riserva la possibilità di sospendere l'account qualora si verificasse la falsità della dichiarazione di maggiore età.</p>
+
+    <h3>4.3 Condizioni di acquisto</h3>
+    <p>Il contratto è regolato dal D.Lgs. 206/2005 e dal D.Lgs. 70/2003 relativi alle vendite a distanza.</p>
+    <ul>
+      <li>CardPioneer si riserva il diritto di modificare la quantità evasa in base alla disponibilità effettiva in caso di bug del sistema.</li>
+      <li>In caso di prezzo sbagliato o manifestamente irrisorio, CardPioneer si riserva il diritto di annullare l'ordine anche dopo conferma iniziale.</li>
+      <li>I prezzi possono essere aggiornati senza preavviso. Il prezzo finale è quello visualizzato al momento della conferma d'ordine.</li>
+      <li>L'utente è responsabile della merce ordinata e deve verificare prezzi, quantità e caratteristiche dei prodotti scelti.</li>
+    </ul>
+
+    <h3>4.4 Condizioni di vendita</h3>
+    <p>Il contratto è regolato dal D.Lgs. 206/2005 e dal D.Lgs. 70/2003. Il termine "vendita" comprende tutto il processo dalla scelta del materiale al ricevimento del pagamento.</p>
+    <ul>
+      <li>CardPioneer si riserva il diritto di modificare l'ordine solo in caso di bug del sistema.</li>
+      <li>In caso di mancata consegna del bene venduto, l'ordine sarà annullato dopo 30 giorni dalla conferma mail all'utente.</li>
+    </ul>
+
+    <h3>4.5.1 Condizioni della merce e grading</h3>
+    <p>La condizione di ogni prodotto è verificata da CardPioneer secondo lo schema di <a href="classificazione.html">classificazione</a>. È prevista una piccola tolleranza soggettiva nella valutazione del grading.</p>
+    <p>Il reso per errore di grading può avvenire solo se l'errore causa uno scostamento di almeno 2 posizioni nella scala (es. da condizione 3 a condizione 1). Per errori di una sola posizione il reso non è previsto. Le spese di spedizione per i resi da errore di grading sono a carico del venditore.</p>
+    <p>CardPioneer scansiona tutte le carte vendute a tutela propria. L'utente non può richiedere la visione di tale materiale.</p>
+
+    <h3>4.5.1 Procedura di vendita</h3>
+    <ul>
+      <li>I prodotti devono rispettare il grading indicato nella richiesta di CardPioneer.</li>
+      <li>L'utente dovrà fotografare i prodotti e caricarli come indicato dalla procedura.</li>
+      <li>Solo dopo la conferma di CardPioneer l'utente potrà procedere con la conferma d'ordine.</li>
+      <li>Tutti i prodotti devono essere consegnati contemporaneamente in un'unica spedizione.</li>
+      <li>La spedizione deve contenere il codice d'ordine fornito da CardPioneer.</li>
+      <li>Al ricevimento CardPioneer verifica la merce: se tutto corrisponde conferma la vendita e procede con la transazione.</li>
+    </ul>
+    <p>Qualora si trovasse anche un solo prodotto differente da quelli selezionati o con grading difforme, l'intera spedizione sarà restituita al mittente. Discrepanze significative o ripetitive comportano la rimozione dell'utente dalla piattaforma.</p>
+
+    <h3>4.5.2 Sigillo di garanzia</h3>
+    <p>Dopo la verifica CardPioneer applica un sigillo di garanzia sulla custodia del prodotto. Il futuro acquirente potrà rimuoverlo, consapevole che perderà il diritto di reso.</p>
+
+    <h3>4.6 Carte non originali</h3>
+    <p>Qualora CardPioneer riceva carte false, non originali o contraffatte, l'ordine sarà annullato con immediata sospensione dell'account. CardPioneer si riserva di valutare un'azione legale.</p>
+
+    <h3>4.7 Sospensione account</h3>
+    <p>CardPioneer si riserva la facoltà di sospendere un account, anche senza preavviso, per gravi mancanze o violazioni. Le sospensioni possono essere temporanee o definitive, con comunicazione ufficiale motivata.</p>
+
+    <h3>4.8.1 Immagini dei prodotti</h3>
+    <p>Le immagini nello store sono a scopo indicativo. Fanno fede le indicazioni testuali (set, nazione, numero carta, tipologia, condizione) per il riconoscimento del prodotto.</p>
+
+    <h3>4.8.2 Immagine "reale"</h3>
+    <p>Qualora l'immagine presente nello store riporti la dicitura "reale", indica la vera carta che sarà inviata in caso di acquisto. Condizioni e caratteristiche sono visibili dall'immagine oltre che dalle indicazioni testuali.</p>
+
+    <h3>4.9 Carte accettate</h3>
+    <p>Le carte accettate in acquisto da CardPioneer sono quelle disponibili nell'apposito market. Per le carte in condizione MT, CardPioneer accetta solo quelle con grading ufficiale da aziende autorizzate, all'interno della relativa custodia con sigillo e numero di certificazione.</p>
+
+    <h2 id="pagamenti">5 — Pagamenti e fatturazione</h2>
+
+    <h3>5.1 Saldo e Credito</h3>
+    <p>Il <strong>saldo</strong> è il pagamento che l'utente deve eseguire a favore di CardPioneer. Il <strong>credito</strong> è il pagamento che CardPioneer deve eseguire a favore dell'utente.</p>
+
+    <h3>5.2 Modalità</h3>
+    <p>Il saldo viene eseguito al momento della conferma d'ordine tramite le metodologie proposte dal sistema. I crediti vengono depositati sul conto personale dell'utente (castelletto) dopo la conferma di CardPioneer.</p>
+
+    <h3>5.3 Castelletto</h3>
+    <p>Il castelletto non può essere utilizzato per il saldo delle carte acquistate. Può essere richiesto il trasferimento dell'intero importo tramite bonifico bancario, con un limite di 5 volte l'anno e a condizione che il trasferimento superi €100,00. Il costo dell'operazione (€9,00) viene trattenuto dal castelletto al momento del trasferimento.</p>
+
+    <h3>5.4 Spese di terze parti</h3>
+    <p>Eventuali spese richieste da terze parti (sistemi di pagamento scelti dall'utente) sono a carico dell'utente. CardPioneer non ne è in alcun modo responsabile.</p>
+
+    <h2 id="resi">6 — Resi e rimborsi</h2>
+    <p>L'acquirente ha diritto al reso come previsto dalla legislazione italiana, entro 14 giorni dal ricevimento della merce, senza motivazione e con rimborso totale.</p>
+    <ul>
+      <li>Le spese di spedizione per i resi volontari sono a carico dell'acquirente.</li>
+      <li>Il rimborso avviene tramite bonifico bancario entro 14 giorni lavorativi dalla conferma della non alterazione del materiale.</li>
+      <li>L'acquirente è responsabile della merce fino alla sua consegna a CardPioneer.</li>
+      <li>Il reso non può avvenire se il sigillo di garanzia è stato danneggiato, compromesso o rimosso.</li>
+    </ul>
+    <p>Per avviare la procedura di rimborso: <a href="mailto:rimborsi@cardpioneer.it">rimborsi@cardpioneer.it</a>.</p>
+
+    <h2 id="spedizioni">7 — Spedizioni</h2>
+    <p>CardPioneer non si ritiene responsabile della merce una volta consegnata al corriere. Non è pertanto responsabile per smarrimenti, furti, alterazioni o danneggiamenti al materiale dopo la consegna al corriere. Si consiglia di utilizzare la spedizione assicurata.</p>
+    <p>All'interno della spedizione deve essere inserito il codice d'ordine rilasciato, al fine di velocizzare il processo di acquisto e vendita.</p>
+
+    <h2 id="modifiche">8 — Modifiche ai termini</h2>
+    <p>Quando i termini vengono aggiornati, verrà inviata una mail informativa. Eventuali nuovi servizi, modifiche e aggiunte si considerano accettate automaticamente dagli utenti iscritti. Chi non volesse accettare le nuove disposizioni potrà annullare la propria registrazione.</p>
+
+    <h2 id="legge">9 — Legge applicabile e giurisdizione</h2>
+    <p>I presenti Termini e Condizioni sono regolati e interpretati in conformità con le leggi dello Stato Italiano. Ogni controversia sarà sottoposta alla giurisdizione esclusiva del <strong>Tribunale di Milano</strong>.</p>
+
+    <h2 id="contatti">10 — Contatti</h2>
+    <p>Per domande, dubbi o reclami riguardanti i presenti Termini e Condizioni: <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a></p>
+    <p>L'uso continuato del sito implica l'accettazione di questi Termini e Condizioni.</p>
+
+    <div class="info-box" style="margin-top:32px">
+      <strong>Il Team di CardPioneer</strong><br>
+      LADEGU SRLS — Via Morazzone 21, 22100 Como — P.IVA 04255650139
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
