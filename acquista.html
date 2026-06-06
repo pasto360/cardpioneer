@@ -430,7 +430,7 @@ async function loadAll() {
       sku:         p.sku         || '',
       price:       parseFloat(p.prezzo) || 0,
       avail:       parseInt(p.disponibile) || 0,
-      img:         p.immagine ? CONFIG.IMG_BASE + p.immagine.replace(/^\//, '') : null,
+      img:         p.immagine || null,
       ptype:       p.categoria,
     }));
 
