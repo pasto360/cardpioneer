@@ -174,8 +174,24 @@ const TEMPLATE_NEGOZIO    = 'template_m32tgaq';
 const TEMPLATE_CLIENTE    = 'template_c067axo';
 const EMAIL_NEGOZIO       = 'infocardpioneer@gmail.com';
 
-const SPEDIZIONE_SOGLIA   = 50;
-const SPEDIZIONE_COSTO    = 5.90;
+// Valori default — vengono sovrascritti da Supabase (impostazioni)
+let SPEDIZIONE_SOGLIA   = 50;
+let SPEDIZIONE_COSTO    = 5.90;
+
+async function loadSpedizione() {
+  try {
+    const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) {
+      data.forEach(r => {
+        if (r.chiave === 'spedizione_soglia') SPEDIZIONE_SOGLIA = parseFloat(r.valore) || 50;
+        if (r.chiave === 'spedizione_costo')  SPEDIZIONE_COSTO  = parseFloat(r.valore) || 5.90;
+      });
+    }
+  } catch(e) { console.warn('Impostazioni spedizione non caricate, uso default'); }
+}
 
 // Inizializza EmailJS
 emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -531,6 +547,25 @@ function showDiscountMsg(text, type) {
 }
 
 // ══════════════════════════════════════════════════════
+//  DECREMENTO STOCK
+// ══════════════════════════════════════════════════════
+async function decrementaStock(items) {
+  // Chiama la funzione RPC su Supabase per ogni articolo
+  const promises = items.map(item =>
+    window.sb.rpc('decrementa_stock', {
+      p_sku: item.sku,
+      p_qty: item.qty
+    })
+  );
+  const results = await Promise.allSettled(promises);
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.warn(`Stock non decrementato per ${items[i].sku}:`, r.reason);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
 //  SALVA ORDINE SU SUPABASE
 // ══════════════════════════════════════════════════════
 async function saveOrder(items, totals, formData, pagamento, paypalOrderId = null) {
@@ -663,6 +698,7 @@ function initPayPal(totale, items) {
         const formData = getFormData();
 
         const ordineId = await saveOrder(cartItems, totals, formData, 'paypal', details.id);
+        await decrementaStock(cartItems);  // ← decrementa stock subito (pagamento ricevuto)
         await sendEmailNegozio(ordineId, formData, cartItems, totals, 'paypal');
         await sendEmailCliente(ordineId, formData, cartItems, totals, 'paypal');
 
@@ -705,6 +741,8 @@ async function handleBonifico() {
     const formData  = getFormData();
 
     const ordineId = await saveOrder(cartItems, totals, formData, 'bonifico');
+    // Stock NON decrementato — verrà decrementato dalla pagina admin
+    // quando confermi la ricezione del bonifico
     await sendEmailNegozio(ordineId, formData, cartItems, totals, 'bonifico');
     await sendEmailCliente(ordineId, formData, cartItems, totals, 'bonifico');
 
@@ -727,7 +765,7 @@ function escHtml(s) {
 }
 
 // ── Boot ──
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Badge carrello
   try {
     const tot = getCart().reduce((s,i)=>s+i.qty,0);
@@ -735,6 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (b) b.textContent = tot;
   } catch(e){}
 
+  await loadSpedizione();
   // Aspetta che auth.js carichi la sessione poi renderizza
   setTimeout(renderCheckout, 400);
 });

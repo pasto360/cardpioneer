@@ -204,8 +204,24 @@
 //  ← MODIFICA QUI per cambiare soglia o costo spedizione
 //  Ricorda di aggiornare gli stessi valori anche in checkout.html
 // ══════════════════════════════════════════════════════
-const SPEDIZIONE_SOGLIA  = 50;    // € — sopra questa cifra spedizione gratis
-const SPEDIZIONE_COSTO   = 5.90;  // € — costo spedizione sotto soglia
+// Valori default — vengono sovrascritti da Supabase (impostazioni)
+let SPEDIZIONE_SOGLIA  = 50;
+let SPEDIZIONE_COSTO   = 5.90;
+
+async function loadSpedizione() {
+  try {
+    const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) {
+      data.forEach(r => {
+        if (r.chiave === 'spedizione_soglia') SPEDIZIONE_SOGLIA = parseFloat(r.valore) || 50;
+        if (r.chiave === 'spedizione_costo')  SPEDIZIONE_COSTO  = parseFloat(r.valore) || 5.90;
+      });
+    }
+  } catch(e) { console.warn('Impostazioni spedizione non caricate, uso default'); }
+}
 const SPEDIZIONE_LABEL   = 'Spedizione standard (3-5 giorni)';
 
 // ══════════════════════════════════════════════════════
@@ -412,7 +428,8 @@ function escHtml(s) {
 }
 
 // ── Boot ──
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadSpedizione();
   updateCartBadge();
   renderCart();
 });
