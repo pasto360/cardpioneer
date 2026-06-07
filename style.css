@@ -250,7 +250,7 @@ img { max-width: 100%; display: block; }
 .cp-hero-home > * { position: relative; z-index: 2; }
 .cp-hero-inner {
   display: grid;
-  grid-template-columns: 1fr 220px;
+  grid-template-columns: 1fr 340px;
   gap: 40px;
   align-items: center;
 }
@@ -301,13 +301,15 @@ img { max-width: 100%; display: block; }
   background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
-  padding: 10px;
+  padding: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   transition: background 0.2s;
   backdrop-filter: blur(4px);
+  min-width: 0;
+  white-space: nowrap;
 }
 .cp-hero-card-mini:hover { background: rgba(255,255,255,0.12); }
 .cp-hcm-img {
@@ -322,9 +324,9 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
 }
 .cp-hcm-img img { width: 100%; height: 100%; object-fit: cover; }
-.cp-hcm-name { font-size: 11px; font-weight: 600; color: #fff; margin-bottom: 1px; }
-.cp-hcm-set  { font-size: 9px; color: rgba(255,255,255,0.35); margin-bottom: 3px; }
-.cp-hcm-price { font-family: var(--fu); font-size: 11px; font-weight: 700; color: var(--yellow); }
+.cp-hcm-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.cp-hcm-set  { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 3px; }
+.cp-hcm-price { font-family: var(--fu); font-size: 12px; font-weight: 700; color: var(--yellow); }
 
 /* ── HERO pagine interne ── */
 .cp-hero-page {
