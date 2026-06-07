@@ -191,6 +191,7 @@
       <div class="admin-nav-item active" onclick="showAdminPage('ordini', this)">📦 Ordini</div>
       <div class="admin-nav-item" onclick="showAdminPage('prodotti', this)">🎴 Prodotti</div>
       <div class="admin-nav-item" onclick="showAdminPage('sconti', this)">🏷️ Sconti</div>
+      <div class="admin-nav-item" onclick="showAdminPage('banner', this)">🖼️ Banner home</div>
       <div class="admin-nav-item" onclick="showAdminPage('impostazioni', this)">⚙️ Impostazioni</div>
       <hr class="admin-nav-divider">
       <div class="admin-nav-section">Report</div>
@@ -261,7 +262,17 @@
         </div>
       </div>
 
-      <!-- ── IMPOSTAZIONI ── -->
+      <!-- ── BANNER HOME ── -->
+      <div class="admin-page" id="page-banner">
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <div class="admin-table-title">🖼️ Banner home — set in uscita</div>
+          </div>
+          <div id="bannerWrap" style="padding:24px">
+            <div class="admin-loading">Caricamento...</div>
+          </div>
+        </div>
+      </div>
       <div class="admin-page" id="page-impostazioni">
         <div class="admin-table-wrap">
           <div class="admin-table-header">
@@ -434,7 +445,7 @@ function showAdminPage(name, btn) {
   if (name === 'ordini')       loadOrdini();
   if (name === 'prodotti')     loadProdotti();
   if (name === 'sconti')       loadSconti();
-  if (name === 'impostazioni') loadImpostazioni();
+  if (name === 'banner')       loadBannerAdmin();
   if (name === 'stats')        loadStats();
   if (name === 'utenti')       loadUtenti();
   if (name === 'wishlist')     loadWishlistAdmin();
@@ -895,6 +906,86 @@ async function loadWishlistAdmin() {
       <thead><tr><th>SKU</th><th>Prodotto</th><th>Set · Lingua</th><th>Desideri</th><th>Stock</th><th>Prezzo</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  BANNER HOME
+// ═══════════════════════════════════════════════════════
+async function loadBannerAdmin() {
+  const { data } = await sb.from('banner_home').select('*').order('id');
+  const wrap = document.getElementById('bannerWrap');
+  if (!data?.length) { wrap.innerHTML = '<div class="admin-empty">Nessun banner.</div>'; return; }
+
+  wrap.innerHTML = data.map(b => `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:14px;align-items:center">
+
+        <!-- Anteprima immagine -->
+        <div style="width:120px;height:60px;background:rgba(0,0,0,.3);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+          ${b.immagine
+            ? `<img src="${esc(b.immagine)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+            : `<span style="font-size:11px;color:rgba(255,255,255,.25)">Nessuna img</span>`}
+        </div>
+
+        <!-- Campi -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input type="text" value="${esc(b.nome_set)}" id="bn-nome-${b.id}"
+            class="admin-search" style="width:100%;padding:8px 12px" placeholder="Nome set">
+          <input type="text" value="${esc(b.data_uscita)}" id="bn-data-${b.id}"
+            class="admin-search" style="width:100%;padding:8px 12px" placeholder="es. 10 ott 2025">
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input type="text" value="${esc(b.immagine||'')}" id="bn-img-${b.id}"
+            class="admin-search" style="width:100%;padding:8px 12px" placeholder="URL immagine (es. images/banner1.jpg)">
+          <div style="display:flex;gap:12px;align-items:center">
+            <label style="font-size:12px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="bn-disp-${b.id}" ${b.disponibile?'checked':''} style="accent-color:#34d399">
+              Disponibile
+            </label>
+            <label style="font-size:12px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="bn-att-${b.id}" ${b.attivo?'checked':''} style="accent-color:#f5e642">
+              Visibile
+            </label>
+          </div>
+        </div>
+
+        <button onclick="saveBanner(${b.id})"
+          style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;
+                 background:#f5e642;color:#1a0a2e;border:none;padding:10px 16px;
+                 border-radius:8px;cursor:pointer;white-space:nowrap">
+          Salva
+        </button>
+      </div>
+      <div id="bn-msg-${b.id}" style="display:none;font-size:11px;margin-top:10px;padding:6px 12px;border-radius:6px"></div>
+    </div>`).join('');
+}
+
+async function saveBanner(id) {
+  const nome      = document.getElementById(`bn-nome-${id}`)?.value.trim();
+  const data_usc  = document.getElementById(`bn-data-${id}`)?.value.trim();
+  const immagine  = document.getElementById(`bn-img-${id}`)?.value.trim();
+  const disp      = document.getElementById(`bn-disp-${id}`)?.checked;
+  const attivo    = document.getElementById(`bn-att-${id}`)?.checked;
+  const msg       = document.getElementById(`bn-msg-${id}`);
+
+  const { error } = await sb.from('banner_home').update({
+    nome_set:    nome,
+    data_uscita: data_usc,
+    immagine:    immagine || null,
+    disponibile: disp,
+    attivo,
+  }).eq('id', id);
+
+  msg.style.display = 'block';
+  if (error) {
+    msg.style.cssText += ';background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.3)';
+    msg.textContent = 'Errore: ' + error.message;
+  } else {
+    msg.style.cssText += ';background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.3)';
+    msg.textContent = '✅ Salvato!';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }
 }
 
 // ═══════════════════════════════════════════════════════

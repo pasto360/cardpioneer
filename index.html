@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
   <script src="carrello.js"></script>
   <style>
     /* Griglia in evidenza — 4 colonne */
@@ -95,7 +96,6 @@
 <section class="cp-hero-home">
   <div class="cp-hero-inner">
     <div>
-      <div class="cp-hero-badge"><div class="cp-hero-badge-dot"></div><span>Nuovo arrivo</span></div>
       <h1 class="cp-hero-title">OGNI<br>CARTA<em>HA UN PREZZO.</em></h1>
       <p class="cp-hero-sub">Acquista e vendi carte Pokémon singole. Grading verificato, spedizioni garantite in tutta Italia e Europa.</p>
       <div class="cp-hero-btns">
@@ -109,34 +109,8 @@
         <div class="cp-hero-stat"><div class="cp-hero-stat-n">24h</div><div class="cp-hero-stat-l">Supporto</div></div>
       </div>
     </div>
-    <div class="cp-hero-cards">
-      <!-- Espansione 1: Megaevoluzione - Ombre (uscita) -->
-      <div class="cp-hero-card-mini">
-        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e);font-size:22px">🌑</div>
-        <div>
-          <div class="cp-hcm-name">Megaevoluzione — Ombre</div>
-          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 10 ott 2025</div>
-          <div class="cp-hcm-price" style="color:#a78bfa">✅ Disponibile</div>
-        </div>
-      </div>
-      <!-- Espansione 2: Megaevoluzione - Caos Nascente (uscita) -->
-      <div class="cp-hero-card-mini">
-        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#0a2e1a,#0d6e3d);font-size:22px">🌀</div>
-        <div>
-          <div class="cp-hcm-name">Megaevoluzione — Caos Nascente</div>
-          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 22 mag 2026</div>
-          <div class="cp-hcm-price" style="color:#34d399">✅ Disponibile</div>
-        </div>
-      </div>
-      <!-- Espansione 3: Megaevoluzione - Buio Pesto (prossima) -->
-      <div class="cp-hero-card-mini" style="border-color:rgba(245,230,66,0.3)">
-        <div class="cp-hcm-img" style="background:linear-gradient(135deg,#1a1a0a,#3d3a00);font-size:22px">⚡</div>
-        <div>
-          <div class="cp-hcm-name">Megaevoluzione — Buio Pesto</div>
-          <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: 17 lug 2026</div>
-          <div class="cp-hcm-price" style="color:#f5e642">🔜 In arrivo</div>
-        </div>
-      </div>
+    <div class="cp-hero-cards" id="heroBanners">
+      <!-- Popolato da JS da Supabase -->
     </div>
   </div>
 </section>
@@ -259,13 +233,14 @@
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function cardHTML(card, isEtb) {
+  // ── Badge: prime 4 carte = NEW, ETB = ETB ──
+  function cardHTML(card, isFirst4) {
     const price    = '€ ' + parseFloat(card.prezzo).toFixed(2).replace('.', ',');
     const setLabel = card.lingua + ' · ' + card.set_name;
     const sku      = esc(card.sku || '');
     const nome     = esc(card.nome || '');
-    const badge    = isEtb
-      ? '<span class="pcard-badge new">ETB</span>'
+    const badge    = isFirst4
+      ? '<span class="pcard-badge new">NEW</span>'
       : (card.condizione ? `<span class="pcard-badge">${esc(card.condizione)}</span>` : '');
 
     // Dati prodotto serializzati in modo sicuro tramite data attribute
@@ -299,6 +274,42 @@
       </div>
     </div>`
       .replace('class="pcard"', `class="pcard" data-prod="${prodData}"`);
+  }
+
+  // ── Banner hero da Supabase ──
+  async function loadBanners() {
+    try {
+      const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data } = await sb
+        .from('banner_home')
+        .select('*')
+        .eq('attivo', true)
+        .order('id');
+
+      const container = document.getElementById('heroBanners');
+      if (!container || !data?.length) return;
+
+      container.innerHTML = data.map(b => {
+        const imgHTML = b.immagine
+          ? `<img src="${esc(b.immagine)}" alt="${esc(b.nome_set)}"
+               style="width:100%;height:100%;object-fit:cover;border-radius:6px"
+               onerror="this.style.display='none'">`
+          : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a0a2e,#3d1a6e);border-radius:6px"></div>`;
+
+        const dispColor = b.disponibile ? '#34d399' : '#f5e642';
+        const dispLabel = b.disponibile ? '✅ Disponibile' : '🔜 In arrivo';
+        const borderStyle = b.disponibile ? '' : 'border-color:rgba(245,230,66,0.3)';
+
+        return `<div class="cp-hero-card-mini" style="${borderStyle}">
+          <div class="cp-hcm-img">${imgHTML}</div>
+          <div>
+            <div class="cp-hcm-name">${esc(b.nome_set)}</div>
+            <div class="cp-hcm-set" style="color:rgba(255,255,255,0.5)">Uscita: ${esc(b.data_uscita)}</div>
+            <div class="cp-hcm-price" style="color:${dispColor}">${dispLabel}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { console.warn('Banner:', e); }
   }
 
   async function loadFeatured() {
@@ -355,14 +366,15 @@
 
       const grid = document.getElementById('featuredGrid');
       if (grid && featured.length) {
-        grid.innerHTML = featured.map((c, i) =>
-          cardHTML(c, etb.length > 0 && i === 0)
-        ).join('');
+        grid.innerHTML = featured.map((c, i) => cardHTML(c, i < 4)).join('');
       }
     } catch (e) { console.warn('Featured:', e); }
   }
 
-  document.addEventListener('DOMContentLoaded', loadFeatured);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadBanners();
+    loadFeatured();
+  });
 })();
 
 // ── Login dropdown ──
