@@ -281,12 +281,23 @@ function clearCart() {
 }
 
 // Sconto attivo (popolato da verifyDiscount)
-let activeDiscount = null; // { codice, tipo, valore, sconto_importo }
+let activeDiscount = null;
 
-
+function calcTotals(items) {
+  const subtotale = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  const pesoG     = calcolaPeso(items);
+  let sconto = 0;
+  if (activeDiscount) {
+    sconto = activeDiscount.tipo === 'percentuale'
+      ? subtotale * (activeDiscount.valore / 100)
+      : Math.min(activeDiscount.valore, subtotale);
+    sconto = Math.round(sconto * 100) / 100;
+  }
   const subtotale_scontato = subtotale - sconto;
-  const spedizione = subtotale_scontato >= SPEDIZIONE_SOGLIA ? 0 : SPEDIZIONE_COSTO;
-  return { subtotale, sconto, subtotale_scontato, spedizione, totale: subtotale_scontato + spedizione };
+  const spedizione = tipoSpedizione === 'assicurata'
+    ? costoAssicurata(pesoG, subtotale_scontato)
+    : costoNormale(pesoG);
+  return { subtotale, sconto, subtotale_scontato, spedizione, totale: subtotale_scontato + spedizione, pesoG };
 }
 
 // ══════════════════════════════════════════════════════
