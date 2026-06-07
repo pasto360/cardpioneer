@@ -202,43 +202,9 @@
 <script>
 // ══════════════════════════════════════════════════════
 //  CONFIGURAZIONE SPEDIZIONE
-//  ← MODIFICA QUI per cambiare soglia o costo spedizione
-//  Ricorda di aggiornare gli stessi valori anche in checkout.html
 // ══════════════════════════════════════════════════════
-// Valori default — vengono sovrascritti da Supabase (impostazioni)
-let SPEDIZIONE_SOGLIA  = 50;
-let SPEDIZIONE_COSTO   = 5.90;
-
-async function loadSpedizione() {
-  try {
-    const { data } = await (window.sb || supabase.createClient(
-      'https://nzjwpdbljfwrspmepoqo.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
-    )).from('impostazioni').select('chiave, valore');
-    if (data) {
-      data.forEach(r => {
-        if (r.chiave === 'spedizione_soglia') SPEDIZIONE_SOGLIA = parseFloat(r.valore) || 50;
-        if (r.chiave === 'spedizione_costo')  SPEDIZIONE_COSTO  = parseFloat(r.valore) || 5.90;
-      });
-    }
-  } catch(e) { console.warn('Impostazioni spedizione non caricate, uso default'); }
-}
-const SPEDIZIONE_LABEL   = 'Spedizione standard (3-5 giorni)';
-
-// ══════════════════════════════════════════════════════
-//  STATO CARRELLO
-//  Il carrello viene salvato in localStorage per tutti
-//  (loggati e non). Struttura:
-//  [ { sku, nome, set_name, lingua, condizione,
-//      prezzo, immagine, qty } ]
-// ══════════════════════════════════════════════════════
-const CART_KEY = 'cp_cart';
-
-// ══════════════════════════════════════════════════════
-//  CONFIGURAZIONE SPEDIZIONE
-// ══════════════════════════════════════════════════════
-let PESO_IMBALLO = 20;   // grammi fissi per imballo
-let PESO_CARTA   = 9;    // grammi per singola carta
+let PESO_IMBALLO = 20;
+let PESO_CARTA   = 9;
 
 async function loadSpedizione() {
   try {
@@ -253,21 +219,16 @@ async function loadSpedizione() {
   } catch(e) {}
 }
 
-// Calcola peso totale ordine in grammi
 function calcolaPeso(items) {
-  const pesoArticoli = items.reduce((s, i) => s + (parseFloat(i.peso || PESO_CARTA) * (i.qty || 1)), 0);
-  return PESO_IMBALLO + pesoArticoli;
+  return PESO_IMBALLO + items.reduce((s, i) => s + (parseFloat(i.peso || PESO_CARTA) * (i.qty || 1)), 0);
 }
 
-// ── POSTA NORMALE/RACCOMANDATA ──
 function costoNormale(pesoG) {
   if (pesoG <= 1000) return 7.95;
   if (pesoG <= 3000) return 10.30;
-  return 20.00; // oltre 3kg
+  return 20.00;
 }
 
-// ── POSTA ASSICURATA ──
-// Tabella: [pesoMax, [valMax50, valMax250, valMax500, valMax1000, valMax2000, valMax3000]]
 const TABELLA_ASSICURATA = [
   [20,   [6.65,  9.25,  11.95, 14.65, 17.35, 20.05]],
   [50,   [8.30,  10.90, 13.60, 16.30, 19.00, 21.70]],
@@ -280,27 +241,28 @@ const FASCE_VALORE = [50, 250, 500, 1000, 2000, 3000];
 
 function costoAssicurata(pesoG, valoreEur) {
   if (pesoG > 3000) return 20.00;
-  // Trova riga peso
   const riga = TABELLA_ASSICURATA.find(([max]) => pesoG <= max);
   if (!riga) return 20.00;
-  // Trova colonna valore
   const colIdx = FASCE_VALORE.findIndex(v => valoreEur <= v);
   const col = colIdx >= 0 ? colIdx : FASCE_VALORE.length - 1;
   return riga[1][col];
 }
 
-// Tipo spedizione selezionato — 'normale' o 'assicurata'
 let tipoSpedizione = 'normale';
 
 function calcTotals(items) {
-  const subtotale = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
-  const pesoG     = calcolaPeso(items);
+  const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  const pesoG      = calcolaPeso(items);
   const spedizione = tipoSpedizione === 'assicurata'
     ? costoAssicurata(pesoG, subtotale)
     : costoNormale(pesoG);
   return { subtotale, spedizione, totale: subtotale + spedizione, pesoG };
 }
 
+// ══════════════════════════════════════════════════════
+//  CARRELLO (localStorage)
+// ══════════════════════════════════════════════════════
+const CART_KEY = 'cp_cart';
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
@@ -368,9 +330,7 @@ function renderCart() {
     return;
   }
 
-  const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
-  const spedizione = subtotale >= SPEDIZIONE_SOGLIA ? 0 : SPEDIZIONE_COSTO;
-  const totale     = subtotale + spedizione;
+  const { subtotale, spedizione, totale, pesoG } = calcTotals(items);
 
   section.innerHTML = `
     <div class="cart-layout">
@@ -496,4 +456,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 </body>
-</html>
