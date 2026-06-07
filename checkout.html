@@ -212,6 +212,9 @@ async function loadSpedizione() {
     if (data) data.forEach(r => {
       if (r.chiave === 'peso_imballo') PESO_IMBALLO = parseInt(r.valore) || 20;
       if (r.chiave === 'peso_carta')   PESO_CARTA   = parseInt(r.valore) || 9;
+      if (r.chiave === 'racc_1000')    RACC_1000    = parseFloat(r.valore) || 7.95;
+      if (r.chiave === 'racc_3000')    RACC_3000    = parseFloat(r.valore) || 10.30;
+      if (r.chiave === 'racc_max')     RACC_MAX     = parseFloat(r.valore) || 20.00;
     });
   } catch(e) {}
 }

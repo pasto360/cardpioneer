@@ -205,6 +205,9 @@
 // ══════════════════════════════════════════════════════
 let PESO_IMBALLO = 20;
 let PESO_CARTA   = 9;
+let RACC_1000    = 7.95;
+let RACC_3000    = 10.30;
+let RACC_MAX     = 20.00;
 
 async function loadSpedizione() {
   try {
@@ -215,6 +218,9 @@ async function loadSpedizione() {
     if (data) data.forEach(r => {
       if (r.chiave === 'peso_imballo') PESO_IMBALLO = parseInt(r.valore) || 20;
       if (r.chiave === 'peso_carta')   PESO_CARTA   = parseInt(r.valore) || 9;
+      if (r.chiave === 'racc_1000')    RACC_1000    = parseFloat(r.valore) || 7.95;
+      if (r.chiave === 'racc_3000')    RACC_3000    = parseFloat(r.valore) || 10.30;
+      if (r.chiave === 'racc_max')     RACC_MAX     = parseFloat(r.valore) || 20.00;
     });
   } catch(e) {}
 }
@@ -224,9 +230,9 @@ function calcolaPeso(items) {
 }
 
 function costoNormale(pesoG) {
-  if (pesoG <= 1000) return 7.95;
-  if (pesoG <= 3000) return 10.30;
-  return 20.00;
+  if (pesoG <= 1000) return RACC_1000;
+  if (pesoG <= 3000) return RACC_3000;
+  return RACC_MAX;
 }
 
 const TABELLA_ASSICURATA = [

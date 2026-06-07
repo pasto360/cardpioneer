@@ -280,43 +280,94 @@
           </div>
           <div style="padding:28px">
 
-            <div style="margin-bottom:28px">
-              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">Spedizione</div>
-
+            <!-- PESI -->
+            <div style="margin-bottom:32px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">Pesi spedizione</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px">
                 <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">
-                    Soglia spedizione gratuita (€)
-                  </label>
-                  <input type="number" id="set-spedizione-soglia" min="0" step="1"
-                    class="admin-search" style="width:100%;padding:10px 14px"
-                    placeholder="es. 50">
-                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">
-                    0 = sempre gratis · 99999 = mai gratis
-                  </div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso imballo fisso (g)</label>
+                  <input type="number" id="set-peso-imballo" min="0" step="1"
+                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 20">
+                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Busta + bolletta + margine</div>
                 </div>
                 <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">
-                    Costo spedizione (€)
-                  </label>
-                  <input type="number" id="set-spedizione-costo" min="0" step="0.10"
-                    class="admin-search" style="width:100%;padding:10px 14px"
-                    placeholder="es. 5.90">
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso singola carta (g)</label>
+                  <input type="number" id="set-peso-carta" min="0" step="1"
+                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 9">
+                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Peso medio per carta</div>
                 </div>
               </div>
-
-              <div id="impostazioni-msg" style="display:none;font-size:12px;margin-top:12px;padding:8px 14px;border-radius:8px"></div>
-
-              <button onclick="saveImpostazioni()"
-                style="margin-top:16px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
-                       background:#f5e642;color:#1a0a2e;border:none;padding:11px 24px;
-                       border-radius:8px;cursor:pointer">
-                Salva impostazioni
-              </button>
             </div>
 
-            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:16px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.7;max-width:480px">
-              ℹ️ Le modifiche si applicano immediatamente a carrello e checkout per tutti gli utenti. Non è necessario aggiornare i file HTML.
+            <!-- RACCOMANDATA -->
+            <div style="margin-bottom:32px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">📬 Posta raccomandata</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px">
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Fino a 1000g (€)</label>
+                  <input type="number" id="set-racc-1000" min="0" step="0.05"
+                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="7.95">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">1001g – 3000g (€)</label>
+                  <input type="number" id="set-racc-3000" min="0" step="0.05"
+                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="10.30">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Oltre 3000g (€)</label>
+                  <input type="number" id="set-racc-max" min="0" step="0.05"
+                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="20.00">
+                </div>
+              </div>
+            </div>
+
+            <!-- TABELLA ASSICURATA (visualizzazione) -->
+            <div style="margin-bottom:28px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px">📮 Posta assicurata — tariffe vigenti</div>
+              <div style="overflow-x:auto">
+                <table style="border-collapse:collapse;font-size:11px;color:rgba(255,255,255,.6);min-width:600px">
+                  <thead>
+                    <tr>
+                      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">Peso</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">≤ €50</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">€51-250</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">€251-500</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">€501-1000</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">€1001-2000</th>
+                      <th style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.35)">€2001-3000</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${[
+                      ['≤ 20g',    [6.65, 9.25, 11.95, 14.65, 17.35, 20.05]],
+                      ['21-50g',   [8.30, 10.90, 13.60, 16.30, 19.00, 21.70]],
+                      ['51-100g',  [8.85, 11.45, 14.15, 16.85, 19.55, 22.25]],
+                      ['101-250g', [9.50, 12.10, 14.80, 17.50, 20.20, 22.90]],
+                      ['251-350g', [10.50, 13.10, 15.80, 18.50, 21.20, 23.90]],
+                      ['351-1000g',[12.75, 15.35, 18.05, 20.75, 23.45, 26.15]],
+                    ].map(([label, prezzi]) =>
+                      `<tr>
+                        <td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05);color:#fff;font-weight:500">${label}</td>
+                        ${prezzi.map(p => `<td style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05);text-align:center">€ ${p.toFixed(2).replace('.',',')}</td>`).join('')}
+                      </tr>`
+                    ).join('')}
+                  </tbody>
+                </table>
+              </div>
+              <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:8px">Le tariffe assicurate sono fisse. Contatta il provider per eventuali aggiornamenti.</div>
+            </div>
+
+            <div id="impostazioni-msg" style="display:none;font-size:12px;margin-top:12px;padding:8px 14px;border-radius:8px"></div>
+
+            <button onclick="saveImpostazioni()"
+              style="margin-top:4px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                     background:#f5e642;color:#1a0a2e;border:none;padding:11px 24px;
+                     border-radius:8px;cursor:pointer">
+              Salva impostazioni
+            </button>
+
+            <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:16px;font-size:12px;color:rgba(255,255,255,.4);line-height:1.7;max-width:600px;margin-top:20px">
+              ℹ️ Le modifiche si applicano immediatamente a carrello e checkout per tutti gli utenti.
             </div>
 
           </div>
@@ -995,26 +1046,34 @@ async function loadImpostazioni() {
   const { data } = await sb.from('impostazioni').select('chiave, valore');
   if (!data) return;
   data.forEach(r => {
-    if (r.chiave === 'spedizione_soglia') document.getElementById('set-spedizione-soglia').value = r.valore;
-    if (r.chiave === 'spedizione_costo')  document.getElementById('set-spedizione-costo').value  = r.valore;
+    if (r.chiave === 'peso_imballo') document.getElementById('set-peso-imballo').value = r.valore;
+    if (r.chiave === 'peso_carta')   document.getElementById('set-peso-carta').value   = r.valore;
+    if (r.chiave === 'racc_1000')    document.getElementById('set-racc-1000').value    = r.valore;
+    if (r.chiave === 'racc_3000')    document.getElementById('set-racc-3000').value    = r.valore;
+    if (r.chiave === 'racc_max')     document.getElementById('set-racc-max').value     = r.valore;
   });
+  // Valori default se non ancora in DB
+  if (!document.getElementById('set-racc-1000').value) document.getElementById('set-racc-1000').value = '7.95';
+  if (!document.getElementById('set-racc-3000').value) document.getElementById('set-racc-3000').value = '10.30';
+  if (!document.getElementById('set-racc-max').value)  document.getElementById('set-racc-max').value  = '20.00';
+  if (!document.getElementById('set-peso-imballo').value) document.getElementById('set-peso-imballo').value = '20';
+  if (!document.getElementById('set-peso-carta').value)   document.getElementById('set-peso-carta').value   = '9';
 }
 
 async function saveImpostazioni() {
-  const soglia = document.getElementById('set-spedizione-soglia').value;
-  const costo  = document.getElementById('set-spedizione-costo').value;
-  const msg    = document.getElementById('impostazioni-msg');
-
-  if (!soglia || !costo) {
-    msg.style.display = 'block';
-    msg.style.cssText += ';background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.3)';
-    msg.textContent = 'Inserisci entrambi i valori.';
-    return;
-  }
+  const pesoImballo = document.getElementById('set-peso-imballo').value;
+  const pesoCarta   = document.getElementById('set-peso-carta').value;
+  const racc1000    = document.getElementById('set-racc-1000').value;
+  const racc3000    = document.getElementById('set-racc-3000').value;
+  const raccMax     = document.getElementById('set-racc-max').value;
+  const msg         = document.getElementById('impostazioni-msg');
 
   const { error } = await sb.from('impostazioni').upsert([
-    { chiave: 'spedizione_soglia', valore: soglia },
-    { chiave: 'spedizione_costo',  valore: costo  },
+    { chiave: 'peso_imballo', valore: pesoImballo, nota: 'Peso fisso imballo in grammi' },
+    { chiave: 'peso_carta',   valore: pesoCarta,   nota: 'Peso singola carta in grammi' },
+    { chiave: 'racc_1000',    valore: racc1000,    nota: 'Raccomandata fino a 1000g' },
+    { chiave: 'racc_3000',    valore: racc3000,    nota: 'Raccomandata 1001-3000g' },
+    { chiave: 'racc_max',     valore: raccMax,     nota: 'Raccomandata oltre 3000g' },
   ]);
 
   msg.style.display = 'block';
@@ -1023,7 +1082,7 @@ async function saveImpostazioni() {
     msg.textContent = 'Errore: ' + error.message;
   } else {
     msg.style.cssText += ';background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.3)';
-    msg.textContent = '✅ Impostazioni salvate! Si applicano immediatamente.';
+    msg.textContent = '✅ Impostazioni salvate!';
     setTimeout(() => { msg.style.display = 'none'; }, 3000);
   }
 }
