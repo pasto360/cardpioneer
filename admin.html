@@ -195,6 +195,8 @@
       <hr class="admin-nav-divider">
       <div class="admin-nav-section">Report</div>
       <div class="admin-nav-item" onclick="showAdminPage('stats', this)">📊 Statistiche</div>
+      <div class="admin-nav-item" onclick="showAdminPage('utenti', this)">👥 Utenti</div>
+      <div class="admin-nav-item" onclick="showAdminPage('wishlist', this)">♥ Wishlist</div>
     </aside>
 
     <!-- CONTENT -->
@@ -227,7 +229,8 @@
       <div class="admin-page" id="page-prodotti">
         <div class="admin-table-wrap">
           <div class="admin-table-header">
-            <div class="admin-table-title">Prodotti</div>
+            <div class="admin-table-title">🎴 Prodotti</div>
+            <button onclick="showAddProdotto()" style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;background:#f5e642;color:#1a0a2e;border:none;padding:9px 16px;border-radius:8px;cursor:pointer">+ Nuovo prodotto</button>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <input type="text" id="searchProdotti" class="admin-search"
                      placeholder="Cerca nome, set, SKU..."
@@ -314,6 +317,51 @@
         <div class="stats-grid" id="statsGrid">
           <div class="admin-loading" style="grid-column:1/-1">Calcolo statistiche...</div>
         </div>
+        <!-- Traffico pagine -->
+        <div class="admin-table-wrap" style="margin-top:20px">
+          <div class="admin-table-header">
+            <div class="admin-table-title">📈 Traffico per pagina</div>
+            <div style="display:flex;gap:8px">
+              <select id="trafficoPeriodo" onchange="loadStats()"
+                style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;
+                       font-family:inherit;font-size:12px;padding:7px 12px;border-radius:8px;outline:none">
+                <option value="7">Ultimi 7 giorni</option>
+                <option value="30" selected>Ultimi 30 giorni</option>
+                <option value="90">Ultimi 90 giorni</option>
+                <option value="365">Ultimo anno</option>
+              </select>
+            </div>
+          </div>
+          <div id="trafficoWrap" style="padding:20px">
+            <div class="admin-loading">Caricamento...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── UTENTI ── -->
+      <div class="admin-page" id="page-utenti">
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <div class="admin-table-title">👥 Utenti iscritti</div>
+            <input type="text" id="searchUtenti" class="admin-search"
+                   placeholder="Cerca email..." oninput="filterUtenti()">
+          </div>
+          <div id="utentiWrap">
+            <div class="admin-loading">Caricamento utenti...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WISHLIST ── -->
+      <div class="admin-page" id="page-wishlist">
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <div class="admin-table-title">♥ Prodotti più desiderati</div>
+          </div>
+          <div id="wishlistWrap">
+            <div class="admin-loading">Caricamento wishlist...</div>
+          </div>
+        </div>
       </div>
 
     </main>
@@ -388,6 +436,8 @@ function showAdminPage(name, btn) {
   if (name === 'sconti')       loadSconti();
   if (name === 'impostazioni') loadImpostazioni();
   if (name === 'stats')        loadStats();
+  if (name === 'utenti')       loadUtenti();
+  if (name === 'wishlist')     loadWishlistAdmin();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -549,26 +599,108 @@ function renderProdotti() {
 
   const rows = items.map(p => {
     const qtyClass = p.disponibile === 0 ? 'qty-zero' : p.disponibile <= 2 ? 'qty-low' : 'qty-ok';
-    return `<tr>
+    return `<tr id="prod-row-${esc(p.sku)}">
       <td>
         <div class="prod-cell">
           <div class="prod-img"><img src="${esc(p.immagine||'')}" onerror="this.style.display='none'"></div>
-          <div><div class="prod-nome">${esc(p.nome||'')}</div><div class="prod-set">${esc(p.set_name||'')} · ${esc(p.lingua||'')} · ${esc(p.condizione||'')}</div></div>
+          <div>
+            <div class="prod-nome">${esc(p.nome||'')}</div>
+            <div class="prod-set">${esc(p.set_name||'')} · ${esc(p.lingua||'')} · ${esc(p.condizione||'')}</div>
+          </div>
         </div>
       </td>
       <td style="font-size:10px;color:rgba(255,255,255,0.3);font-family:monospace">${esc(p.sku||'')}</td>
       <td style="font-size:11px;color:rgba(255,255,255,0.4)">${esc(p.categoria||'')}</td>
-      <td><span class="qty-badge ${qtyClass}">${p.disponibile}</span></td>
-      <td class="ordine-importo" style="font-size:12px">€ ${parseFloat(p.prezzo||0).toFixed(2).replace('.',',')}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn btn-detail" onclick="editQty('${esc(p.sku)}',${p.disponibile})" title="Modifica stock">✏️</button>
+          <span class="qty-badge ${qtyClass}" id="qty-${esc(p.sku)}">${p.disponibile}</span>
+        </div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn btn-detail" onclick="editPrezzo('${esc(p.sku)}',${p.prezzo})" title="Modifica prezzo">✏️</button>
+          <span class="ordine-importo" style="font-size:12px" id="prezzo-${esc(p.sku)}">€ ${parseFloat(p.prezzo||0).toFixed(2).replace('.',',')}</span>
+        </div>
+      </td>
+      <td>
+        <button class="action-btn btn-annulla" onclick="disattivaProdotto('${esc(p.sku)}')" title="Azzera stock">🚫</button>
+      </td>
     </tr>`;
   }).join('');
 
   document.getElementById('prodottiTableWrap').innerHTML = `
     <table class="admin-table">
-      <thead><tr><th>Prodotto</th><th>SKU</th><th>Categoria</th><th>Stock</th><th>Prezzo</th></tr></thead>
+      <thead><tr><th>Prodotto</th><th>SKU</th><th>Categoria</th><th>Stock</th><th>Prezzo</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
+
+async function editQty(sku, current) {
+  const val = prompt(`Stock attuale: ${current}\nNuovo stock per "${sku}":`, current);
+  if (val === null) return;
+  const qty = parseInt(val);
+  if (isNaN(qty) || qty < 0) { alert('Valore non valido.'); return; }
+  const { error } = await sb.from('prodotti').update({ disponibile: qty }).eq('sku', sku);
+  if (error) { alert('Errore: ' + error.message); return; }
+  const el = document.getElementById(`qty-${sku}`);
+  if (el) { el.textContent = qty; el.className = `qty-badge ${qty===0?'qty-zero':qty<=2?'qty-low':'qty-ok'}`; }
+  const prod = allProdotti.find(p => p.sku === sku);
+  if (prod) prod.disponibile = qty;
+}
+
+async function editPrezzo(sku, current) {
+  const val = prompt(`Prezzo attuale: € ${parseFloat(current).toFixed(2)}\nNuovo prezzo per "${sku}" (es. 3.50):`, parseFloat(current).toFixed(2));
+  if (val === null) return;
+  const prezzo = parseFloat(val.replace(',','.'));
+  if (isNaN(prezzo) || prezzo < 0) { alert('Valore non valido.'); return; }
+  const { error } = await sb.from('prodotti').update({ prezzo }).eq('sku', sku);
+  if (error) { alert('Errore: ' + error.message); return; }
+  const el = document.getElementById(`prezzo-${sku}`);
+  if (el) el.textContent = '€ ' + prezzo.toFixed(2).replace('.',',');
+  const prod = allProdotti.find(p => p.sku === sku);
+  if (prod) prod.prezzo = prezzo;
+}
+
+async function disattivaProdotto(sku) {
+  if (!confirm(`Azzerare lo stock di ${sku}?`)) return;
+  await sb.from('prodotti').update({ disponibile: 0 }).eq('sku', sku);
+  const el = document.getElementById(`qty-${sku}`);
+  if (el) { el.textContent = '0'; el.className = 'qty-badge qty-zero'; }
+  const prod = allProdotti.find(p => p.sku === sku);
+  if (prod) prod.disponibile = 0;
+}
+
+function showAddProdotto() { document.getElementById('modal-add-prod').classList.add('open'); }
+function closeAddProdotto() { document.getElementById('modal-add-prod').classList.remove('open'); }
+
+async function saveNewProdotto() {
+  const get = id => document.getElementById(id)?.value.trim();
+  const data = {
+    categoria: get('add-cat'), set_name: get('add-set'), lingua: get('add-lingua')||'ITA',
+    nome: get('add-nome'), nome_completo: get('add-nome-completo'), condizione: get('add-condizione'),
+    sku: get('add-sku'), prezzo: parseFloat(get('add-prezzo')?.replace(',','.'))||0,
+    disponibile: parseInt(get('add-stock'))||0, immagine: get('add-immagine'),
+  };
+  if (!data.sku || !data.nome || !data.categoria) { showAddMsg('SKU, Nome e Categoria sono obbligatori.',false); return; }
+  const { error } = await sb.from('prodotti').insert([data]);
+  if (error) { showAddMsg('Errore: '+(error.message.includes('unique')?'SKU già esistente.':error.message),false); return; }
+  showAddMsg('✅ Prodotto aggiunto!', true);
+  ['add-cat','add-set','add-lingua','add-nome','add-nome-completo','add-condizione','add-sku','add-prezzo','add-stock','add-immagine']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  await loadProdotti();
+}
+
+function showAddMsg(text, ok) {
+  const el = document.getElementById('add-prod-msg');
+  el.style.display='block';
+  el.style.background = ok ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)';
+  el.style.color = ok ? '#34d399' : '#f87171';
+  el.style.border = ok ? '1px solid rgba(52,211,153,.3)' : '1px solid rgba(248,113,113,.3)';
+  el.style.borderRadius = '8px'; el.style.padding = '8px 14px'; el.style.fontSize = '12px';
+  el.textContent = text;
+}
+
 
 // ═══════════════════════════════════════════════════════
 //  SCONTI
@@ -612,21 +744,157 @@ async function toggleSconto(id, nuovoStato) {
 //  STATISTICHE
 // ═══════════════════════════════════════════════════════
 async function loadStats() {
-  const [{ data: ordini }, { data: prodotti }] = await Promise.all([
+  const giorni  = parseInt(document.getElementById('trafficoPeriodo')?.value || 30);
+  const dataDa  = new Date(Date.now() - giorni * 86400000).toISOString();
+
+  const [
+    { data: ordini },
+    { data: prodotti },
+    { data: visite },
+    { data: utenti }
+  ] = await Promise.all([
     sb.from('ordini').select('totale, stato, created_at, pagamento'),
     sb.from('prodotti').select('disponibile, categoria'),
+    sb.from('visite').select('pagina, created_at').gte('created_at', dataDa),
+    sb.rpc('get_utenti_admin').select('id'),
   ]);
 
-  const confermati = (ordini||[]).filter(o => o.stato === 'confermato' || o.stato === 'spedito');
+  const confermati = (ordini||[]).filter(o => ['confermato','spedito'].includes(o.stato));
   const inAttesa   = (ordini||[]).filter(o => o.stato === 'in_attesa');
   const fatturato  = confermati.reduce((s,o) => s + parseFloat(o.totale||0), 0);
   const esauriti   = (prodotti||[]).filter(p => p.disponibile === 0).length;
+  const totVisite  = (visite||[]).length;
+  const totUtenti  = (utenti||[]).length;
 
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card yellow"><div class="stat-card-label">Fatturato totale</div><div class="stat-card-val">€ ${fatturato.toFixed(0)}</div><div class="stat-card-sub">Ordini confermati + spediti</div></div>
     <div class="stat-card pink"><div class="stat-card-label">Ordini totali</div><div class="stat-card-val">${(ordini||[]).length}</div><div class="stat-card-sub">${inAttesa.length} in attesa di pagamento</div></div>
-    <div class="stat-card green"><div class="stat-card-label">Prodotti a catalogo</div><div class="stat-card-val">${(prodotti||[]).length}</div><div class="stat-card-sub">${esauriti} esauriti</div></div>
-    <div class="stat-card purple"><div class="stat-card-label">Ordini confermati</div><div class="stat-card-val">${confermati.length}</div><div class="stat-card-sub">PayPal + bonifico</div></div>`;
+    <div class="stat-card green"><div class="stat-card-label">Utenti iscritti</div><div class="stat-card-val">${totUtenti}</div><div class="stat-card-sub">Registrati sul sito</div></div>
+    <div class="stat-card purple"><div class="stat-card-label">Visite (${giorni}gg)</div><div class="stat-card-val">${totVisite}</div><div class="stat-card-sub">${esauriti} prodotti esauriti</div></div>`;
+
+  // Traffico per pagina
+  const counts = {};
+  (visite||[]).forEach(v => { counts[v.pagina] = (counts[v.pagina]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const totale = sorted.reduce((s,[,n]) => s+n, 0);
+
+  if (!sorted.length) {
+    document.getElementById('trafficoWrap').innerHTML = '<div class="admin-empty">Nessuna visita registrata nel periodo.</div>';
+    return;
+  }
+
+  document.getElementById('trafficoWrap').innerHTML = sorted.map(([pagina, n]) => {
+    const pct = totale ? Math.round(n / totale * 100) : 0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:13px;color:#fff;font-weight:500">${esc(pagina)}</span>
+        <span style="font-size:12px;color:rgba(255,255,255,.4)">${n} visite · ${pct}%</span>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#e8107a,#f5e642);border-radius:3px;transition:width .4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTENTI
+// ═══════════════════════════════════════════════════════
+let allUtenti = [];
+
+async function loadUtenti() {
+  const { data, error } = await sb.rpc('get_utenti_admin');
+  if (error) {
+    document.getElementById('utentiWrap').innerHTML =
+      '<div class="admin-empty">Errore caricamento utenti: ' + error.message + '</div>';
+    return;
+  }
+  allUtenti = data || [];
+  renderUtenti();
+}
+
+function filterUtenti() {
+  renderUtenti();
+}
+
+function renderUtenti() {
+  const q = (document.getElementById('searchUtenti')?.value || '').toLowerCase();
+  const items = q ? allUtenti.filter(u => u.email?.toLowerCase().includes(q)) : allUtenti;
+
+  if (!items.length) {
+    document.getElementById('utentiWrap').innerHTML = '<div class="admin-empty">Nessun utente trovato.</div>';
+    return;
+  }
+
+  const rows = items.map(u => {
+    const data       = u.created_at ? new Date(u.created_at).toLocaleDateString('it-IT') : '—';
+    const lastLogin  = u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('it-IT') : 'Mai';
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3)">${u.id?.substring(0,8)}...</td>
+      <td style="color:#fff;font-weight:500">${esc(u.email||'—')}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${data}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${lastLogin}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('utentiWrap').innerHTML = `
+    <div style="padding:12px 20px;font-size:11px;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06)">
+      ${items.length} utenti iscritti
+    </div>
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Email</th><th>Iscritto il</th><th>Ultimo accesso</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  WISHLIST ADMIN
+// ═══════════════════════════════════════════════════════
+async function loadWishlistAdmin() {
+  const { data, error } = await sb
+    .from('wishlist')
+    .select('prodotto_sku');
+
+  if (error || !data?.length) {
+    document.getElementById('wishlistWrap').innerHTML =
+      '<div class="admin-empty">Nessun prodotto nella wishlist degli utenti.</div>';
+    return;
+  }
+
+  // Conta per SKU
+  const counts = {};
+  data.forEach(r => { counts[r.prodotto_sku] = (counts[r.prodotto_sku]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 50);
+
+  // Recupera dettagli prodotti
+  const skus = sorted.map(([sku]) => sku);
+  const { data: prodotti } = await sb
+    .from('prodotti')
+    .select('sku, nome, set_name, lingua, prezzo, disponibile')
+    .in('sku', skus);
+
+  const prodMap = {};
+  (prodotti||[]).forEach(p => { prodMap[p.sku] = p; });
+
+  const rows = sorted.map(([sku, n]) => {
+    const p = prodMap[sku];
+    const disponibile = p ? p.disponibile : '?';
+    const qtyClass = disponibile === 0 ? 'qty-zero' : disponibile <= 2 ? 'qty-low' : 'qty-ok';
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3)">${esc(sku)}</td>
+      <td style="color:#fff;font-weight:500">${p ? esc(p.nome) : '—'}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${p ? esc(p.set_name)+' · '+esc(p.lingua) : '—'}</td>
+      <td style="font-family:var(--fu);font-size:13px;color:#e8107a;font-weight:700">${n} ♥</td>
+      <td><span class="qty-badge ${qtyClass}">${disponibile}</span></td>
+      <td style="font-size:12px;color:rgba(255,255,255,.5)">${p ? '€ '+parseFloat(p.prezzo).toFixed(2).replace('.',',') : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('wishlistWrap').innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>SKU</th><th>Prodotto</th><th>Set · Lingua</th><th>Desideri</th><th>Stock</th><th>Prezzo</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -684,5 +952,91 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+<!-- MODAL NUOVO PRODOTTO -->
+<div class="modal-overlay" id="modal-add-prod" onclick="if(event.target===this)closeAddProdotto()">
+  <div class="modal-box" style="max-width:640px">
+    <button class="modal-close" onclick="closeAddProdotto()">×</button>
+    <div class="modal-title">➕ Nuovo prodotto</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Categoria *</label>
+        <select id="add-cat" class="admin-search" style="width:100%;padding:9px 12px">
+          <option value="">— seleziona —</option>
+          <option value="carte">carte</option>
+          <option value="buste">buste</option>
+          <option value="etb">etb</option>
+          <option value="altro">altro</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">SKU * (univoco)</label>
+        <input type="text" id="add-sku" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. B010">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Nome *</label>
+        <input type="text" id="add-nome" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. Charizard">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Nome completo</label>
+        <input type="text" id="add-nome-completo" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. BS04 - 4/102 Charizard - Rara Holo - MT">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Set / Espansione</label>
+        <input type="text" id="add-set" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. Set Base">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Lingua</label>
+        <select id="add-lingua" class="admin-search" style="width:100%;padding:9px 12px">
+          <option value="ITA">ITA</option>
+          <option value="ENG">ENG</option>
+          <option value="JP">JP</option>
+          <option value="FR">FR</option>
+          <option value="DE">DE</option>
+          <option value="ES">ES</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Condizione</label>
+        <select id="add-condizione" class="admin-search" style="width:100%;padding:9px 12px">
+          <option value="">—</option>
+          <option value="MT">MT</option>
+          <option value="MN">MN</option>
+          <option value="EX">EX</option>
+          <option value="GD">GD</option>
+          <option value="OL">OL</option>
+          <option value="PL">PL</option>
+          <option value="PO">PO</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Prezzo (€)</label>
+        <input type="number" id="add-prezzo" min="0" step="0.01" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. 3.50">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Stock disponibile</label>
+        <input type="number" id="add-stock" min="0" step="1" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. 1" value="1">
+      </div>
+      <div>
+        <label style="font-size:10px;color:rgba(255,255,255,.4);display:block;margin-bottom:4px">Immagine (percorso)</label>
+        <input type="text" id="add-immagine" class="admin-search" style="width:100%;padding:9px 12px" placeholder="es. images/B010.jpg">
+      </div>
+    </div>
+    <div id="add-prod-msg" style="display:none;margin-top:12px"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveNewProdotto()"
+        style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+               background:#f5e642;color:#1a0a2e;border:none;padding:12px 24px;
+               border-radius:8px;cursor:pointer">
+        Salva prodotto
+      </button>
+      <button onclick="closeAddProdotto()"
+        style="font-size:11px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);
+               border:1px solid rgba(255,255,255,.1);padding:11px 20px;border-radius:8px;cursor:pointer">
+        Annulla
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
