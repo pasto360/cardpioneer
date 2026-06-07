@@ -960,7 +960,9 @@ function filterUtenti() {
 
 function renderUtenti() {
   const q = (document.getElementById('searchUtenti')?.value || '').toLowerCase();
-  const items = q ? allUtenti.filter(u => u.email?.toLowerCase().includes(q)) : allUtenti;
+  const items = q ? allUtenti.filter(u =>
+    [u.email, u.nome, u.cognome, u.citta].join(' ').toLowerCase().includes(q)
+  ) : allUtenti;
 
   if (!items.length) {
     document.getElementById('utentiWrap').innerHTML = '<div class="admin-empty">Nessun utente trovato.</div>';
@@ -968,22 +970,42 @@ function renderUtenti() {
   }
 
   const rows = items.map(u => {
-    const data       = u.created_at ? new Date(u.created_at).toLocaleDateString('it-IT') : '—';
-    const lastLogin  = u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('it-IT') : 'Mai';
+    const iscrittoIl  = u.created_at ? new Date(u.created_at).toLocaleDateString('it-IT') : '—';
+    const ultimoAcces = u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('it-IT') : 'Mai';
+    const mailConf    = u.email_confirmed
+      ? '<span style="color:#34d399;font-size:11px">✅ Confermata</span>'
+      : '<span style="color:#f87171;font-size:11px">❌ Non confermata</span>';
+    const newsletter  = u.newsletter
+      ? '<span style="color:#34d399;font-size:11px">✅ Sì</span>'
+      : '<span style="color:rgba(255,255,255,.25);font-size:11px">No</span>';
     return `<tr>
-      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3)">${u.id?.substring(0,8)}...</td>
-      <td style="color:#fff;font-weight:500">${esc(u.email||'—')}</td>
-      <td style="font-size:11px;color:rgba(255,255,255,.4)">${data}</td>
-      <td style="font-size:11px;color:rgba(255,255,255,.4)">${lastLogin}</td>
+      <td>
+        <div style="color:#fff;font-weight:500">${esc((u.nome||'') + ' ' + (u.cognome||'')).trim() || '—'}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:1px">${esc(u.email||'—')}</div>
+      </td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${esc(u.citta||'—')}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${iscrittoIl}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${ultimoAcces}</td>
+      <td>${mailConf}</td>
+      <td>${newsletter}</td>
     </tr>`;
   }).join('');
 
   document.getElementById('utentiWrap').innerHTML = `
     <div style="padding:12px 20px;font-size:11px;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06)">
       ${items.length} utenti iscritti
+      — <span style="color:#34d399">${items.filter(u=>u.email_confirmed).length} confermati</span>
+      — <span style="color:#f5e642">${items.filter(u=>u.newsletter).length} newsletter</span>
     </div>
     <table class="admin-table">
-      <thead><tr><th>ID</th><th>Email</th><th>Iscritto il</th><th>Ultimo accesso</th></tr></thead>
+      <thead><tr>
+        <th>Nome / Email</th>
+        <th>Città</th>
+        <th>Iscritto il</th>
+        <th>Ultimo accesso</th>
+        <th>Email</th>
+        <th>Newsletter</th>
+      </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
