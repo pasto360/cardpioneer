@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
   <!-- PayPal SDK Sandbox -->
   <script src="https://www.paypal.com/sdk/js?client-id=AeAL4f3w2DKr52UgJnjLu_CV9beiiw5JmTBfUcA7wzvW86gUpn-ZkCWCTBpQH4sHz8NUWZHONHa7ZA59&currency=EUR&locale=it_IT"></script>
   <!-- EmailJS -->
@@ -197,6 +198,74 @@ async function loadSpedizione() {
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
 // ══════════════════════════════════════════════════════
+//  CONFIGURAZIONE SPEDIZIONE
+// ══════════════════════════════════════════════════════
+let PESO_IMBALLO = 20;   // grammi fissi per imballo
+let PESO_CARTA   = 9;    // grammi per singola carta
+
+async function loadSpedizione() {
+  try {
+    const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) data.forEach(r => {
+      if (r.chiave === 'peso_imballo') PESO_IMBALLO = parseInt(r.valore) || 20;
+      if (r.chiave === 'peso_carta')   PESO_CARTA   = parseInt(r.valore) || 9;
+    });
+  } catch(e) {}
+}
+
+// Calcola peso totale ordine in grammi
+function calcolaPeso(items) {
+  const pesoArticoli = items.reduce((s, i) => s + (parseFloat(i.peso || PESO_CARTA) * (i.qty || 1)), 0);
+  return PESO_IMBALLO + pesoArticoli;
+}
+
+// ── POSTA NORMALE/RACCOMANDATA ──
+function costoNormale(pesoG) {
+  if (pesoG <= 1000) return 7.95;
+  if (pesoG <= 3000) return 10.30;
+  return 20.00; // oltre 3kg
+}
+
+// ── POSTA ASSICURATA ──
+// Tabella: [pesoMax, [valMax50, valMax250, valMax500, valMax1000, valMax2000, valMax3000]]
+const TABELLA_ASSICURATA = [
+  [20,   [6.65,  9.25,  11.95, 14.65, 17.35, 20.05]],
+  [50,   [8.30,  10.90, 13.60, 16.30, 19.00, 21.70]],
+  [100,  [8.85,  11.45, 14.15, 16.85, 19.55, 22.25]],
+  [250,  [9.50,  12.10, 14.80, 17.50, 20.20, 22.90]],
+  [350,  [10.50, 13.10, 15.80, 18.50, 21.20, 23.90]],
+  [1000, [12.75, 15.35, 18.05, 20.75, 23.45, 26.15]],
+];
+const FASCE_VALORE = [50, 250, 500, 1000, 2000, 3000];
+
+function costoAssicurata(pesoG, valoreEur) {
+  if (pesoG > 3000) return 20.00;
+  // Trova riga peso
+  const riga = TABELLA_ASSICURATA.find(([max]) => pesoG <= max);
+  if (!riga) return 20.00;
+  // Trova colonna valore
+  const colIdx = FASCE_VALORE.findIndex(v => valoreEur <= v);
+  const col = colIdx >= 0 ? colIdx : FASCE_VALORE.length - 1;
+  return riga[1][col];
+}
+
+// Tipo spedizione selezionato — 'normale' o 'assicurata'
+let tipoSpedizione = 'normale';
+
+function calcTotals(items) {
+  const subtotale = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  const pesoG     = calcolaPeso(items);
+  const spedizione = tipoSpedizione === 'assicurata'
+    ? costoAssicurata(pesoG, subtotale)
+    : costoNormale(pesoG);
+  return { subtotale, spedizione, totale: subtotale + spedizione, pesoG };
+}
+
+
+// ══════════════════════════════════════════════════════
 //  CARRELLO
 // ══════════════════════════════════════════════════════
 function getCart() {
@@ -211,15 +280,7 @@ function clearCart() {
 // Sconto attivo (popolato da verifyDiscount)
 let activeDiscount = null; // { codice, tipo, valore, sconto_importo }
 
-function calcTotals(items) {
-  const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
-  let sconto = 0;
-  if (activeDiscount) {
-    sconto = activeDiscount.tipo === 'percentuale'
-      ? subtotale * (activeDiscount.valore / 100)
-      : Math.min(activeDiscount.valore, subtotale);
-    sconto = Math.round(sconto * 100) / 100;
-  }
+
   const subtotale_scontato = subtotale - sconto;
   const spedizione = subtotale_scontato >= SPEDIZIONE_SOGLIA ? 0 : SPEDIZIONE_COSTO;
   return { subtotale, sconto, subtotale_scontato, spedizione, totale: subtotale_scontato + spedizione };
@@ -327,9 +388,32 @@ function renderCheckout() {
         </div>
       </div>
 
+      <!-- TIPO SPEDIZIONE -->
+      <div class="checkout-card" style="margin-bottom:20px">
+        <div class="checkout-card-title"><span>2</span> Tipo di spedizione</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:12px;border:2px solid var(--border);border-radius:10px" id="sped-opt-normale"
+            onclick="tipoSpedizione='normale';renderCheckout()">
+            <input type="radio" name="tipoSpedCh" value="normale" checked style="accent-color:var(--pink);margin-top:2px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">📬 Posta raccomandata</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Tracciabile, senza assicurazione. Consigliata per ordini sotto €50.</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:12px;border:2px solid var(--border);border-radius:10px" id="sped-opt-assicurata"
+            onclick="tipoSpedizione='assicurata';renderCheckout()">
+            <input type="radio" name="tipoSpedCh" value="assicurata" style="accent-color:var(--pink);margin-top:2px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--dark)">📮 Posta assicurata</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Copre il valore in caso di smarrimento. Consigliata per ordini di valore.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <!-- METODO PAGAMENTO -->
       <div class="checkout-card">
-        <div class="checkout-card-title"><span>2</span> Metodo di pagamento</div>
+        <div class="checkout-card-title"><span>3</span> Metodo di pagamento</div>
         <div class="payment-options">
           <label class="payment-option selected" id="opt-paypal" onclick="selectPayment('paypal')">
             <input type="radio" name="payment" value="paypal" checked>
@@ -392,8 +476,8 @@ function renderCheckout() {
         <span>− € ${sconto.toFixed(2).replace('.',',')}</span>
       </div>` : ''}
       <div class="summary-row">
-        <span>Spedizione</span>
-        <span>${spedizione === 0 ? '<span style="color:#059669;font-weight:600">Gratis</span>' : '€ ' + spedizione.toFixed(2).replace('.',',')}</span>
+        <span>${tipoSpedizione === 'assicurata' ? '📮 Posta assicurata' : '📬 Posta raccomandata'} <span style="font-size:10px;color:var(--light)">(${pesoG}g)</span></span>
+        <span style="font-weight:600">€ ${spedizione.toFixed(2).replace('.',',')}</span>
       </div>
       <div class="summary-row total"><span>Totale</span><span>€ ${totale.toFixed(2).replace('.',',')}</span></div>
       <div style="margin-top:16px;font-size:11px;color:var(--light);text-align:center;line-height:1.6">
@@ -586,7 +670,7 @@ async function saveOrder(items, totals, formData, pagamento, paypalOrderId = nul
     cap:            formData.cap,
     citta:          formData.citta,
     nazione:        formData.nazione,
-    note:           formData.note,
+    note:           (formData.note ? formData.note + ' | ' : '') + 'Spedizione: ' + (tipoSpedizione === 'assicurata' ? 'Posta assicurata' : 'Posta raccomandata'),
     paypal_order_id: paypalOrderId,
     codice_sconto:  activeDiscount?.codice || null,
     sconto_importo: sconto || 0,

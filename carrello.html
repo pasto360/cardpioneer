@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
   <script src="carrello.js"></script>
   <style>
     .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
@@ -233,6 +234,74 @@ const SPEDIZIONE_LABEL   = 'Spedizione standard (3-5 giorni)';
 // ══════════════════════════════════════════════════════
 const CART_KEY = 'cp_cart';
 
+// ══════════════════════════════════════════════════════
+//  CONFIGURAZIONE SPEDIZIONE
+// ══════════════════════════════════════════════════════
+let PESO_IMBALLO = 20;   // grammi fissi per imballo
+let PESO_CARTA   = 9;    // grammi per singola carta
+
+async function loadSpedizione() {
+  try {
+    const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) data.forEach(r => {
+      if (r.chiave === 'peso_imballo') PESO_IMBALLO = parseInt(r.valore) || 20;
+      if (r.chiave === 'peso_carta')   PESO_CARTA   = parseInt(r.valore) || 9;
+    });
+  } catch(e) {}
+}
+
+// Calcola peso totale ordine in grammi
+function calcolaPeso(items) {
+  const pesoArticoli = items.reduce((s, i) => s + (parseFloat(i.peso || PESO_CARTA) * (i.qty || 1)), 0);
+  return PESO_IMBALLO + pesoArticoli;
+}
+
+// ── POSTA NORMALE/RACCOMANDATA ──
+function costoNormale(pesoG) {
+  if (pesoG <= 1000) return 7.95;
+  if (pesoG <= 3000) return 10.30;
+  return 20.00; // oltre 3kg
+}
+
+// ── POSTA ASSICURATA ──
+// Tabella: [pesoMax, [valMax50, valMax250, valMax500, valMax1000, valMax2000, valMax3000]]
+const TABELLA_ASSICURATA = [
+  [20,   [6.65,  9.25,  11.95, 14.65, 17.35, 20.05]],
+  [50,   [8.30,  10.90, 13.60, 16.30, 19.00, 21.70]],
+  [100,  [8.85,  11.45, 14.15, 16.85, 19.55, 22.25]],
+  [250,  [9.50,  12.10, 14.80, 17.50, 20.20, 22.90]],
+  [350,  [10.50, 13.10, 15.80, 18.50, 21.20, 23.90]],
+  [1000, [12.75, 15.35, 18.05, 20.75, 23.45, 26.15]],
+];
+const FASCE_VALORE = [50, 250, 500, 1000, 2000, 3000];
+
+function costoAssicurata(pesoG, valoreEur) {
+  if (pesoG > 3000) return 20.00;
+  // Trova riga peso
+  const riga = TABELLA_ASSICURATA.find(([max]) => pesoG <= max);
+  if (!riga) return 20.00;
+  // Trova colonna valore
+  const colIdx = FASCE_VALORE.findIndex(v => valoreEur <= v);
+  const col = colIdx >= 0 ? colIdx : FASCE_VALORE.length - 1;
+  return riga[1][col];
+}
+
+// Tipo spedizione selezionato — 'normale' o 'assicurata'
+let tipoSpedizione = 'normale';
+
+function calcTotals(items) {
+  const subtotale = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
+  const pesoG     = calcolaPeso(items);
+  const spedizione = tipoSpedizione === 'assicurata'
+    ? costoAssicurata(pesoG, subtotale)
+    : costoNormale(pesoG);
+  return { subtotale, spedizione, totale: subtotale + spedizione, pesoG };
+}
+
+
 function getCart() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
   catch(e) { return []; }
@@ -335,37 +404,29 @@ function renderCart() {
           <span>Subtotale (${items.reduce((s,i)=>s+i.qty,0)} articoli)</span>
           <span>€ ${subtotale.toFixed(2).replace('.',',')}</span>
         </div>
-        <div class="summary-row">
-          <span>${SPEDIZIONE_LABEL}</span>
-          <span>${spedizione === 0 ? '<span style="color:#059669;font-weight:600">Gratis</span>' : '€ ' + spedizione.toFixed(2).replace('.',',')}</span>
+        <!-- Selettore tipo spedizione -->
+        <div style="margin:12px 0;padding:12px;background:var(--bg);border-radius:8px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Tipo spedizione</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--dark)">
+              <input type="radio" name="tipoSped" value="normale" ${tipoSpedizione==='normale'?'checked':''}
+                onchange="tipoSpedizione='normale';renderCart()" style="accent-color:var(--pink)">
+              <span><strong>Posta raccomandata</strong> <span style="color:var(--muted);font-size:12px">— € ${costoNormale(pesoG).toFixed(2).replace('.',',')}</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--dark)">
+              <input type="radio" name="tipoSped" value="assicurata" ${tipoSpedizione==='assicurata'?'checked':''}
+                onchange="tipoSpedizione='assicurata';renderCart()" style="accent-color:var(--pink)">
+              <span><strong>Posta assicurata</strong> <span style="color:var(--muted);font-size:12px">— € ${costoAssicurata(pesoG, subtotale).toFixed(2).replace('.',',')}</span></span>
+            </label>
+          </div>
+          <div style="font-size:10px;color:var(--light);margin-top:8px">📦 Peso stimato: ${pesoG}g</div>
         </div>
-
-        ${spedizione > 0 ? `
-        <div class="summary-shipping">
-          📦 Aggiungi <strong>€ ${(SPEDIZIONE_SOGLIA - subtotale).toFixed(2).replace('.',',')}</strong> per la spedizione gratuita
-        </div>` : `
-        <div class="summary-shipping">
-          🎉 Hai la <strong>spedizione gratuita!</strong>
-        </div>`}
-
-        <div class="summary-row total">
-          <span>Totale</span>
-          <span>€ ${totale.toFixed(2).replace('.',',')}</span>
-        </div>
-
-        <a href="checkout.html" class="btn-fill" style="display:block;text-align:center;margin-top:20px;padding:14px;font-size:12px">
-          Procedi al checkout →
-        </a>
-
-        <div class="summary-note">
-          🔒 Pagamento sicuro via PayPal o Bonifico<br>
-          Accettato anche per utenti non registrati
-        </div>
-
+        <div class="summary-row"><span>Spedizione</span><span style="font-weight:600">€ ${spedizione.toFixed(2).replace('.',',')}</span></div>
+        <div class="summary-row total"><span>Totale</span><span>€ ${totale.toFixed(2).replace('.',',')}</span></div>
+        <a href="checkout.html" class="btn-fill" style="display:block;text-align:center;margin-top:20px;padding:14px;font-size:12px">Procedi al checkout →</a>
+        <div class="summary-note">🔒 Pagamento sicuro via PayPal o Bonifico</div>
         <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
         <div style="display:flex;gap:8px;justify-content:center">
-          <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg"
-               alt="PayPal" style="height:20px;border-radius:3px" onerror="this.style.display='none'">
           <span style="font-size:11px;color:var(--light);line-height:20px">PayPal · Bonifico bancario</span>
         </div>
       </div>
