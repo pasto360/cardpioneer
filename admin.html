@@ -252,9 +252,50 @@
 
       <!-- ── SCONTI ── -->
       <div class="admin-page" id="page-sconti">
+        <div class="admin-table-wrap" style="margin-bottom:20px">
+          <div class="admin-table-header">
+            <div class="admin-table-title">➕ Nuovo codice sconto</div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Codice</label>
+              <input type="text" id="new-codice" class="admin-search" style="width:100%;padding:9px 12px;text-transform:uppercase"
+                placeholder="es. ESTATE26" oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Tipo</label>
+              <select id="new-tipo" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:12px;padding:9px 12px;border-radius:8px;outline:none">
+                <option value="percentuale">Percentuale (%)</option>
+                <option value="fisso">Fisso (€)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Valore</label>
+              <input type="number" id="new-valore" class="admin-search" style="width:100%;padding:9px 12px"
+                placeholder="es. 10" min="0" step="0.01">
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Max utilizzi</label>
+              <input type="number" id="new-uso-max" class="admin-search" style="width:100%;padding:9px 12px"
+                placeholder="vuoto = ∞" min="1" step="1">
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Scadenza</label>
+              <input type="date" id="new-data-fine" class="admin-search" style="width:100%;padding:9px 12px">
+            </div>
+            <button onclick="createSconto()"
+              style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;
+                     background:#f5e642;color:#1a0a2e;border:none;padding:10px 16px;
+                     border-radius:8px;cursor:pointer;white-space:nowrap;height:38px">
+              Crea →
+            </button>
+          </div>
+          <div id="new-sconto-msg" style="display:none;font-size:12px;margin:0 20px 16px;padding:8px 14px;border-radius:8px"></div>
+        </div>
+
         <div class="admin-table-wrap">
           <div class="admin-table-header">
-            <div class="admin-table-title">Codici sconto</div>
+            <div class="admin-table-title">🏷️ Codici sconto</div>
           </div>
           <div id="scontiTableWrap">
             <div class="admin-loading">Caricamento sconti...</div>
@@ -769,32 +810,70 @@ function showAddMsg(text, ok) {
 // ═══════════════════════════════════════════════════════
 async function loadSconti() {
   const { data } = await sb.from('sconti').select('*').order('created_at', { ascending: false });
-  if (!data?.length) { document.getElementById('scontiTableWrap').innerHTML = '<div class="admin-empty">Nessun codice sconto creato.</div>'; return; }
-
+  if (!data?.length) {
+    document.getElementById('scontiTableWrap').innerHTML = '<div class="admin-empty">Nessun codice sconto. Creane uno sopra.</div>';
+    return;
+  }
   const rows = data.map(s => {
-    const valLabel = s.tipo === 'percentuale' ? `${s.valore}%` : `€ ${s.valore}`;
+    const valLabel = s.tipo === 'percentuale' ? `${s.valore}%` : `€ ${parseFloat(s.valore).toFixed(2).replace('.',',')}`;
     const scadenza = s.data_fine ? new Date(s.data_fine).toLocaleDateString('it-IT') : '∞';
     const utilizzi = s.uso_max ? `${s.uso_count} / ${s.uso_max}` : `${s.uso_count} / ∞`;
+    const scaduto  = s.data_fine && new Date(s.data_fine) < new Date();
     return `<tr>
-      <td><strong style="color:#fff;font-family:monospace;font-size:13px">${esc(s.codice)}</strong></td>
-      <td style="color:rgba(255,255,255,0.5)">${esc(s.tipo)} — ${valLabel}</td>
-      <td><span class="stato-badge ${s.attivo ? 'stato-confermato' : 'stato-annullato'}">${s.attivo ? '✅ Attivo' : '❌ Disattivo'}</span></td>
-      <td style="color:rgba(255,255,255,0.4);font-size:11px">${utilizzi}</td>
-      <td style="color:rgba(255,255,255,0.4);font-size:11px">${scadenza}</td>
+      <td><strong style="color:#fff;font-family:monospace;font-size:13px;letter-spacing:.04em">${esc(s.codice)}</strong></td>
+      <td style="color:rgba(255,255,255,.5)">${esc(s.tipo)} — <strong>${valLabel}</strong></td>
+      <td><span class="stato-badge ${s.attivo && !scaduto ? 'stato-confermato' : 'stato-annullato'}">${s.attivo && !scaduto ? '✅ Attivo' : scaduto ? '⏰ Scaduto' : '❌ Disattivo'}</span></td>
+      <td style="color:rgba(255,255,255,.4);font-size:11px">${utilizzi}</td>
+      <td style="color:rgba(255,255,255,.4);font-size:11px">${scadenza}</td>
       <td>
-        <button class="action-btn ${s.attivo ? 'btn-annulla' : 'btn-conferma'}"
-          onclick="toggleSconto('${s.id}', ${!s.attivo})">
-          ${s.attivo ? 'Disattiva' : 'Attiva'}
-        </button>
+        <div style="display:flex;gap:6px">
+          <button class="action-btn ${s.attivo ? 'btn-annulla' : 'btn-conferma'}" onclick="toggleSconto('${s.id}', ${!s.attivo})">${s.attivo ? 'Disattiva' : 'Attiva'}</button>
+          <button class="action-btn" onclick="deleteSconto('${s.id}','${s.codice}')" style="background:rgba(127,29,29,.2);color:#f87171;border:1px solid rgba(248,113,113,.3)">🗑</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
-
   document.getElementById('scontiTableWrap').innerHTML = `
     <table class="admin-table">
-      <thead><tr><th>Codice</th><th>Sconto</th><th>Stato</th><th>Utilizzi</th><th>Scadenza</th><th>Azione</th></tr></thead>
+      <thead><tr><th>Codice</th><th>Sconto</th><th>Stato</th><th>Utilizzi</th><th>Scadenza</th><th>Azioni</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+async function createSconto() {
+  const codice   = document.getElementById('new-codice').value.trim().toUpperCase();
+  const tipo     = document.getElementById('new-tipo').value;
+  const valore   = parseFloat(document.getElementById('new-valore').value);
+  const usoMax   = document.getElementById('new-uso-max').value;
+  const dataFine = document.getElementById('new-data-fine').value;
+  if (!codice) { showScontoMsg('Inserisci un codice.', false); return; }
+  if (!valore || valore <= 0) { showScontoMsg('Inserisci un valore valido.', false); return; }
+  const { error } = await sb.from('sconti').insert([{
+    codice, tipo, valore, attivo: true, uso_count: 0,
+    uso_max:   usoMax   ? parseInt(usoMax)   : null,
+    data_fine: dataFine ? dataFine            : null,
+  }]);
+  if (error) { showScontoMsg('Errore: ' + (error.message.includes('unique') ? 'Codice già esistente.' : error.message), false); return; }
+  showScontoMsg('✅ Codice "' + codice + '" creato!', true);
+  ['new-codice','new-valore','new-uso-max','new-data-fine'].forEach(id => document.getElementById(id).value = '');
+  loadSconti();
+}
+
+function showScontoMsg(text, ok) {
+  const msg = document.getElementById('new-sconto-msg');
+  msg.style.display = 'block';
+  msg.style.background = ok ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)';
+  msg.style.color  = ok ? '#34d399' : '#f87171';
+  msg.style.border = ok ? '1px solid rgba(52,211,153,.3)' : '1px solid rgba(248,113,113,.3)';
+  msg.textContent  = text;
+  if (ok) setTimeout(() => { msg.style.display = 'none'; }, 3000);
+}
+
+async function deleteSconto(id, codice) {
+  if (!confirm('Eliminare definitivamente il codice "' + codice + '"?')) return;
+  const { error } = await sb.from('sconti').delete().eq('id', id);
+  if (error) { showScontoMsg('Errore eliminazione: ' + error.message, false); return; }
+  loadSconti();
 }
 
 async function toggleSconto(id, nuovoStato) {
