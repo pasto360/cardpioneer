@@ -262,15 +262,15 @@ function calcTotals(items) {
 // ══════════════════════════════════════════════════════
 //  CARRELLO (localStorage)
 // ══════════════════════════════════════════════════════
-const CART_KEY = 'cp_cart';
+// CART_KEY è definito in carrello.js
 
 function getCart() {
-  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+  try { return JSON.parse(localStorage.getItem('cp_cart')) || []; }
   catch(e) { return []; }
 }
 
 function saveCart(items) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  localStorage.setItem('cp_cart', JSON.stringify(items));
   updateCartBadge();
 }
 
