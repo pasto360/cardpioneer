@@ -189,6 +189,7 @@
     <aside class="admin-sidebar">
       <div class="admin-nav-section">Gestione</div>
       <div class="admin-nav-item active" onclick="showAdminPage('ordini', this)">📦 Ordini</div>
+      <div class="admin-nav-item" onclick="showAdminPage('proposte', this)">📬 Proposte vendita</div>
       <div class="admin-nav-item" onclick="showAdminPage('prodotti', this)">🎴 Prodotti</div>
       <div class="admin-nav-item" onclick="showAdminPage('sconti', this)">🏷️ Sconti</div>
       <div class="admin-nav-item" onclick="showAdminPage('banner', this)">🖼️ Banner home</div>
@@ -203,8 +204,32 @@
     <!-- CONTENT -->
     <main class="admin-content">
 
-      <!-- ── ORDINI ── -->
-      <div class="admin-page active" id="page-ordini">
+      <!-- ── PROPOSTE VENDITA ── -->
+      <div class="admin-page" id="page-proposte">
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <div class="admin-table-title">📬 Proposte di vendita</div>
+            <div class="filter-row">
+              <button class="filter-btn active" onclick="setFiltroProposte('tutti',this)">Tutti</button>
+              <button class="filter-btn" onclick="setFiltroProposte('in_attesa',this)">⏳ In attesa</button>
+              <button class="filter-btn" onclick="setFiltroProposte('offerta_inviata',this)">💰 Offerta inviata</button>
+              <button class="filter-btn" onclick="setFiltroProposte('accettata',this)">✅ Accettate</button>
+              <button class="filter-btn" onclick="setFiltroProposte('rifiutata',this)">❌ Rifiutate</button>
+            </div>
+          </div>
+          <div id="proposteTableWrap">
+            <div class="admin-loading">Caricamento proposte...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal offerta -->
+      <div class="modal-overlay" id="modalOfferta" onclick="closeModalOfferta()">
+        <div class="modal-box" style="max-width:660px" onclick="event.stopPropagation()">
+          <button class="modal-close" onclick="closeModalOfferta()">×</button>
+          <div id="modalOffertaContent"></div>
+        </div>
+      </div>
         <div class="admin-table-wrap">
           <div class="admin-table-header">
             <div class="admin-table-title">Ordini</div>
@@ -340,7 +365,43 @@
               </div>
             </div>
 
-            <!-- RACCOMANDATA -->
+            <!-- IVA E COMMISSIONI -->
+            <div style="margin-bottom:32px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">IVA e commissioni</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:600px">
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">IVA (%)</label>
+                  <input type="number" id="set-iva" min="0" step="0.5" class="admin-search" style="width:100%;padding:10px 14px" placeholder="22">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">PayPal % commissione</label>
+                  <input type="number" id="set-paypal-perc" min="0" step="0.01" class="admin-search" style="width:100%;padding:10px 14px" placeholder="3.5">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">PayPal fisso (€)</label>
+                  <input type="number" id="set-paypal-fisso" min="0" step="0.01" class="admin-search" style="width:100%;padding:10px 14px" placeholder="0.35">
+                </div>
+              </div>
+            </div>
+
+            <!-- PROMO SPEDIZIONE -->
+            <div style="margin-bottom:28px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">🎉 Promo spedizione gratuita</div>
+              <div style="display:grid;grid-template-columns:auto 1fr 2fr;gap:16px;max-width:700px;align-items:center">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.6)">
+                  <input type="checkbox" id="set-promo-attiva" style="accent-color:#f5e642;width:16px;height:16px">
+                  Attiva
+                </label>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Soglia (€)</label>
+                  <input type="number" id="set-promo-soglia" min="0" step="1" class="admin-search" style="width:100%;padding:10px 14px" placeholder="30">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Testo mostrato al cliente</label>
+                  <input type="text" id="set-promo-label" class="admin-search" style="width:100%;padding:10px 14px" placeholder="Promo settimana: spedizione gratis sopra €30">
+                </div>
+              </div>
+            </div>
             <div style="margin-bottom:32px">
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">📬 Posta raccomandata</div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px">
@@ -535,12 +596,239 @@ function showAdminPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'ordini')       loadOrdini();
+  if (name === 'proposte')     loadProposte();
   if (name === 'prodotti')     loadProdotti();
   if (name === 'sconti')       loadSconti();
   if (name === 'banner')       loadBannerAdmin();
   if (name === 'stats')        loadStats();
   if (name === 'utenti')       loadUtenti();
   if (name === 'wishlist')     loadWishlistAdmin();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROPOSTE VENDITA
+// ═══════════════════════════════════════════════════════
+let allProposte = [];
+let filtroProposte = 'tutti';
+
+async function loadProposte() {
+  const { data, error } = await sb
+    .from('proposte_vendita')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    document.getElementById('proposteTableWrap').innerHTML =
+      '<div class="admin-empty">Errore caricamento proposte.</div>';
+    return;
+  }
+  allProposte = data || [];
+  renderProposte();
+}
+
+function setFiltroProposte(stato, btn) {
+  filtroProposte = stato;
+  document.querySelectorAll('#page-proposte .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProposte();
+}
+
+function renderProposte() {
+  const items = filtroProposte === 'tutti'
+    ? allProposte
+    : allProposte.filter(p => p.stato === filtroProposte);
+
+  if (!items.length) {
+    document.getElementById('proposteTableWrap').innerHTML =
+      '<div class="admin-empty">Nessuna proposta trovata.</div>';
+    return;
+  }
+
+  const rows = items.map(p => {
+    const data     = new Date(p.created_at).toLocaleDateString('it-IT');
+    const carte    = Array.isArray(p.carte) ? p.carte : [];
+    const nCarte   = carte.length;
+    const badgeClass = {
+      in_attesa:       'stato-in_attesa',
+      offerta_inviata: 'stato-spedito',
+      accettata:       'stato-confermato',
+      rifiutata:       'stato-annullato',
+    }[p.stato] || 'stato-in_attesa';
+    const statoLabel = {
+      in_attesa:       '⏳ In attesa',
+      offerta_inviata: '💰 Offerta inviata',
+      accettata:       '✅ Accettata',
+      rifiutata:       '❌ Rifiutata',
+    }[p.stato] || p.stato;
+
+    const totaleOfferta = Array.isArray(p.offerta)
+      ? p.offerta.reduce((s, o) => s + (parseFloat(o.prezzo) || 0), 0)
+      : 0;
+
+    return `<tr>
+      <td>
+        <div style="color:#fff;font-weight:500">${esc(p.nome||'')} ${esc(p.cognome||'')}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3)">${esc(p.email||'')}</div>
+      </td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${data}</td>
+      <td style="font-size:13px;color:rgba(255,255,255,.6)">${nCarte} carta${nCarte!==1?'e':''}</td>
+      <td><span class="stato-badge ${badgeClass}">${statoLabel}</span></td>
+      <td style="font-family:var(--fu);font-size:13px;color:#e8107a">
+        ${totaleOfferta > 0 ? '€ ' + totaleOfferta.toFixed(2).replace('.',',') : '—'}
+      </td>
+      <td>
+        <button class="action-btn btn-detail" onclick="openModalOfferta('${p.id}')">
+          ${p.stato === 'in_attesa' ? '💰 Fai offerta' : '👁 Dettaglio'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('proposteTableWrap').innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Cliente</th><th>Data</th><th>Carte</th><th>Stato</th><th>Offerta</th><th>Azione</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function openModalOfferta(id) {
+  const p = allProposte.find(x => x.id === id);
+  if (!p) return;
+  const carte = Array.isArray(p.carte) ? p.carte : [];
+  const offerta = Array.isArray(p.offerta) ? p.offerta : carte.map(c => ({ ...c, prezzo: '' }));
+
+  const carteRows = carte.map((c, i) => `
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#fff">${esc(c.nome)} — ${esc(c.espansione)} #${esc(c.numero)}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">
+            ${esc(c.stato)} ${c.rarita ? '· ' + esc(c.rarita) : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:rgba(255,255,255,.4)">Offerta €</span>
+          <input type="number" id="offerta-prezzo-${i}" min="0" step="0.01"
+            value="${offerta[i]?.prezzo || ''}"
+            class="admin-search" style="width:90px;padding:7px 10px"
+            placeholder="0.00"
+            ${p.stato !== 'in_attesa' && p.stato !== 'offerta_inviata' ? 'disabled' : ''}>
+        </div>
+      </div>
+    </div>`).join('');
+
+  const totaleAttuale = offerta.reduce((s,o) => s + (parseFloat(o.prezzo)||0), 0);
+
+  document.getElementById('modalOffertaContent').innerHTML = `
+    <div class="modal-title">
+      Proposta di ${esc(p.nome||'')} ${esc(p.cognome||'')}
+      <span style="font-size:12px;color:rgba(255,255,255,.4);font-family:monospace"> — #${p.id.substring(0,8)}</span>
+    </div>
+
+    <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">
+      ${esc(p.email||'')} · ${new Date(p.created_at).toLocaleString('it-IT')}
+      ${p.cf ? ' · CF: ' + esc(p.cf) : ''}
+    </div>
+
+    <div style="margin-bottom:20px">${carteRows}</div>
+
+    <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:14px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:rgba(255,255,255,.5)">Totale offerta</span>
+        <span id="totale-offerta-display" style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:#e8107a">
+          € ${totaleAttuale.toFixed(2).replace('.',',')}
+        </span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Note per il cliente (facoltative)</label>
+      <textarea id="offerta-note" class="admin-search" style="width:100%;padding:10px 12px;min-height:72px;resize:vertical"
+        placeholder="es. Le carte sono in ottime condizioni, offerta basata sul mercato attuale..."
+        ${p.stato !== 'in_attesa' && p.stato !== 'offerta_inviata' ? 'disabled' : ''}>${p.note_admin||''}</textarea>
+    </div>
+
+    ${p.stato !== 'accettata' && p.stato !== 'rifiutata' ? `
+    <div style="display:flex;gap:10px">
+      <button onclick="inviaOfferta('${p.id}', ${carte.length})"
+        style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+               background:#f5e642;color:#1a0a2e;border:none;padding:12px 24px;
+               border-radius:8px;cursor:pointer;flex:1">
+        💰 Invia offerta al cliente
+      </button>
+      <button onclick="rifiutaProposta('${p.id}')"
+        style="font-size:11px;font-weight:600;background:rgba(248,113,113,.1);
+               color:#f87171;border:1px solid rgba(248,113,113,.3);padding:12px 18px;
+               border-radius:8px;cursor:pointer">
+        ❌ Rifiuta
+      </button>
+    </div>` : `
+    <div style="font-size:13px;color:rgba(255,255,255,.4);text-align:center;padding:12px">
+      Proposta ${p.stato === 'accettata' ? '✅ accettata' : '❌ rifiutata'} dal cliente
+      ${p.data_risposta ? ' il ' + new Date(p.data_risposta).toLocaleDateString('it-IT') : ''}
+    </div>`}
+
+    <div id="offerta-msg" style="display:none;font-size:12px;margin-top:12px;padding:8px 14px;border-radius:8px"></div>`;
+
+  // Aggiorna totale in tempo reale
+  document.getElementById('modalOfferta').classList.add('open');
+  carte.forEach((_, i) => {
+    document.getElementById(`offerta-prezzo-${i}`)?.addEventListener('input', () => {
+      let tot = 0;
+      carte.forEach((__, j) => { tot += parseFloat(document.getElementById(`offerta-prezzo-${j}`)?.value || 0); });
+      document.getElementById('totale-offerta-display').textContent = '€ ' + tot.toFixed(2).replace('.',',');
+    });
+  });
+}
+
+function closeModalOfferta() {
+  document.getElementById('modalOfferta').classList.remove('open');
+}
+
+async function inviaOfferta(id, nCarte) {
+  const offerta = [];
+  const p = allProposte.find(x => x.id === id);
+  if (!p) return;
+  const carte = Array.isArray(p.carte) ? p.carte : [];
+
+  for (let i = 0; i < nCarte; i++) {
+    const prezzo = parseFloat(document.getElementById(`offerta-prezzo-${i}`)?.value || 0);
+    offerta.push({ ...carte[i], prezzo });
+  }
+  const note = document.getElementById('offerta-note')?.value.trim();
+  const totale = offerta.reduce((s,o) => s + (o.prezzo||0), 0);
+
+  if (totale <= 0) {
+    const msg = document.getElementById('offerta-msg');
+    msg.style.display = 'block';
+    msg.style.cssText += ';background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.3)';
+    msg.textContent = 'Inserisci almeno un prezzo per procedere.';
+    return;
+  }
+
+  const { error } = await sb.from('proposte_vendita').update({
+    stato:      'offerta_inviata',
+    offerta,
+    note_admin: note || null,
+  }).eq('id', id);
+
+  if (error) {
+    const msg = document.getElementById('offerta-msg');
+    msg.style.display = 'block';
+    msg.style.cssText += ';background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.3)';
+    msg.textContent = 'Errore: ' + error.message;
+    return;
+  }
+
+  closeModalOfferta();
+  loadProposte();
+}
+
+async function rifiutaProposta(id) {
+  if (!confirm('Rifiutare questa proposta? Il cliente vedrà la risposta nella sua area personale.')) return;
+  await sb.from('proposte_vendita').update({ stato: 'rifiutata', data_risposta: new Date().toISOString() }).eq('id', id);
+  closeModalOfferta();
+  loadProposte();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1146,35 +1434,40 @@ async function saveBanner(id) {
 async function loadImpostazioni() {
   const { data } = await sb.from('impostazioni').select('chiave, valore');
   if (!data) return;
-  data.forEach(r => {
-    if (r.chiave === 'peso_imballo') document.getElementById('set-peso-imballo').value = r.valore;
-    if (r.chiave === 'peso_carta')   document.getElementById('set-peso-carta').value   = r.valore;
-    if (r.chiave === 'racc_1000')    document.getElementById('set-racc-1000').value    = r.valore;
-    if (r.chiave === 'racc_3000')    document.getElementById('set-racc-3000').value    = r.valore;
-    if (r.chiave === 'racc_max')     document.getElementById('set-racc-max').value     = r.valore;
-  });
-  // Valori default se non ancora in DB
-  if (!document.getElementById('set-racc-1000').value) document.getElementById('set-racc-1000').value = '7.95';
-  if (!document.getElementById('set-racc-3000').value) document.getElementById('set-racc-3000').value = '10.30';
-  if (!document.getElementById('set-racc-max').value)  document.getElementById('set-racc-max').value  = '20.00';
-  if (!document.getElementById('set-peso-imballo').value) document.getElementById('set-peso-imballo').value = '20';
-  if (!document.getElementById('set-peso-carta').value)   document.getElementById('set-peso-carta').value   = '9';
+  const defaults = { 'peso_imballo':'20','peso_carta':'9','racc_1000':'7.95','racc_3000':'10.30','racc_max':'20.00','iva_percentuale':'22','paypal_perc':'3.5','paypal_fisso':'0.35','promo_sped_attiva':'false','promo_sped_soglia':'30','promo_sped_label':'' };
+  const vals = { ...defaults };
+  data.forEach(r => { vals[r.chiave] = r.valore; });
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set('set-peso-imballo', vals['peso_imballo']);
+  set('set-peso-carta',   vals['peso_carta']);
+  set('set-racc-1000',    vals['racc_1000']);
+  set('set-racc-3000',    vals['racc_3000']);
+  set('set-racc-max',     vals['racc_max']);
+  set('set-iva',          vals['iva_percentuale']);
+  set('set-paypal-perc',  vals['paypal_perc']);
+  set('set-paypal-fisso', vals['paypal_fisso']);
+  set('set-promo-soglia', vals['promo_sped_soglia']);
+  set('set-promo-label',  vals['promo_sped_label']);
+  const cbPromo = document.getElementById('set-promo-attiva');
+  if (cbPromo) cbPromo.checked = vals['promo_sped_attiva'] === 'true';
 }
 
 async function saveImpostazioni() {
-  const pesoImballo = document.getElementById('set-peso-imballo').value;
-  const pesoCarta   = document.getElementById('set-peso-carta').value;
-  const racc1000    = document.getElementById('set-racc-1000').value;
-  const racc3000    = document.getElementById('set-racc-3000').value;
-  const raccMax     = document.getElementById('set-racc-max').value;
-  const msg         = document.getElementById('impostazioni-msg');
-
+  const msg = document.getElementById('impostazioni-msg');
+  const get = id => document.getElementById(id)?.value || '';
   const { error } = await sb.from('impostazioni').upsert([
-    { chiave: 'peso_imballo', valore: pesoImballo, nota: 'Peso fisso imballo in grammi' },
-    { chiave: 'peso_carta',   valore: pesoCarta,   nota: 'Peso singola carta in grammi' },
-    { chiave: 'racc_1000',    valore: racc1000,    nota: 'Raccomandata fino a 1000g' },
-    { chiave: 'racc_3000',    valore: racc3000,    nota: 'Raccomandata 1001-3000g' },
-    { chiave: 'racc_max',     valore: raccMax,     nota: 'Raccomandata oltre 3000g' },
+    { chiave: 'peso_imballo',    valore: get('set-peso-imballo'),  nota: 'Peso fisso imballo in grammi' },
+    { chiave: 'peso_carta',      valore: get('set-peso-carta'),    nota: 'Peso singola carta in grammi' },
+    { chiave: 'racc_1000',       valore: get('set-racc-1000'),     nota: 'Raccomandata fino a 1000g' },
+    { chiave: 'racc_3000',       valore: get('set-racc-3000'),     nota: 'Raccomandata 1001-3000g' },
+    { chiave: 'racc_max',        valore: get('set-racc-max'),      nota: 'Raccomandata oltre 3000g' },
+    { chiave: 'iva_percentuale', valore: get('set-iva'),           nota: 'IVA in percentuale' },
+    { chiave: 'paypal_perc',     valore: get('set-paypal-perc'),   nota: 'Commissione PayPal %' },
+    { chiave: 'paypal_fisso',    valore: get('set-paypal-fisso'),  nota: 'Commissione PayPal fissa €' },
+    { chiave: 'promo_sped_attiva', valore: String(document.getElementById('set-promo-attiva')?.checked || false), nota: 'Promo spedizione attiva' },
+    { chiave: 'promo_sped_soglia', valore: get('set-promo-soglia'), nota: 'Soglia promo spedizione €' },
+    { chiave: 'promo_sped_label',  valore: get('set-promo-label'),  nota: 'Testo promo spedizione' },
   ]);
 
   msg.style.display = 'block';

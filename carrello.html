@@ -208,10 +208,34 @@ let PESO_CARTA   = 9;
 let RACC_1000    = 7.95;
 let RACC_3000    = 10.30;
 let RACC_MAX     = 20.00;
+let IVA_PERC        = 22;
+let PAYPAL_PERC     = 3.5;
+let PAYPAL_FISSO    = 0.35;
+let PROMO_SPED_ATTIVA = false;
+let PROMO_SPED_SOGLIA = 30;
+let PROMO_SPED_LABEL  = '';
 
 async function loadSpedizione() {
   try {
     const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) data.forEach(r => {
+      if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
+      if (r.chiave === 'peso_carta')      PESO_CARTA      = parseInt(r.valore)   || 9;
+      if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
+      if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
+      if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
+      if (r.chiave === 'iva_percentuale') IVA_PERC        = parseFloat(r.valore) || 22;
+      if (r.chiave === 'paypal_perc')     PAYPAL_PERC     = parseFloat(r.valore) || 3.5;
+      if (r.chiave === 'paypal_fisso')    PAYPAL_FISSO    = parseFloat(r.valore) || 0.35;
+      if (r.chiave === 'promo_sped_attiva') PROMO_SPED_ATTIVA = r.valore === 'true';
+      if (r.chiave === 'promo_sped_soglia') PROMO_SPED_SOGLIA = parseFloat(r.valore) || 30;
+      if (r.chiave === 'promo_sped_label')  PROMO_SPED_LABEL  = r.valore || '';
+    });
+  } catch(e) {}
+} = await (window.sb || supabase.createClient(
       'https://nzjwpdbljfwrspmepoqo.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
     )).from('impostazioni').select('chiave, valore');
@@ -259,10 +283,20 @@ let tipoSpedizione = 'normale';
 function calcTotals(items) {
   const subtotale  = items.reduce((s, i) => s + i.prezzo * i.qty, 0);
   const pesoG      = calcolaPeso(items);
-  const spedizione = tipoSpedizione === 'assicurata'
-    ? costoAssicurata(pesoG, subtotale)
-    : costoNormale(pesoG);
-  return { subtotale, spedizione, totale: subtotale + spedizione, pesoG };
+  // Promo spedizione gratuita
+  let spedizione;
+  if (PROMO_SPED_ATTIVA && subtotale >= PROMO_SPED_SOGLIA) {
+    spedizione = 0;
+  } else {
+    spedizione = tipoSpedizione === 'assicurata'
+      ? costoAssicurata(pesoG, subtotale)
+      : costoNormale(pesoG);
+  }
+  // IVA scorporata dal subtotale (prezzi IVA inclusa)
+  const imponibile = Math.round(subtotale / (1 + IVA_PERC / 100) * 100) / 100;
+  const iva        = Math.round((subtotale - imponibile) * 100) / 100;
+  const totale     = subtotale + spedizione;
+  return { subtotale, imponibile, iva, spedizione, totale, pesoG };
 }
 
 // ══════════════════════════════════════════════════════
@@ -370,6 +404,20 @@ function renderCart() {
           <span>Subtotale (${items.reduce((s,i)=>s+i.qty,0)} articoli)</span>
           <span>€ ${subtotale.toFixed(2).replace('.',',')}</span>
         </div>
+        <div class="summary-row">
+          <span>Imponibile</span>
+          <span>€ ${imponibile.toFixed(2).replace('.',',')}</span>
+        </div>
+        <div class="summary-row">
+          <span>IVA ${IVA_PERC}%</span>
+          <span>€ ${iva.toFixed(2).replace('.',',')}</span>
+        </div>
+
+        ${PROMO_SPED_ATTIVA ? `
+        <div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#059669;margin-bottom:10px">
+          🎉 ${escHtml(PROMO_SPED_LABEL)}
+        </div>` : ''}
+
         <!-- Selettore tipo spedizione -->
         <div style="margin:12px 0;padding:12px;background:var(--bg);border-radius:8px">
           <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Tipo spedizione</div>

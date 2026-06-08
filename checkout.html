@@ -185,6 +185,24 @@ async function loadSpedizione() {
       'https://nzjwpdbljfwrspmepoqo.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
     )).from('impostazioni').select('chiave, valore');
+    if (data) data.forEach(r => {
+      if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
+      if (r.chiave === 'peso_carta')      PESO_CARTA      = parseInt(r.valore)   || 9;
+      if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
+      if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
+      if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
+      if (r.chiave === 'iva_percentuale') IVA_PERC        = parseFloat(r.valore) || 22;
+      if (r.chiave === 'paypal_perc')     PAYPAL_PERC     = parseFloat(r.valore) || 3.5;
+      if (r.chiave === 'paypal_fisso')    PAYPAL_FISSO    = parseFloat(r.valore) || 0.35;
+      if (r.chiave === 'promo_sped_attiva') PROMO_SPED_ATTIVA = r.valore === 'true';
+      if (r.chiave === 'promo_sped_soglia') PROMO_SPED_SOGLIA = parseFloat(r.valore) || 30;
+      if (r.chiave === 'promo_sped_label')  PROMO_SPED_LABEL  = r.valore || '';
+    });
+  } catch(e) {}
+} = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
     if (data) {
       data.forEach(r => {
         if (r.chiave === 'spedizione_soglia') SPEDIZIONE_SOGLIA = parseFloat(r.valore) || 50;
@@ -206,6 +224,24 @@ let PESO_CARTA   = 9;    // grammi per singola carta
 async function loadSpedizione() {
   try {
     const { data } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('impostazioni').select('chiave, valore');
+    if (data) data.forEach(r => {
+      if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
+      if (r.chiave === 'peso_carta')      PESO_CARTA      = parseInt(r.valore)   || 9;
+      if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
+      if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
+      if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
+      if (r.chiave === 'iva_percentuale') IVA_PERC        = parseFloat(r.valore) || 22;
+      if (r.chiave === 'paypal_perc')     PAYPAL_PERC     = parseFloat(r.valore) || 3.5;
+      if (r.chiave === 'paypal_fisso')    PAYPAL_FISSO    = parseFloat(r.valore) || 0.35;
+      if (r.chiave === 'promo_sped_attiva') PROMO_SPED_ATTIVA = r.valore === 'true';
+      if (r.chiave === 'promo_sped_soglia') PROMO_SPED_SOGLIA = parseFloat(r.valore) || 30;
+      if (r.chiave === 'promo_sped_label')  PROMO_SPED_LABEL  = r.valore || '';
+    });
+  } catch(e) {}
+} = await (window.sb || supabase.createClient(
       'https://nzjwpdbljfwrspmepoqo.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
     )).from('impostazioni').select('chiave, valore');
@@ -294,10 +330,29 @@ function calcTotals(items) {
     sconto = Math.round(sconto * 100) / 100;
   }
   const subtotale_scontato = subtotale - sconto;
-  const spedizione = tipoSpedizione === 'assicurata'
-    ? costoAssicurata(pesoG, subtotale_scontato)
-    : costoNormale(pesoG);
-  return { subtotale, sconto, subtotale_scontato, spedizione, totale: subtotale_scontato + spedizione, pesoG };
+
+  // Promo spedizione
+  let spedizione;
+  if (PROMO_SPED_ATTIVA && subtotale_scontato >= PROMO_SPED_SOGLIA) {
+    spedizione = 0;
+  } else {
+    spedizione = tipoSpedizione === 'assicurata'
+      ? costoAssicurata(pesoG, subtotale_scontato)
+      : costoNormale(pesoG);
+  }
+
+  // IVA scorporata (prezzi IVA inclusa)
+  const imponibile = Math.round(subtotale_scontato / (1 + IVA_PERC / 100) * 100) / 100;
+  const iva        = Math.round((subtotale_scontato - imponibile) * 100) / 100;
+
+  // Commissione PayPal (solo se metodo paypal)
+  const basePerCommissione = subtotale_scontato + spedizione;
+  const commissione = selectedPayment === 'paypal'
+    ? Math.round((basePerCommissione * PAYPAL_PERC / 100 + PAYPAL_FISSO) * 100) / 100
+    : 0;
+
+  const totale = subtotale_scontato + spedizione + commissione;
+  return { subtotale, sconto, subtotale_scontato, imponibile, iva, spedizione, commissione, totale, pesoG };
 }
 
 // ══════════════════════════════════════════════════════
@@ -484,15 +539,21 @@ function renderCheckout() {
           </div>`).join('')}
       </div>
       <hr class="summary-divider">
-      <div class="summary-row"><span>Subtotale</span><span>€ ${subtotale.toFixed(2).replace('.',',')}</span></div>
+      <div class="summary-row"><span>Articoli (imponibile)</span><span>€ ${imponibile.toFixed(2).replace('.',',')}</span></div>
+      <div class="summary-row"><span>IVA ${IVA_PERC}%</span><span>€ ${iva.toFixed(2).replace('.',',')}</span></div>
       ${sconto > 0 ? `<div class="summary-row" style="color:#059669;font-weight:600">
         <span>🎉 Sconto (${activeDiscount.codice})</span>
         <span>− € ${sconto.toFixed(2).replace('.',',')}</span>
       </div>` : ''}
+      ${PROMO_SPED_ATTIVA && spedizione === 0 ? `<div class="summary-row" style="color:#059669;font-size:11px"><span colspan="2">🎉 ${escHtml(PROMO_SPED_LABEL)}</span></div>` : ''}
       <div class="summary-row">
         <span>${tipoSpedizione === 'assicurata' ? '📮 Posta assicurata' : '📬 Posta raccomandata'} <span style="font-size:10px;color:var(--light)">(${pesoG}g)</span></span>
-        <span style="font-weight:600">€ ${spedizione.toFixed(2).replace('.',',')}</span>
+        <span style="font-weight:600">${spedizione === 0 ? '<span style="color:#059669">Gratis</span>' : '€ ' + spedizione.toFixed(2).replace('.',',')}</span>
       </div>
+      ${commissione > 0 ? `<div class="summary-row" style="color:var(--muted)">
+        <span>Commissione PayPal (${PAYPAL_PERC}% + €${PAYPAL_FISSO.toFixed(2).replace('.',',')})</span>
+        <span>€ ${commissione.toFixed(2).replace('.',',')}</span>
+      </div>` : ''}
       <div class="summary-row total"><span>Totale</span><span>€ ${totale.toFixed(2).replace('.',',')}</span></div>
       <div style="margin-top:16px;font-size:11px;color:var(--light);text-align:center;line-height:1.6">
         🔒 Transazione sicura<br>
@@ -519,6 +580,8 @@ function selectPayment(method) {
   document.getElementById('payment-desc-bonifico').style.display = method === 'bonifico' ? '' : 'none';
   document.getElementById('paypal-button-container').style.display = method === 'paypal'   ? '' : 'none';
   document.getElementById('bonifico-btn').style.display            = method === 'bonifico' ? '' : 'none';
+  // Ricalcola totali (la commissione PayPal cambia)
+  renderCheckout();
 }
 
 // ══════════════════════════════════════════════════════
