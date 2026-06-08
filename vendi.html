@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendi le tue carte — CardPioneer</title>
+  <meta name="description" content="Vendi le tue carte Pokémon a CardPioneer. Compila il form e ricevi una valutazione.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <script src="tracker.js"></script>
+  <style>
+    .vendi-wrap { max-width: 820px; }
+
+    .form-section {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .form-section-title {
+      font-family: var(--fu);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -.02em;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Carta singola */
+    .carta-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .carta-block-title {
+      font-family: var(--fu);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pink);
+      letter-spacing: -.01em;
+      margin-bottom: 16px;
+    }
+
+    /* Toggle fiscale */
+    .fiscal-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .fiscal-btn {
+      font-family: var(--fu);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      transition: all .2s;
+      letter-spacing: -.01em;
+    }
+    .fiscal-btn.active {
+      background: var(--dark);
+      border-color: var(--dark);
+      color: #fff;
+    }
+
+    /* Stato carta buttons */
+    .stato-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .stato-btn {
+      font-family: var(--fu);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 100px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      transition: all .2s;
+      letter-spacing: .02em;
+    }
+    .stato-btn:hover { border-color: var(--dark); color: var(--dark); }
+    .stato-btn.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+    .stato-btn.MT  { }
+    .stato-btn.NM.active  { background: #16a34a; border-color: #16a34a; }
+    .stato-btn.EX.active  { background: #4ade80; border-color: #4ade80; color: #1a1a1a; }
+    .stato-btn.GD.active  { background: #ca8a04; border-color: #ca8a04; }
+    .stato-btn.OL.active  { background: #ea580c; border-color: #ea580c; }
+    .stato-btn.PL.active  { background: #db2777; border-color: #db2777; }
+    .stato-btn.PO.active  { background: #7f1d1d; border-color: #7f1d1d; }
+
+    /* Rarità checkboxes */
+    .rarita-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .rarita-chip {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--muted);
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+    }
+    .rarita-chip input { display: none; }
+    .rarita-chip.checked { background: var(--dark); border-color: var(--dark); color: #fff; }
+
+    /* Upload foto */
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s;
+      background: var(--white);
+      position: relative;
+    }
+    .upload-area:hover { border-color: var(--pink); }
+    .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-area-icon { font-size: 24px; margin-bottom: 6px; }
+    .upload-area-label { font-size: 12px; color: var(--muted); }
+    .upload-preview { width: 80px; height: 110px; object-fit: cover; border-radius: 6px; display: none; margin: 0 auto; }
+
+    /* Bottoni aggiungi/rimuovi */
+    .carte-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+    .btn-add { background: var(--dark); color: #fff; }
+    .btn-remove { background: rgba(248,113,113,.1); color: #dc2626; border-color: rgba(248,113,113,.3); }
+
+    /* Success */
+    .vendi-success { text-align: center; padding: 48px 20px; }
+
+    /* Messaggio errore form */
+    .form-error {
+      background: rgba(248,113,113,.08);
+      border: 1px solid rgba(248,113,113,.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #dc2626;
+      margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html" class="active">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Vendi a CardPioneer</div>
+  <h1 class="cp-hero-title">Vendi le tue <em>carte</em></h1>
+  <p class="cp-hero-sub">Inserisci i tuoi dati una sola volta e aggiungi tutte le carte che desideri vendere. Ti risponderemo entro 24 ore.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="vendi-wrap">
+
+    <!-- Successo (nascosto) -->
+    <div id="vendiSuccess" style="display:none">
+      <div class="form-section vendi-success">
+        <div style="font-size:56px;margin-bottom:16px">📬</div>
+        <h2 style="font-family:var(--fu);font-size:22px;color:var(--dark);margin-bottom:10px;letter-spacing:-.02em">Proposta inviata!</h2>
+        <p style="font-size:13px;color:var(--muted);max-width:420px;margin:0 auto 24px;line-height:1.7">
+          Abbiamo ricevuto la tua proposta di vendita. La valuteremo e ti risponderemo via email entro 24 ore lavorative.
+        </p>
+        <a href="index.html" class="btn-fill">Torna alla home</a>
+      </div>
+    </div>
+
+    <!-- Form (visibile) -->
+    <div id="vendiForm">
+
+      <!-- TIPO VENDITORE -->
+      <div class="form-section">
+        <div class="form-section-title">👤 Conferma dati venditore</div>
+
+        <div class="fiscal-toggle">
+          <button class="fiscal-btn active" id="btn-privato" onclick="setTipo('privato')">Privato</button>
+          <button class="fiscal-btn" id="btn-azienda" onclick="setTipo('azienda')">Azienda / P.IVA</button>
+        </div>
+
+        <div class="cp-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome *</label>
+              <input type="text" id="v-nome" class="form-input" placeholder="Mario">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cognome *</label>
+              <input type="text" id="v-cognome" class="form-input" placeholder="Rossi">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" id="v-email" class="form-input" placeholder="tua@email.it">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Codice Fiscale *</label>
+            <input type="text" id="v-cf" class="form-input" placeholder="RSSMRA80A01H501Z" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+
+          <!-- Campi azienda (nascosti di default) -->
+          <div id="campi-azienda" style="display:none">
+            <div class="form-group">
+              <label class="form-label">Ragione Sociale *</label>
+              <input type="text" id="v-ragione" class="form-input" placeholder="Rossi S.r.l.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Partita IVA *</label>
+              <input type="text" id="v-piva" class="form-input" placeholder="IT12345678901">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARTE -->
+      <div class="form-section">
+        <div class="form-section-title">🎴 Dati delle carte</div>
+
+        <div class="carte-actions">
+          <button class="btn-outline-dark btn-add" onclick="aggiungiCarta()" style="font-size:11px;padding:9px 18px">
+            + Aggiungi carta
+          </button>
+          <button class="btn-outline-dark btn-remove" onclick="rimuoviCarta()" style="font-size:11px;padding:9px 18px">
+            − Rimuovi ultima
+          </button>
+        </div>
+
+        <div id="carteContainer">
+          <!-- Carte generate da JS -->
+        </div>
+      </div>
+
+      <!-- TERMINI -->
+      <div class="form-section">
+        <div class="form-section-title">📋 Termini e condizioni</div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);line-height:1.6">
+          <input type="checkbox" id="v-termini" style="margin-top:2px;accent-color:var(--pink);flex-shrink:0">
+          Ho letto e accetto i <a href="norme-legali.html" style="color:var(--pink)" target="_blank">termini e condizioni di vendita</a> di CardPioneer, incluse le politiche di grading e spedizione.
+        </label>
+      </div>
+
+      <div class="form-error" id="vendiError"></div>
+
+      <button class="btn-fill" onclick="inviaPropostaVendita()"
+        style="width:100%;padding:14px;font-size:12px;margin-top:4px" id="vendiBtn">
+        Invia proposta di vendita →
+      </button>
+
+      <p style="font-size:11px;color:var(--light);text-align:center;margin-top:12px;line-height:1.6">
+        Riceverai una risposta entro 24 ore lavorative all'email indicata.<br>
+        Per info: <a href="mailto:info@cardpioneer.it" style="color:var(--pink)">info@cardpioneer.it</a>
+      </p>
+
+    </div>
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="classificazione.html">Classificazione</a><a href="utility.html">FAQ</a><a href="vendi.html">Vendi</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+// Espansioni caricate dal CSV espansioni.csv
+// Struttura: { ITA: ['Set Base', ...], ENG: [...], JP: [...] }
+let ESPANSIONI_MAP = {};
+
+async function loadEspansioni() {
+  try {
+    const res  = await fetch('espansioni.csv?v=' + Date.now());
+    const text = await res.text();
+    const rows = text.split(/\r?\n/).filter(r => r.trim()).slice(1); // salta header
+    rows.forEach(row => {
+      const cols = row.split(';');
+      const naz  = (cols[1] || '').trim();
+      const esp  = (cols[2] || '').trim();
+      if (!naz || !esp) return;
+      if (!ESPANSIONI_MAP[naz]) ESPANSIONI_MAP[naz] = [];
+      if (!ESPANSIONI_MAP[naz].includes(esp)) ESPANSIONI_MAP[naz].push(esp);
+    });
+    // Ordina alfabeticamente
+    Object.keys(ESPANSIONI_MAP).forEach(k => ESPANSIONI_MAP[k].sort());
+    console.log('Espansioni caricate:', Object.keys(ESPANSIONI_MAP).map(k => k + ':' + ESPANSIONI_MAP[k].length));
+  } catch(e) {
+    console.warn('CSV espansioni non trovato — uso lista vuota');
+  }
+}
+
+function caricaEspansioni(n) {
+  const naz = document.getElementById(`naz-carta-${n}`).value;
+  const sel = document.getElementById(`esp-carta-${n}`);
+  if (!naz) { sel.innerHTML = '<option value="">Prima seleziona la nazionalità</option>'; sel.disabled = true; return; }
+  const lista = ESPANSIONI_MAP[naz] || [];
+  sel.innerHTML = '<option value="">Seleziona espansione...</option>' +
+    lista.map(e => `<option value="${e}">${e}</option>`).join('') +
+    '<option value="Altro">Altro</option>';
+  sel.disabled = false;
+}
+
+const STATI   = ['MT','NM','EX','GD','OL','PL','PO'];
+const RARITA  = ['Comune','Holo','Foil / Reverse','Prima Serie','Shadowless','UPC','Logo','Prerelease Stamp','Ristampa','Silver'];
+
+let numCarte   = 0;
+let tipoVendit = 'privato';
+
+// ── Tipo venditore ──
+function setTipo(tipo) {
+  tipoVendit = tipo;
+  document.getElementById('btn-privato').classList.toggle('active', tipo === 'privato');
+  document.getElementById('btn-azienda').classList.toggle('active', tipo === 'azienda');
+  document.getElementById('campi-azienda').style.display = tipo === 'azienda' ? 'block' : 'none';
+  document.getElementById('v-cf').closest('.form-group').querySelector('.form-label').textContent =
+    tipo === 'azienda' ? 'Codice Fiscale' : 'Codice Fiscale *';
+}
+
+// ── Carta HTML ──
+function cartaHTML(n) {
+  const statiHTML = STATI.map(s =>
+    `<button type="button" class="stato-btn ${s}" onclick="setStato(${n},'${s}',this)">${s}</button>`
+  ).join('');
+  const raritaHTML = RARITA.map(r =>
+    `<label class="rarita-chip" onclick="toggleRarita(this)">
+      <input type="checkbox" value="${r}"> ${r}
+    </label>`
+  ).join('');
+
+  return `<div class="carta-block" id="carta-${n}">
+    <div class="carta-block-title">Carta #${n}</div>
+    <input type="hidden" id="stato-${n}" value="">
+    <div class="cp-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome carta *</label>
+          <input type="text" id="nome-carta-${n}" class="form-input" placeholder="es. Charizard">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Numero *</label>
+          <input type="text" id="numero-carta-${n}" class="form-input" placeholder="es. 4/102">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nazionalità *</label>
+          <select id="naz-carta-${n}" class="form-select" onchange="caricaEspansioni(${n})">
+            <option value="">Seleziona...</option>
+            <option value="ITA">🇮🇹 ITA — Italiano</option>
+            <option value="ENG">🇬🇧 ENG — Inglese</option>
+            <option value="JP">🇯🇵 JP — Giapponese</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Espansione *</label>
+          <select id="esp-carta-${n}" class="form-select" disabled>
+            <option value="">Prima seleziona la nazionalità</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato / Condizione *</label>
+        <div class="stato-group">${statiHTML}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rarità *</label>
+        <div class="rarita-group">${raritaHTML}</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Foto fronte *</label>
+          <div class="upload-area" onclick="document.getElementById('fronte-${n}').click()">
+            <input type="file" id="fronte-${n}" accept="image/*" onchange="previewImg(this,'prev-fronte-${n}')">
+            <img id="prev-fronte-${n}" class="upload-preview">
+            <div id="lbl-fronte-${n}">
+              <div class="upload-area-icon">📷</div>
+              <div class="upload-area-label">Clicca per caricare la foto fronte</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto retro *</label>
+          <div class="upload-area" onclick="document.getElementById('retro-${n}').click()">
+            <input type="file" id="retro-${n}" accept="image/*" onchange="previewImg(this,'prev-retro-${n}')">
+            <img id="prev-retro-${n}" class="upload-preview">
+            <div id="lbl-retro-${n}">
+              <div class="upload-area-icon">📷</div>
+              <div class="upload-area-label">Clicca per caricare la foto retro</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function aggiungiCarta() {
+  numCarte++;
+  document.getElementById('carteContainer').insertAdjacentHTML('beforeend', cartaHTML(numCarte));
+}
+
+function rimuoviCarta() {
+  if (numCarte < 1) return;
+  document.getElementById(`carta-${numCarte}`)?.remove();
+  numCarte--;
+}
+
+function setStato(n, stato, btn) {
+  document.getElementById(`stato-${n}`).value = stato;
+  btn.closest('.stato-group').querySelectorAll('.stato-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleRarita(label) {
+  label.classList.toggle('checked');
+  label.querySelector('input').checked = label.classList.contains('checked');
+}
+
+function previewImg(input, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById(previewId);
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+    const lbl = document.getElementById(previewId.replace('prev-','lbl-'));
+    if (lbl) lbl.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Validazione e invio ──
+async function inviaPropostaVendita() {
+  const err  = document.getElementById('vendiError');
+  const btn  = document.getElementById('vendiBtn');
+  err.style.display = 'none';
+
+  const nome    = document.getElementById('v-nome').value.trim();
+  const cognome = document.getElementById('v-cognome').value.trim();
+  const email   = document.getElementById('v-email').value.trim();
+  const cf      = document.getElementById('v-cf').value.trim();
+  const termini = document.getElementById('v-termini').checked;
+
+  if (!nome || !cognome)        { showErr('Inserisci nome e cognome.'); return; }
+  if (!email || !email.includes('@')) { showErr('Inserisci un\'email valida.'); return; }
+  if (!cf)                      { showErr('Inserisci il codice fiscale.'); return; }
+  if (tipoVendit === 'azienda') {
+    if (!document.getElementById('v-ragione').value.trim()) { showErr('Inserisci la ragione sociale.'); return; }
+    if (!document.getElementById('v-piva').value.trim())    { showErr('Inserisci la Partita IVA.'); return; }
+  }
+  if (numCarte < 1) { showErr('Aggiungi almeno una carta.'); return; }
+  if (!termini)     { showErr('Devi accettare i termini e condizioni.'); return; }
+
+  // Valida ogni carta
+  for (let i = 1; i <= numCarte; i++) {
+    if (!document.getElementById(`carta-${i}`)) continue;
+    if (!document.getElementById(`nome-carta-${i}`).value.trim()) { showErr(`Carta #${i}: inserisci il nome.`); return; }
+    if (!document.getElementById(`esp-carta-${i}`).value)         { showErr(`Carta #${i}: seleziona l'espansione.`); return; }
+    if (!document.getElementById(`numero-carta-${i}`).value.trim()){ showErr(`Carta #${i}: inserisci il numero.`); return; }
+    if (!document.getElementById(`stato-${i}`).value)             { showErr(`Carta #${i}: seleziona lo stato.`); return; }
+    const raritaChecked = [...document.querySelectorAll(`#carta-${i} .rarita-chip.checked`)].length;
+    if (!raritaChecked)                                               { showErr(`Carta #${i}: seleziona almeno una rarità.`); return; }
+    if (!document.getElementById(`fronte-${i}`).files[0])         { showErr(`Carta #${i}: carica la foto fronte.`); return; }
+    if (!document.getElementById(`retro-${i}`).files[0])          { showErr(`Carta #${i}: carica la foto retro.`); return; }
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Invio in corso...';
+
+  try {
+    // Raccogli dati carte
+    const carte = [];
+    for (let i = 1; i <= numCarte; i++) {
+      if (!document.getElementById(`carta-${i}`)) continue;
+      const rarita = [...document.querySelectorAll(`#carta-${i} .rarita-chip.checked input`)]
+        .map(el => el.value).join(', ');
+      carte.push({
+        nome:      document.getElementById(`nome-carta-${i}`).value.trim(),
+        espansione:document.getElementById(`esp-carta-${i}`).value,
+        numero:    document.getElementById(`numero-carta-${i}`).value.trim(),
+        stato:     document.getElementById(`stato-${i}`).value,
+        rarita:    rarita || null,
+      });
+    }
+
+    const proposta = {
+      nome, cognome, email, cf,
+      tipo_venditore: tipoVendit,
+      ragione_sociale: tipoVendit === 'azienda' ? document.getElementById('v-ragione').value.trim() : null,
+      partita_iva:     tipoVendit === 'azienda' ? document.getElementById('v-piva').value.trim()    : null,
+      carte,
+      stato: 'in_attesa',
+    };
+
+    // Salva su Supabase
+    const { error } = await (window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    )).from('proposte_vendita').insert([proposta]);
+
+    if (error) throw error;
+
+    document.getElementById('vendiForm').style.display    = 'none';
+    document.getElementById('vendiSuccess').style.display = 'block';
+
+  } catch(e) {
+    console.error(e);
+    showErr('Errore durante l\'invio. Riprova o scrivici a info@cardpioneer.it');
+    btn.disabled = false;
+    btn.textContent = 'Invia proposta di vendita →';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('vendiError');
+  el.style.display = 'block';
+  el.textContent   = msg;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Pre-carica dati utente se loggato
+  setTimeout(() => {
+    const user = window.getCurrentUser?.();
+    if (user) {
+      document.getElementById('v-nome').value    = user.user_metadata?.nome    || '';
+      document.getElementById('v-cognome').value = user.user_metadata?.cognome || '';
+      document.getElementById('v-email').value   = user.email || '';
+    }
+  }, 500);
+
+  // Carrello badge
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+
+  // Carica espansioni dal CSV poi aggiunge la prima carta
+  loadEspansioni().then(() => aggiungiCarta());
+});
+</script>
+</body>
+</html>
