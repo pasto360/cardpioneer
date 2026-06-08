@@ -41,7 +41,7 @@
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong> — Solo per questa settimana</div>
+  <div class="topbar-msg">&nbsp;</div>
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
     <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
@@ -85,28 +85,31 @@
   </div>
 </nav>
 
-<!-- BANNER PROMO fuxia statico -->
-<div style="background:#e8107a;padding:10px 40px;text-align:center">
-  <span style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#fff">🎉 PROMO SETTIMANALE — Spedizione gratuita per ordini superiori a € 50</span>
+<!-- BANNER PROMO fuxia dinamico -->
+<div id="promoBar" style="display:none;background:#e8107a;padding:10px 40px;text-align:center">
+  <span id="promoBarText" style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#fff"></span>
 </div>
 
 
 
 <!-- HERO CON IMMAGINE DI SFONDO -->
 <section class="cp-hero-home">
-  <div class="cp-hero-inner">
+  <div class="cp-hero-inner" style="position:relative">
+    <img src="images/meda.png" alt=""
+      style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+             width:220px;opacity:0.5;pointer-events:none;z-index:0;object-fit:contain">
     <div>
-      <h1 class="cp-hero-title">OGNI<br>CARTA<em>HA UN PREZZO.</em></h1>
+      <h1 class="cp-hero-title">OGNI<br>CARTA<em>HA UNA STORIA.</em></h1>
       <p class="cp-hero-sub">Acquista e vendi carte Pokémon singole. Grading verificato, spedizioni garantite in tutta Italia e Europa.</p>
       <div class="cp-hero-btns">
         <a href="acquista.html" class="btn-fill">Sfoglia il catalogo</a>
         <a href="vendi.html" class="btn-ghost">Vendi le tue carte</a>
       </div>
       <div class="cp-hero-stats">
-        <div class="cp-hero-stat"><div class="cp-hero-stat-n">1.200+</div><div class="cp-hero-stat-l">Carte disponibili</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">500+</div><div class="cp-hero-stat-l">Carte disponibili</div></div>
         <div class="cp-hero-stat"><div class="cp-hero-stat-n">100%</div><div class="cp-hero-stat-l">Grading verificato</div></div>
-        <div class="cp-hero-stat"><div class="cp-hero-stat-n">IT/EU</div><div class="cp-hero-stat-l">Spedizioni</div></div>
-        <div class="cp-hero-stat"><div class="cp-hero-stat-n">24h</div><div class="cp-hero-stat-l">Supporto</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">IT/ENG/JP</div><div class="cp-hero-stat-l">Nazionalità</div></div>
+        <div class="cp-hero-stat"><div class="cp-hero-stat-n">Valutazione</div><div class="cp-hero-stat-l">Trasparente</div></div>
       </div>
     </div>
     <div class="cp-hero-cards" id="heroBanners">
@@ -122,6 +125,9 @@
   <a href="acquista.html#type=buste" class="cp-cat"><div class="cp-cat-icon">📦</div><span>Buste nuove</span></a>
   <a href="acquista.html#type=etb" class="cp-cat"><div class="cp-cat-icon">🎁</div><span>ETB</span></a>
   <a href="acquista.html#type=altro" class="cp-cat"><div class="cp-cat-icon">✨</div><span>Altro</span></a>
+  <a href="#" class="cp-cat" style="opacity:.35;pointer-events:none;cursor:default" id="cat-mysecret">
+    <div class="cp-cat-icon">🔮</div><span>My Secret</span>
+  </a>
 </div>
 
 <!-- CARTE IN EVIDENZA -->
@@ -374,7 +380,26 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadBanners();
     loadFeatured();
+    loadPromoBar();
   });
+
+  async function loadPromoBar() {
+    try {
+      const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data } = await sb
+        .from('impostazioni')
+        .select('chiave, valore')
+        .in('chiave', ['promo_sped_attiva', 'promo_sped_label', 'promo_sped_soglia']);
+      if (!data) return;
+      const vals = {};
+      data.forEach(r => { vals[r.chiave] = r.valore; });
+      if (vals['promo_sped_attiva'] === 'true') {
+        const label = vals['promo_sped_label'] || `Promo settimana: spedizione gratis sopra €${vals['promo_sped_soglia']||''}`;
+        document.getElementById('promoBarText').textContent = '🎉 ' + label;
+        document.getElementById('promoBar').style.display = 'block';
+      }
+    } catch(e) {}
+  }
 })();
 
 // ── Login dropdown ──
