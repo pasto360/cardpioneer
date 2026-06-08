@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
   <style>
     .profilo-layout { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: start; }
 
@@ -185,6 +186,9 @@
           <div class="profilo-nav-item" onclick="showPanel('ordini')">
             <span class="profilo-nav-icon">📦</span> I miei ordini
           </div>
+          <div class="profilo-nav-item" onclick="showPanel('proposte')">
+            <span class="profilo-nav-icon">📬</span> Le mie proposte
+          </div>
           <div class="profilo-nav-item" onclick="showPanel('sicurezza')">
             <span class="profilo-nav-icon">🔒</span> Sicurezza
           </div>
@@ -296,6 +300,21 @@
           </div>
         </div>
 
+        <!-- PROPOSTE -->
+        <div class="profilo-panel" id="panel-proposte">
+          <div class="panel-card">
+            <div class="panel-title">📬 Le mie proposte di vendita</div>
+            <div id="proposteList">
+              <div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">Caricamento...</div>
+            </div>
+            <div style="margin-top:16px">
+              <a href="vendi.html" class="btn-fill" style="font-size:11px;padding:10px 20px;display:inline-block">
+                + Nuova proposta
+              </a>
+            </div>
+          </div>
+        </div>
+
         <!-- SICUREZZA -->
         <div class="profilo-panel" id="panel-sicurezza">
           <div class="panel-card">
@@ -367,8 +386,80 @@ function showPanel(name) {
   document.querySelectorAll('.profilo-nav-item').forEach(i => i.classList.remove('active'));
   document.getElementById('panel-' + name)?.classList.add('active');
   event.currentTarget.classList.add('active');
-  if (name === 'ordini') loadOrdini();
+  if (name === 'ordini')   loadOrdini();
+  if (name === 'proposte') loadProposteUtente();
 }
+
+// ═══════════════════════════════════════
+//  PROPOSTE UTENTE
+// ═══════════════════════════════════════
+async function loadProposteUtente() {
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) return;
+
+  const { data } = await window.sb
+    .from('proposte_vendita')
+    .select('*')
+    .eq('email', user.email)
+    .order('created_at', { ascending: false });
+
+  const list = document.getElementById('proposteList');
+  if (!data?.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">
+      Nessuna proposta inviata ancora.<br>
+      <a href="vendi.html" style="color:var(--pink)">Vendi le tue carte →</a>
+    </div>`;
+    return;
+  }
+
+  const statoLabel = { in_attesa:'⏳ In valutazione', offerta_inviata:'💰 Offerta ricevuta', accettata:'✅ Accettata', rifiutata:'❌ Rifiutata' };
+  const badgeClass = { in_attesa:'badge-attesa', offerta_inviata:'badge-spedito', accettata:'badge-confermato', rifiutata:'badge-annullato' };
+
+  list.innerHTML = data.map(p => {
+    const carte   = Array.isArray(p.carte)   ? p.carte   : [];
+    const offerta = Array.isArray(p.offerta) ? p.offerta : [];
+    const totale  = offerta.reduce((s,o) => s + (parseFloat(o.prezzo)||0), 0);
+    const dataStr = new Date(p.created_at).toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+
+    const offertaHTML = p.stato === 'offerta_inviata' ? `
+      <div style="margin-top:14px;background:rgba(245,230,66,.06);border:1px solid rgba(245,230,66,.2);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Offerta ricevuta</div>
+        ${offerta.map(o => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--dark)">${esc(o.nome||'')} — ${esc(o.espansione||'')}</span>
+          <span style="font-weight:600;color:var(--dark)">€ ${parseFloat(o.prezzo||0).toFixed(2).replace('.',',')}</span>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:10px;color:var(--pink)">
+          <span>Totale offerta</span><span>€ ${totale.toFixed(2).replace('.',',')}</span>
+        </div>
+        ${p.note_admin ? `<div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic">"${esc(p.note_admin)}"</div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button onclick="rispondiProposta('${p.id}','accettata')" class="btn-fill" style="font-size:11px;padding:10px 20px;flex:1">✅ Accetta offerta</button>
+          <button onclick="rispondiProposta('${p.id}','rifiutata')" style="font-size:11px;font-weight:600;background:transparent;color:#dc2626;border:1px solid rgba(248,113,113,.3);padding:10px 20px;border-radius:8px;cursor:pointer">❌ Rifiuta</button>
+        </div>
+      </div>` : '';
+
+    return `<div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--dark)">${carte.length} carta${carte.length!==1?'e':''} — ${dataStr}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${carte.map(c=>esc(c.nome||'')).join(', ')}</div>
+        </div>
+        <span class="${badgeClass[p.stato]||'badge-attesa'}" style="font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px">${statoLabel[p.stato]||p.stato}</span>
+      </div>
+      ${offertaHTML}
+    </div>`;
+  }).join('');
+}
+
+async function rispondiProposta(id, risposta) {
+  if (!confirm(risposta === 'accettata' ? 'Confermi di accettare questa offerta?' : 'Vuoi rifiutare questa offerta?')) return;
+  await window.sb.from('proposte_vendita').update({
+    stato: risposta, risposta_cliente: risposta, data_risposta: new Date().toISOString(),
+  }).eq('id', id);
+  loadProposteUtente();
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ═══════════════════════════════════════
 //  INIT — carica dati utente
