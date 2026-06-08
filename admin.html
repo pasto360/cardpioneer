@@ -230,6 +230,9 @@
           <div id="modalOffertaContent"></div>
         </div>
       </div>
+
+      <!-- ── ORDINI ── -->
+      <div class="admin-page active" id="page-ordini">
         <div class="admin-table-wrap">
           <div class="admin-table-header">
             <div class="admin-table-title">Ordini</div>
@@ -591,18 +594,23 @@ function showAdmin(user) {
 //  NAVIGAZIONE
 // ═══════════════════════════════════════════════════════
 function showAdminPage(name, btn) {
-  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  btn.classList.add('active');
-  if (name === 'ordini')       loadOrdini();
-  if (name === 'proposte')     loadProposte();
-  if (name === 'prodotti')     loadProdotti();
-  if (name === 'sconti')       loadSconti();
-  if (name === 'banner')       loadBannerAdmin();
-  if (name === 'stats')        loadStats();
-  if (name === 'utenti')       loadUtenti();
-  if (name === 'wishlist')     loadWishlistAdmin();
+  try {
+    document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'));
+    const page = document.getElementById('page-' + name);
+    if (!page) { console.error('Pagina non trovata: page-' + name); return; }
+    page.classList.add('active');
+    btn.classList.add('active');
+    if (name === 'ordini')       loadOrdini();
+    if (name === 'proposte')     loadProposte();
+    if (name === 'prodotti')     loadProdotti();
+    if (name === 'sconti')       loadSconti();
+    if (name === 'banner')       loadBannerAdmin();
+    if (name === 'impostazioni') loadImpostazioni();
+    if (name === 'stats')        loadStats();
+    if (name === 'utenti')       loadUtenti();
+    if (name === 'wishlist')     loadWishlistAdmin();
+  } catch(e) { console.error('showAdminPage error:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
