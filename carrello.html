@@ -503,12 +503,16 @@ function escHtml(s) {
 }
 
 // ── Boot ──
-document.addEventListener('DOMContentLoaded', async () => {
-  // Aggiorna badge
+document.addEventListener('DOMContentLoaded', () => {
   updateCartBadge();
-  // Prova a caricare impostazioni spedizione, poi renderizza comunque
-  try { await loadSpedizione(); } catch(e) { console.warn('Spedizione defaults usati'); }
+  // Renderizza subito con valori default
   renderCart();
+  // Poi aggiorna con i valori da Supabase (max 3 secondi)
+  const timeout = setTimeout(() => renderCart(), 3000);
+  loadSpedizione().then(() => {
+    clearTimeout(timeout);
+    renderCart();
+  }).catch(() => {});
 });
 </script>
 </body>
