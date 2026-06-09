@@ -147,7 +147,7 @@ function cpShowWishlistToast(msg) {
 
 async function cpUpdateWishlistBadge() {
   const list = await cpGetWishlist();
-  document.querySelectorAll('.cp-wish-badge').forEach(el => el.textContent = list.length || '0');
+  document.querySelectorAll('.cp-wish-badge').forEach(el => el.textContent = '');
 }
 
 // Colora i cuori già salvati quando si carica una pagina con prodotti

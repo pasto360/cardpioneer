@@ -12,6 +12,7 @@ img { max-width: 100%; display: block; }
   --dark:     #1a0a2e;
   --dark2:    #14111f;
   --white:    #ffffff;
+  --price:    #16a34a;
   --bg:       #f4f0ff;
   --border:   #ede8f8;
   --muted:    #888;
@@ -57,7 +58,7 @@ img { max-width: 100%; display: block; }
   letter-spacing: -0.01em;
 }
 .cp-logo-icon {
-  width: 32px; height: 32px;
+  width: 36px; height: 36px;
   background: #fff;
   border-radius: 8px;
   display: flex;
@@ -580,7 +581,7 @@ a.cp-cat { color: inherit; }
 .pcard-name { font-size: 11px; font-weight: 600; color: var(--dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pcard-set  { font-size: 9px; color: var(--light); margin-bottom: 8px; }
 .pcard-bottom { display: flex; align-items: center; justify-content: space-between; }
-.pcard-price { font-family: var(--fu); font-size: 13px; font-weight: 700; color: var(--pink); }
+.pcard-price { font-family: var(--fu); font-size: 13px; font-weight: 700; color: var(--price); }
 .pcard-stars { font-size: 10px; color: var(--yellow); letter-spacing: -1px; }
 
 /* ── Card grids ── */
