@@ -86,7 +86,6 @@ async function cpToggleWishlist(sku, btn) {
   if (!window.sb) return;
   const user = window.getCurrentUser?.();
   if (!user) {
-    // Non loggato → apri dropdown login
     document.getElementById('loginWrap')?.classList.add('open');
     cpShowWishlistToast('Accedi per salvare i preferiti');
     return;
@@ -96,7 +95,6 @@ async function cpToggleWishlist(sku, btn) {
   const inList = list.includes(sku);
 
   if (inList) {
-    // Rimuovi
     await window.sb.from('wishlist').delete()
       .eq('user_id', user.id)
       .eq('prodotto_sku', sku);
@@ -104,8 +102,19 @@ async function cpToggleWishlist(sku, btn) {
     if (btn) { btn.textContent = '♡'; btn.classList.remove('active'); }
     cpShowWishlistToast('Rimosso dai preferiti');
   } else {
-    // Aggiungi
-    await window.sb.from('wishlist').insert([{ user_id: user.id, prodotto_sku: sku }]);
+    // Controlla disponibilità attuale per salvare era_disponibile
+    let disponibile = true;
+    try {
+      const { data } = await window.sb.from('prodotti')
+        .select('disponibile').eq('sku', sku).single();
+      disponibile = (data?.disponibile || 0) > 0;
+    } catch(e) {}
+
+    await window.sb.from('wishlist').insert([{
+      user_id: user.id,
+      prodotto_sku: sku,
+      era_disponibile: disponibile,
+    }]);
     _wishlistCache = [...list, sku];
     if (btn) { btn.textContent = '♥'; btn.classList.add('active'); }
     cpShowWishlistToast('Aggiunto ai preferiti ♥');
@@ -189,6 +198,89 @@ function escHtml(s) {
 }
 
 // ═══════════════════════════════════════
+//  NOTIFICA WISHLIST — carte diventate disponibili
+// ═══════════════════════════════════════
+async function cpCheckWishlistDisponibilita() {
+  if (!window.sb) return;
+  const user = window.getCurrentUser?.();
+  if (!user) return;
+
+  try {
+    // Prendi solo le carte che erano NON disponibili quando aggiunte
+    const { data: wishItems } = await window.sb
+      .from('wishlist')
+      .select('prodotto_sku, era_disponibile')
+      .eq('user_id', user.id)
+      .eq('era_disponibile', false);
+
+    if (!wishItems?.length) return;
+
+    const skus = wishItems.map(w => w.prodotto_sku);
+
+    // Controlla quali sono ora disponibili
+    const { data: prodotti } = await window.sb
+      .from('prodotti')
+      .select('sku, nome, disponibile')
+      .in('sku', skus)
+      .gt('disponibile', 0);
+
+    if (!prodotti?.length) return;
+
+    // Aggiorna era_disponibile a true per quelle ora disponibili
+    const skusDisponibili = prodotti.map(p => p.sku);
+    await window.sb.from('wishlist')
+      .update({ era_disponibile: true })
+      .eq('user_id', user.id)
+      .in('prodotto_sku', skusDisponibili);
+
+    // Mostra notifica
+    const n = prodotti.length;
+    const msg = n === 1
+      ? `🟢 "${prodotti[0].nome}" nella tua wishlist è ora disponibile!`
+      : `🟢 ${n} carte nella tua wishlist sono ora disponibili!`;
+
+    cpShowWishlistNotifica(msg);
+  } catch(e) {}
+}
+
+function cpShowWishlistNotifica(msg) {
+  const id = 'cp-wish-notifica';
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = id;
+    el.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#059669;color:#fff;
+      font-family:system-ui,sans-serif;font-size:13px;font-weight:600;
+      padding:13px 22px;border-radius:10px;
+      box-shadow:0 4px 20px rgba(0,0,0,.18);
+      z-index:9999;cursor:pointer;
+      display:flex;align-items:center;gap:12px;
+      max-width:90vw;text-align:center;
+      animation:slideUp .3s ease;
+    `;
+    el.innerHTML = `<span id="cp-wish-notifica-text"></span>
+      <a href="wishlist.html" style="color:#fff;text-decoration:underline;white-space:nowrap;font-size:12px">Vedi →</a>
+      <button onclick="document.getElementById('cp-wish-notifica').remove()"
+        style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;margin-left:4px;line-height:1">×</button>`;
+    document.body.appendChild(el);
+
+    // Auto-remove dopo 8 secondi
+    setTimeout(() => el?.remove(), 8000);
+  }
+  document.getElementById('cp-wish-notifica-text').textContent = msg;
+
+  // Aggiungi keyframe se non esiste
+  if (!document.getElementById('cp-wish-anim')) {
+    const style = document.createElement('style');
+    style.id = 'cp-wish-anim';
+    style.textContent = '@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+    document.head.appendChild(style);
+  }
+}
+
+// ═══════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
@@ -196,8 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Unica chiamata wishlist dopo auth — delay 1.2s per non sovraccaricare Supabase
   setTimeout(async () => {
     const user = window.getCurrentUser?.();
-    if (!user) return;                    // non loggato → nessuna query
-    const list = await cpGetWishlist();   // una sola query
+    if (!user) return;
+    const list = await cpGetWishlist();
     // Evidenzia cuori
     if (list.length) {
       document.querySelectorAll('[data-wish-sku]').forEach(btn => {
@@ -207,7 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-    // Aggiorna badge wishlist
-    document.querySelectorAll('.cp-wish-badge').forEach(el => el.textContent = list.length || '0');
+    // Badge wishlist — senza contatore (solo ♡)
+    document.querySelectorAll('.cp-wish-badge').forEach(el => el.textContent = '');
+    // Controlla carte diventate disponibili
+    cpCheckWishlistDisponibilita();
   }, 1200);
 });
