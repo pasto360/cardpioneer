@@ -191,6 +191,7 @@
       <div class="admin-nav-item active" onclick="showAdminPage('ordini', this)">📦 Ordini</div>
       <div class="admin-nav-item" onclick="showAdminPage('proposte', this)">📬 Proposte vendita</div>
       <div class="admin-nav-item" onclick="showAdminPage('prodotti', this)">🎴 Prodotti</div>
+      <div class="admin-nav-item" onclick="showAdminPage('importexport', this)">📤 Importa / Esporta</div>
       <div class="admin-nav-item" onclick="showAdminPage('sconti', this)">🏷️ Sconti</div>
       <div class="admin-nav-item" onclick="showAdminPage('banner', this)">🖼️ Banner home</div>
       <div class="admin-nav-item" onclick="showAdminPage('impostazioni', this)">⚙️ Impostazioni</div>
@@ -231,7 +232,85 @@
         </div>
       </div>
 
-      <!-- ── ORDINI ── -->
+      <!-- ── IMPORTA / ESPORTA ── -->
+      <div class="admin-page" id="page-importexport">
+        <div class="admin-table-wrap" style="margin-bottom:20px">
+          <div class="admin-table-header">
+            <div class="admin-table-title">📥 Esporta catalogo</div>
+          </div>
+          <div style="padding:24px">
+            <p style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:16px;line-height:1.7">
+              Scarica tutti i prodotti del catalogo in formato CSV. Puoi aprirlo con Excel o Google Sheets, modificarlo e reimportarlo.
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onclick="esportaCSV('tutti')"
+                style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                       background:#f5e642;color:#1a0a2e;border:none;padding:11px 22px;
+                       border-radius:8px;cursor:pointer">
+                📥 Esporta tutti i prodotti
+              </button>
+              <button onclick="esportaCSV('disponibili')"
+                style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                       background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3);
+                       padding:11px 22px;border-radius:8px;cursor:pointer">
+                📥 Solo disponibili
+              </button>
+            </div>
+            <div style="margin-top:14px;font-size:11px;color:rgba(255,255,255,.25);line-height:1.6">
+              Colonne esportate: sku, categoria, set_name, lingua, nome, nome_completo, condizione, prezzo, peso, disponibile, immagine
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <div class="admin-table-title">📤 Importa catalogo</div>
+          </div>
+          <div style="padding:24px">
+            <p style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:6px;line-height:1.7">
+              Carica un CSV per aggiornare o aggiungere prodotti. Il file deve avere le stesse colonne dell'esportazione.
+            </p>
+            <p style="font-size:12px;color:rgba(248,113,113,.7);margin-bottom:16px">
+              ⚠️ Le righe con SKU già esistente vengono <strong style="color:#f87171">aggiornate</strong>. Le righe con SKU nuovo vengono <strong style="color:#f87171">aggiunte</strong>. Nessun prodotto viene eliminato.
+            </p>
+
+            <!-- Drop area -->
+            <div id="dropArea"
+              style="border:2px dashed rgba(255,255,255,.15);border-radius:10px;padding:32px;
+                     text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:16px;
+                     position:relative"
+              ondragover="event.preventDefault();this.style.borderColor='#f5e642'"
+              ondragleave="this.style.borderColor='rgba(255,255,255,.15)'"
+              ondrop="handleDrop(event)">
+              <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileSelect(this)"
+                style="position:absolute;inset:0;opacity:0;cursor:pointer">
+              <div style="font-size:32px;margin-bottom:10px">📄</div>
+              <div style="font-size:13px;color:rgba(255,255,255,.5)">
+                Trascina il CSV qui oppure <span style="color:#f5e642;font-weight:600">clicca per scegliere</span>
+              </div>
+              <div id="dropFileName" style="font-size:11px;color:rgba(255,255,255,.3);margin-top:8px"></div>
+            </div>
+
+            <!-- Anteprima -->
+            <div id="importPreview" style="display:none;margin-bottom:16px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+                          color:rgba(255,255,255,.3);margin-bottom:10px">Anteprima — prime 5 righe</div>
+              <div id="importPreviewTable" style="overflow-x:auto"></div>
+              <div id="importStats" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:10px"></div>
+            </div>
+
+            <div id="importMsg" style="display:none;font-size:12px;padding:10px 14px;border-radius:8px;margin-bottom:14px"></div>
+
+            <button id="importBtn" onclick="importaCSV()" disabled
+              style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                     background:rgba(255,255,255,.1);color:rgba(255,255,255,.3);border:none;
+                     padding:11px 22px;border-radius:8px;cursor:not-allowed;transition:all .2s"
+              id="importBtn">
+              📤 Avvia importazione
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="admin-page active" id="page-ordini">
         <div class="admin-table-wrap">
           <div class="admin-table-header">
@@ -601,7 +680,7 @@ function showAdminPage(name, btn) {
     if (!page) { console.error('Pagina non trovata: page-' + name); return; }
     page.classList.add('active');
     btn.classList.add('active');
-    if (name === 'ordini')       loadOrdini();
+    if (name === 'importexport') initImportExport();
     if (name === 'proposte')     loadProposte();
     if (name === 'prodotti')     loadProdotti();
     if (name === 'sconti')       loadSconti();
@@ -611,6 +690,192 @@ function showAdminPage(name, btn) {
     if (name === 'utenti')       loadUtenti();
     if (name === 'wishlist')     loadWishlistAdmin();
   } catch(e) { console.error('showAdminPage error:', e); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORTA / ESPORTA CSV
+// ═══════════════════════════════════════════════════════
+const CSV_COLS = ['sku','categoria','set_name','lingua','nome','nome_completo','condizione','prezzo','peso','disponibile','immagine'];
+let importData = null;
+
+function initImportExport() {
+  importData = null;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importMsg').style.display = 'none';
+  document.getElementById('dropFileName').textContent = '';
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  btn.style.cssText += ';background:rgba(255,255,255,.1);color:rgba(255,255,255,.3);cursor:not-allowed';
+}
+
+// ── ESPORTA ──
+async function esportaCSV(filtro) {
+  let query = sb.from('prodotti').select(CSV_COLS.join(','));
+  if (filtro === 'disponibili') query = query.gt('disponibile', 0);
+  const { data, error } = await query.order('sku');
+  if (error || !data?.length) { alert('Nessun dato da esportare.'); return; }
+
+  const header = CSV_COLS.join(';');
+  const rows = data.map(r =>
+    CSV_COLS.map(col => {
+      const val = r[col] ?? '';
+      const s = String(val);
+      return s.includes(';') || s.includes('"') || s.includes('\n')
+        ? '"' + s.replace(/"/g, '""') + '"'
+        : s;
+    }).join(';')
+  );
+
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `cardpioneer_prodotti_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── IMPORT — gestione file ──
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropArea').style.borderColor = 'rgba(255,255,255,.15)';
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (file) processCSVFile(file);
+}
+
+function processCSVFile(file) {
+  document.getElementById('dropFileName').textContent = '📄 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result.replace(/^\uFEFF/, ''); // rimuovi BOM
+    parseCSVPreview(text);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function parseCSVPreview(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) { showImportMsg('Il file è vuoto o non valido.', false); return; }
+
+  const header = lines[0].split(';').map(h => h.trim().replace(/^"|"$/g,''));
+  const missingCols = ['sku'].filter(c => !header.includes(c));
+  if (missingCols.length) {
+    showImportMsg(`Colonna obbligatoria mancante: ${missingCols.join(', ')}`, false);
+    return;
+  }
+
+  // Parsa righe
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCSVLine(lines[i]);
+    const obj = {};
+    header.forEach((col, j) => { obj[col] = vals[j] ?? ''; });
+    if (obj.sku) rows.push(obj);
+  }
+
+  importData = { header, rows };
+
+  // Mostra anteprima
+  const preview5 = rows.slice(0, 5);
+  const thCols = header.filter(h => CSV_COLS.includes(h));
+  const tableHTML = `<table class="admin-table" style="font-size:11px">
+    <thead><tr>${thCols.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${preview5.map(r =>
+      `<tr>${thCols.map(h => `<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[h]||'')}</td>`).join('')}</tr>`
+    ).join('')}</tbody>
+  </table>`;
+
+  document.getElementById('importPreviewTable').innerHTML = tableHTML;
+  document.getElementById('importStats').textContent = `${rows.length} prodotti trovati nel file · Colonne riconosciute: ${thCols.join(', ')}`;
+  document.getElementById('importPreview').style.display = 'block';
+  document.getElementById('importMsg').style.display = 'none';
+
+  // Abilita pulsante
+  const btn = document.getElementById('importBtn');
+  btn.disabled = false;
+  btn.style.cssText += ';background:#f5e642;color:#1a0a2e;cursor:pointer';
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === ';' && !inQ) {
+      result.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── IMPORTA ──
+async function importaCSV() {
+  if (!importData?.rows?.length) return;
+
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Importazione in corso...';
+
+  const BATCH = 50;
+  let aggiornati = 0, aggiunti = 0, errori = 0;
+  const rows = importData.rows;
+
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH).map(r => {
+      const obj = {};
+      CSV_COLS.forEach(col => {
+        if (r[col] !== undefined && r[col] !== '') {
+          if (col === 'prezzo' || col === 'peso') obj[col] = parseFloat(r[col]) || 0;
+          else if (col === 'disponibile')          obj[col] = parseInt(r[col])   || 0;
+          else obj[col] = r[col];
+        }
+      });
+      return obj;
+    });
+
+    const { data, error } = await sb.from('prodotti')
+      .upsert(batch, { onConflict: 'sku', ignoreDuplicates: false });
+
+    if (error) { errori += batch.length; console.error(error); }
+    else {
+      // Conta nuovi vs aggiornati approssimativamente
+      aggiornati += batch.length;
+    }
+
+    // Progress
+    btn.textContent = `⏳ ${Math.min(i + BATCH, rows.length)} / ${rows.length}...`;
+  }
+
+  showImportMsg(
+    `✅ Importazione completata! ${aggiornati} prodotti upsertati${errori > 0 ? ` · ⚠️ ${errori} errori` : ''}.`,
+    errori === 0
+  );
+  btn.textContent = '📤 Avvia importazione';
+  btn.disabled = false;
+
+  // Ricarica catalogo prodotti se visibile
+  loadProdotti();
+}
+
+function showImportMsg(text, ok) {
+  const msg = document.getElementById('importMsg');
+  msg.style.display = 'block';
+  msg.style.background = ok ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)';
+  msg.style.color  = ok ? '#34d399' : '#f87171';
+  msg.style.border = `1px solid ${ok ? 'rgba(52,211,153,.3)' : 'rgba(248,113,113,.3)'}`;
+  msg.textContent  = text;
 }
 
 // ═══════════════════════════════════════════════════════
