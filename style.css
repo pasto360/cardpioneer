@@ -776,10 +776,125 @@ input[type="file"].form-input { cursor: pointer; }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .topbar { padding: 7px 20px; }
-  .cp-nav { padding: 0 20px; height: 60px; }
+  /* ── Topbar ── */
+  .topbar { padding: 7px 16px; }
+  .topbar-links { display: none; }
+
+  /* ── Nav ── */
+  .cp-nav { padding: 0 16px; height: 60px; position: relative; }
   .cp-nav-links { display: none; }
   .cp-nav-mobile { display: block; color: var(--dark); font-size: 22px; }
+
+  /* Menu mobile aperto */
+  .cp-nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 60px; left: 0; right: 0;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    gap: 4px;
+    z-index: 999;
+    box-shadow: 0 8px 24px rgba(26,10,46,.12);
+  }
+  .cp-nav-links.open a {
+    padding: 12px 0;
+    font-size: 15px;
+    border-bottom: 1px solid var(--border);
+    display: block;
+  }
+  .cp-nav-links.open a:last-child { border-bottom: none; }
+
+  /* ── Hero home ── */
+  .cp-hero-home { padding: 32px 16px 36px; min-height: auto; }
+  .cp-hero-inner { grid-template-columns: 1fr; gap: 28px; position: relative; }
+  .cp-hero-inner img[src*="meda"] { width: 140px !important; opacity: .25 !important; }
+  .cp-hero-cards { display: none; }
+  .cp-hero-title { font-size: 32px; }
+  .cp-hero-sub { font-size: 13px; }
+  .cp-hero-btns { flex-direction: column; gap: 10px; }
+  .cp-hero-btns a { text-align: center; }
+  .cp-hero-stats { grid-template-columns: repeat(2,1fr); gap: 12px; }
+
+  /* ── Filtri categorie ── */
+  .cp-cats { padding: 10px 16px; gap: 6px; overflow-x: auto; flex-wrap: nowrap; }
+  .cp-cat { flex-shrink: 0; }
+
+  /* ── Sezioni ── */
+  .cp-section { padding: 32px 16px; }
+  .cp-section.alt { padding: 32px 16px; }
+  .cp-hero-page { padding: 32px 16px 28px; }
+  .cp-hero-page .cp-hero-title { font-size: 26px; }
+
+  /* ── Griglia carte ── */
+  .card-grid-5,
+  .card-grid-4 { grid-template-columns: repeat(2,1fr); }
+  .card-grid-3 { grid-template-columns: repeat(2,1fr); }
+  .card-grid-2 { grid-template-columns: 1fr; }
+
+  /* Market */
+  .market-grid { grid-template-columns: repeat(2,1fr) !important; gap: 10px; }
+  .mcard { font-size: 11px; }
+  .mcard-name { font-size: 11px; }
+  .mcard-price { font-size: 13px; }
+  .market-sidebar { display: none; }
+  .market-layout { grid-template-columns: 1fr !important; }
+
+  /* Carte home */
+  .pcard-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+
+  /* ── Form ── */
+  .form-row { grid-template-columns: 1fr; gap: 12px; }
+  .cp-form { gap: 12px; }
+
+  /* ── Carrello ── */
+  .cart-layout { grid-template-columns: 1fr; }
+  .order-summary { margin-top: 16px; }
+
+  /* ── Checkout ── */
+  .checkout-layout { grid-template-columns: 1fr; }
+  .checkout-summary { margin-top: 16px; }
+
+  /* ── Footer ── */
+  .cp-footer { padding: 32px 16px 20px; }
+  .cp-footer-grid { grid-template-columns: 1fr; gap: 20px; }
+  .cp-footer-bottom { flex-direction: column; gap: 6px; text-align: center; }
+
+  /* ── Vendi ── */
+  .steps-grid { grid-template-columns: 1fr; }
+  .carta-block .form-row { grid-template-columns: 1fr; }
+
+  /* ── Wishlist ── */
+  .wish-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+
+  /* ── Promo ── */
+  .cp-promo { margin: 0 16px 32px; grid-template-columns: 1fr; }
+  .cp-trust { grid-template-columns: repeat(2,1fr); }
+
+  /* ── Info box ── */
+  .info-box { font-size: 12px; padding: 12px 16px; }
+
+  /* ── Tabelle legali ── */
+  .id-table { font-size: 12px; }
+  .char-grid { grid-template-columns: 1fr; }
+  .faq-wrap, .legal-wrap, .cf-wrap, .vendi-wrap { max-width: 100%; }
+
+  /* ── Hero page sub ── */
+  .cp-hero-sub { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .cp-hero-title { font-size: 26px; }
+  .market-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .pcard-grid { grid-template-columns: repeat(2,1fr); }
+  .wish-grid { grid-template-columns: repeat(2,1fr); }
+  .cp-hero-stats { grid-template-columns: repeat(2,1fr); }
+  .cp-footer-grid { grid-template-columns: 1fr; }
+  .faq-question { padding: 14px 16px; }
+  .faq-text { font-size: 13px; }
+}
+
   .cp-hero-home { padding: 48px 20px 40px; }
   .cp-hero-inner { grid-template-columns: 1fr; }
   .cp-hero-cards { display: none; }
