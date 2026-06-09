@@ -164,9 +164,7 @@
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <script>
-const SUPABASE_URL = 'https://nzjwpdbljfwrspmepoqo.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs';
-
+// SUPABASE_URL e SUPABASE_KEY sono definiti in auth.js
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 async function loadWishlist() {
