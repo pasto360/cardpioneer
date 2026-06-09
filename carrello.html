@@ -170,7 +170,7 @@
     <a href="vendi.html">Vendi</a>
   </div>
   <div class="cp-nav-r">
-    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
     <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
@@ -504,8 +504,10 @@ function escHtml(s) {
 
 // ── Boot ──
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadSpedizione();
+  // Aggiorna badge
   updateCartBadge();
+  // Prova a caricare impostazioni spedizione, poi renderizza comunque
+  try { await loadSpedizione(); } catch(e) { console.warn('Spedizione defaults usati'); }
   renderCart();
 });
 </script>

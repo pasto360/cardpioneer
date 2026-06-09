@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La mia Wishlist — CardPioneer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <script src="tracker.js"></script>
+  <style>
+    .wish-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    /* Carta disponibile */
+    .wish-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: box-shadow .2s, transform .2s;
+      position: relative;
+    }
+    .wish-card:hover { box-shadow: 0 6px 24px rgba(26,10,46,.1); transform: translateY(-2px); }
+    .wish-card.esaurita {
+      opacity: .45;
+      filter: grayscale(60%);
+      pointer-events: none;
+    }
+    .wish-card.esaurita .wish-card-actions { display: none; }
+
+    .wish-card-img {
+      aspect-ratio: .72/1;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+    }
+    .wish-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .wish-remove {
+      position: absolute;
+      top: 7px; right: 7px;
+      width: 26px; height: 26px;
+      background: rgba(255,255,255,.9);
+      border: none; border-radius: 50%;
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--pink);
+      transition: transform .15s;
+      z-index: 2;
+    }
+    .wish-remove:hover { transform: scale(1.15); }
+
+    .wish-esaurito-badge {
+      position: absolute;
+      bottom: 8px; left: 8px;
+      background: rgba(127,29,29,.85);
+      color: #fff;
+      font-size: 9px; font-weight: 700;
+      padding: 3px 8px; border-radius: 100px;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    .wish-card-body { padding: 10px 12px 12px; }
+    .wish-card-set   { font-size: 10px; color: var(--pink); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wish-card-name  { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wish-card-price { font-family: var(--fu); font-size: 15px; font-weight: 700; color: var(--pink); }
+
+    .wish-card-actions { margin-top: 10px; }
+    .wish-card-actions button {
+      width: 100%;
+      font-family: var(--fu);
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--yellow);
+      color: var(--dark);
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .wish-card-actions button:hover { opacity: .85; }
+
+    /* Disponibile indicator */
+    .wish-avail {
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 4px;
+      padding: 2px 7px;
+      border-radius: 100px;
+      display: inline-block;
+    }
+    .wish-avail.ok  { background: rgba(52,211,153,.12); color: #059669; }
+    .wish-avail.low { background: rgba(251,191,36,.12);  color: #d97706; }
+
+    /* Empty state */
+    .wish-empty { text-align: center; padding: 64px 20px; }
+    .wish-empty-icon { font-size: 56px; margin-bottom: 16px; }
+
+    /* Login prompt */
+    .wish-login { text-align: center; padding: 48px 20px; max-width: 440px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg" id="promoTopbar">&nbsp;</div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <a href="wishlist.html" class="cp-nav-icon active" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Area personale</div>
+  <h1 class="cp-hero-title">La mia <em>Wishlist</em></h1>
+  <p class="cp-hero-sub">Le carte che hai salvato. Quelle disponibili puoi aggiungerle subito al carrello.</p>
+</section>
+
+<section class="cp-section alt" id="wishSection">
+  <div style="text-align:center;padding:48px">
+    <div style="width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px"></div>
+    <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Caricamento...</p>
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<script>
+const SUPABASE_URL = 'https://nzjwpdbljfwrspmepoqo.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs';
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function loadWishlist() {
+  const section = document.getElementById('wishSection');
+  const user    = window.getCurrentUser?.();
+
+  if (!user) {
+    section.innerHTML = `
+      <div class="wish-login">
+        <div style="font-size:48px;margin-bottom:16px">🔒</div>
+        <h2 style="font-family:var(--fu);font-size:18px;color:var(--dark);margin-bottom:10px;letter-spacing:-.02em">Accedi per vedere la tua wishlist</h2>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7">Salva le carte che ti interessano e trovale sempre qui.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="registrati.html" class="btn-fill">Registrati</a>
+          <button onclick="document.getElementById('loginWrap').classList.toggle('open')" class="btn-outline-dark">Accedi</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Carica SKU dalla wishlist
+  const { data: wishItems } = await sb
+    .from('wishlist')
+    .select('prodotto_sku')
+    .eq('user_id', user.id);
+
+  if (!wishItems?.length) {
+    section.innerHTML = `
+      <div class="wish-empty">
+        <div class="wish-empty-icon">♡</div>
+        <h2 style="font-family:var(--fu);font-size:20px;color:var(--dark);margin-bottom:8px;letter-spacing:-.02em">La tua wishlist è vuota</h2>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Sfoglia il catalogo e clicca sul cuore per salvare le carte che ti interessano.</p>
+        <a href="acquista.html" class="btn-fill">Vai al market</a>
+      </div>`;
+    return;
+  }
+
+  const skus = wishItems.map(w => w.prodotto_sku);
+
+  // Carica dettagli prodotti
+  const { data: prodotti } = await sb
+    .from('prodotti')
+    .select('sku, nome, set_name, lingua, condizione, prezzo, disponibile, immagine')
+    .in('sku', skus);
+
+  if (!prodotti?.length) {
+    section.innerHTML = '<div class="wish-empty"><div class="wish-empty-icon">♡</div><p>Nessun prodotto trovato.</p></div>';
+    return;
+  }
+
+  // Ordina: disponibili prima, esauriti dopo
+  const sorted = [...prodotti].sort((a, b) => {
+    if (a.disponibile > 0 && b.disponibile <= 0) return -1;
+    if (a.disponibile <= 0 && b.disponibile > 0) return 1;
+    return 0;
+  });
+
+  const dispCount = sorted.filter(p => p.disponibile > 0).length;
+  const esauritiCount = sorted.length - dispCount;
+
+  section.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:var(--muted)">
+        <span style="color:#059669;font-weight:600">${dispCount} disponibili</span>
+        ${esauritiCount > 0 ? ` · <span style="color:var(--light)">${esauritiCount} esaurite</span>` : ''}
+      </div>
+    </div>
+    <div class="wish-grid">
+      ${sorted.map(p => renderWishCard(p)).join('')}
+    </div>`;
+}
+
+function renderWishCard(p) {
+  const disponibile = p.disponibile > 0;
+  const imgSrc = p.immagine || '';
+  const price  = '€ ' + parseFloat(p.prezzo).toFixed(2).replace('.',',');
+  const prodData = esc(JSON.stringify({
+    sku: p.sku, nome: p.nome, set_name: p.set_name,
+    lingua: p.lingua, condizione: p.condizione,
+    prezzo: parseFloat(p.prezzo), immagine: p.immagine, disponibile: p.disponibile
+  }));
+
+  const availBadge = disponibile
+    ? `<span class="wish-avail ${p.disponibile <= 2 ? 'low' : 'ok'}">${p.disponibile <= 2 ? `Ultimi ${p.disponibile}` : '✅ Disponibile'}</span>`
+    : '';
+
+  return `<div class="wish-card ${disponibile ? '' : 'esaurita'}" data-prod="${prodData}">
+    <div class="wish-card-img">
+      <img src="${esc(imgSrc)}" alt="${esc(p.nome)}" loading="lazy" onerror="this.style.display='none'">
+      <button class="wish-remove" onclick="rimuoviWishlist('${esc(p.sku)}',this.closest('.wish-card'))" title="Rimuovi dai preferiti">♥</button>
+      ${!disponibile ? '<div class="wish-esaurito-badge">Esaurito</div>' : ''}
+    </div>
+    <div class="wish-card-body">
+      <div class="wish-card-set">${esc(p.lingua)} · ${esc(p.set_name)}</div>
+      <div class="wish-card-name">${esc(p.nome)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="wish-card-price">${price}</div>
+        ${availBadge}
+      </div>
+      ${disponibile ? `
+      <div class="wish-card-actions">
+        <button onclick="addToCart(JSON.parse(this.closest('.wish-card').dataset.prod))">
+          🛒 Aggiungi al carrello
+        </button>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+async function rimuoviWishlist(sku, cardEl) {
+  const user = window.getCurrentUser?.();
+  if (!user) return;
+  const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  await sb.from('wishlist').delete().eq('user_id', user.id).eq('prodotto_sku', sku);
+  // Animazione rimozione
+  cardEl.style.transition = 'opacity .3s, transform .3s';
+  cardEl.style.opacity = '0';
+  cardEl.style.transform = 'scale(.9)';
+  setTimeout(() => { cardEl.remove(); }, 300);
+  // Aggiorna badge
+  if (window.cpUpdateWishlistBadge) window.cpUpdateWishlistBadge();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Badge carrello
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+
+  // Aspetta auth.js poi carica
+  const check = setInterval(() => {
+    if (!window.sb) return;
+    clearInterval(check);
+    loadWishlist();
+    window.sb.auth.onAuthStateChange(() => loadWishlist());
+  }, 100);
+});
+</script>
+</body>
+</html>
