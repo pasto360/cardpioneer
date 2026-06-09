@@ -161,6 +161,7 @@
 
 <nav class="cp-nav">
   <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
     <a href="index.html">Home</a>
     <a href="acquista.html">Market</a>
@@ -358,7 +359,7 @@ function renderCart() {
     return;
   }
 
-  const { subtotale, spedizione, totale, pesoG } = calcTotals(items);
+  const { subtotale, imponibile, iva, spedizione, totale, pesoG } = calcTotals(items);
 
   section.innerHTML = `
     <div class="cart-layout">
