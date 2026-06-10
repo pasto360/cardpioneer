@@ -417,8 +417,8 @@
         </div>
 
         <p style="font-size:11px;color:var(--light);margin-top:14px;line-height:1.7">
-          Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market.
-          Clicca <strong>♡ Wishlist</strong> per salvarle e acquistarle quando vuoi.
+          Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market — premi ♡ per acquistarle subito dalla <a href="wishlist.html" style="color:var(--pink)">wishlist</a>.<br>
+          Le carte <span style="color:var(--muted)">grigie</span> non sono ancora disponibili — premi ♡ e ti avvisiamo quando arrivano.
         </p>
 
         <!-- Statistiche collezione -->
@@ -772,10 +772,8 @@ function renderCollezione() {
         <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
       <div class="col-card-actions">
-        ${c._inMarket
-          ? `<button onclick="colAddToWishlist('${c._sku||''}','${c.id}')" class="col-wish-btn" style="flex:1;height:26px;font-size:9px" title="Aggiungi alla wishlist">♡</button>`
-          : ''}
-        <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi" style="${c._inMarket ? '' : 'flex:1'}">🗑</button>
+        <button onclick="colAddToWishlist('${c._sku||''}','${c.id}',${c._inMarket})" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
+        <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
     </div>`).join('');
 
@@ -806,18 +804,50 @@ function goColPage(p) {
   document.getElementById('colList').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function colAddToWishlist(sku, colId) {
-  if (!sku) { alert('SKU non trovato. Riprova.'); return; }
-  const user = cpCurrentUser;
-  if (!user) return;
+async function colAddToWishlist(sku, colId, inMarket) {
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) { alert('Accedi per usare la wishlist.'); return; }
+
+  // Se non disponibile nel market non abbiamo lo SKU — salviamo la carta
+  // dalla collezione cercando lo SKU se disponibile
+  let skuToUse = sku;
+
+  if (!skuToUse) {
+    // Carta non disponibile — la aggiungiamo comunque alla wishlist cercando lo SKU
+    // dal prodotto corrispondente (anche se disponibile = 0)
+    const col = allCollezione.find(c => c.id === colId);
+    if (col) {
+      const { data: found } = await window.sb.from('prodotti')
+        .select('sku')
+        .eq('lingua', col.lingua)
+        .ilike('nome', col.nome)
+        .ilike('set_name', col.espansione)
+        .limit(1);
+      skuToUse = found?.[0]?.sku || null;
+    }
+  }
+
+  if (!skuToUse) {
+    // SKU non trovato nel market — non possiamo ancora aggiungere alla wishlist
+    event.target.textContent = '—';
+    event.target.title = 'Carta non ancora nel catalogo CardPioneer';
+    setTimeout(() => { event.target.textContent = '♡'; }, 2000);
+    return;
+  }
+
   const { error } = await window.sb.from('wishlist').upsert([{
-    user_id: user.id, prodotto_sku: sku, era_disponibile: true
+    user_id: user.id,
+    prodotto_sku: skuToUse,
+    era_disponibile: inMarket === true || inMarket === 'true',
   }], { onConflict: 'user_id,prodotto_sku' });
+
   if (error) { alert('Errore: ' + error.message); return; }
-  // Feedback visivo
-  const btn = document.querySelector(`button[onclick*="colAddToWishlist('${sku}'"]`);
-  if (btn) { btn.textContent = '♥ Aggiunta!'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; }
-  setTimeout(() => loadCollezione(), 1500);
+
+  event.target.textContent = '♥';
+  event.target.style.color = '#16a34a';
+  event.target.style.background = 'rgba(22,163,74,.2)';
+  event.target.disabled = true;
+  event.target.title = 'Aggiunta alla wishlist!';
 }
 
 function renderStatistiche() {
