@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="images/logo.png" type="image/png">
   <title>Vendi le tue carte — CardPioneer</title>
   <meta name="description" content="Vendi le tue carte Pokémon a CardPioneer. Compila il form e ricevi una valutazione.">
   <link rel="stylesheet" href="style.css">
@@ -334,8 +335,15 @@ async function loadEspansioni() {
     const rows = text.split(/\r?\n/).filter(r => r.trim()).slice(1);
     rows.forEach(row => {
       const cols = row.split(';');
-      const naz  = (cols[1] || '').trim();
-      const esp  = (cols[2] || '').trim();
+      // Supporta sia formato 2 colonne (naz;esp) che 3 colonne (;naz;esp)
+      let naz, esp;
+      if (cols.length >= 3) {
+        naz = (cols[1] || '').trim();
+        esp = (cols[2] || '').trim();
+      } else {
+        naz = (cols[0] || '').trim();
+        esp = (cols[1] || '').trim();
+      }
       if (!naz || !esp) return;
       if (!ESPANSIONI_MAP[naz]) ESPANSIONI_MAP[naz] = [];
       if (!ESPANSIONI_MAP[naz].includes(esp)) ESPANSIONI_MAP[naz].push(esp);
