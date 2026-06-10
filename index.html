@@ -542,6 +542,16 @@
     document.getElementById('modalCollection').classList.remove('open');
   }
 
+  // Esponi le funzioni globalmente (sono dentro una IIFE)
+  window.openMyCollection  = openMyCollection;
+  window.closeMyCollection = closeMyCollection;
+  window.colLoadEspansioni = colLoadEspansioni;
+  window.colLoadNomi       = colLoadNomi;
+  window.colAutoNome       = colAutoNome;
+  window.colAutoNumero     = colAutoNumero;
+  window.colAggiungi       = colAggiungi;
+  window.colRimuovi        = colRimuovi;
+
   async function colRenderLista() {
     const user = window.getCurrentUser?.();
     if (!user) return;
