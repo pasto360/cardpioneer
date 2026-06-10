@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Collection — CardPioneer</title>
+  <meta name="description" content="La tua collezione personale di carte Pokémon.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <script src="tracker.js"></script>
+  <style>
+    .col-wrap { max-width: 900px; }
+
+    /* Layout two column */
+    .col-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Form panel */
+    .col-form-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      position: sticky;
+      top: 80px;
+    }
+    .col-panel-title {
+      font-family: var(--fu);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -.02em;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Search box */
+    .col-search-wrap { position: relative; margin-bottom: 12px; }
+    .col-search-wrap input {
+      width: 100%;
+      padding: 11px 14px 11px 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .col-search-wrap input:focus { border-color: var(--pink); }
+    .col-search-icon {
+      position: absolute;
+      left: 11px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: var(--light);
+    }
+
+    /* Lingua pills */
+    .col-lingua-group {
+      display: flex; gap: 6px; margin-bottom: 14px;
+    }
+    .col-lingua-btn {
+      flex: 1; padding: 7px; text-align: center;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      background: var(--white); color: var(--muted);
+      transition: all .15s;
+    }
+    .col-lingua-btn.active {
+      background: var(--dark); border-color: var(--dark); color: #fff;
+    }
+
+    /* Risultati ricerca */
+    .col-results {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .col-results.show { display: block; }
+    .col-result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .col-result-item:last-child { border-bottom: none; }
+    .col-result-item:hover { background: var(--bg); }
+    .col-result-img {
+      width: 32px; height: 44px;
+      object-fit: contain;
+      border-radius: 3px;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+    .col-result-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .col-result-sub  { font-size: 10px; color: var(--muted); }
+    .col-result-num  { font-size: 11px; font-weight: 600; color: var(--pink); margin-left: auto; flex-shrink: 0; }
+
+    /* Carta selezionata */
+    .col-selected {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .col-selected.show { display: flex; }
+    .col-selected img { width: 48px; border-radius: 4px; }
+    .col-selected-info { flex: 1; }
+    .col-selected-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .col-selected-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Loading spinner inline */
+    .col-searching {
+      text-align: center; padding: 16px;
+      font-size: 12px; color: var(--muted); display: none;
+    }
+    .col-searching.show { display: block; }
+
+    /* Lista collezione */
+    .col-list-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .col-list-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .col-list-title {
+      font-family: var(--fu);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -.02em;
+    }
+    .col-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .col-filter-btn {
+      font-size: 10px; font-weight: 600; padding: 5px 12px;
+      border: 1px solid var(--border); border-radius: 100px;
+      background: var(--white); color: var(--muted); cursor: pointer;
+      transition: all .15s;
+    }
+    .col-filter-btn.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+
+    /* Card nella lista */
+    .col-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .col-card:last-child { border-bottom: none; }
+    .col-card:hover { background: var(--bg); }
+    .col-card.in-market {
+      background: rgba(22,163,74,.04);
+      border-left: 3px solid #16a34a;
+      padding-left: 17px;
+    }
+    .col-card img {
+      width: 36px; height: 50px;
+      object-fit: contain; border-radius: 3px;
+      flex-shrink: 0; background: var(--bg);
+    }
+    .col-card-info { flex: 1; min-width: 0; }
+    .col-card-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .col-card-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .col-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .col-card-del {
+      width: 28px; height: 28px;
+      background: rgba(248,113,113,.1); color: #dc2626;
+      border: 1px solid rgba(248,113,113,.2);
+      border-radius: 6px; cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .col-card-del:hover { background: rgba(248,113,113,.2); }
+    .col-market-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 8px;
+      border-radius: 100px; white-space: nowrap;
+      background: rgba(22,163,74,.1); color: #16a34a;
+      border: 1px solid rgba(22,163,74,.2);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: inline-block; vertical-align: middle; margin-right: 6px;
+    }
+
+    @media (max-width: 700px) {
+      .col-layout { grid-template-columns: 1fr; }
+      .col-form-panel { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg" id="promoTopbar">&nbsp;</div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Area personale</div>
+  <h1 class="cp-hero-title">🔮 My Collection</h1>
+  <p class="cp-hero-sub">Registra le carte che vuoi collezionare. Ti avvisiamo quando appaiono nel market.</p>
+</section>
+
+<section class="cp-section alt" id="mainSection">
+
+  <!-- Login prompt -->
+  <div id="loginPrompt" style="display:none;text-align:center;padding:48px 20px;max-width:440px;margin:0 auto">
+    <div style="font-size:48px;margin-bottom:16px">🔒</div>
+    <h2 style="font-family:var(--fu);font-size:18px;color:var(--dark);margin-bottom:10px;letter-spacing:-.02em">Accedi per usare My Collection</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7">Tieni traccia delle carte che cerchi e scopri quando sono disponibili nel market.</p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <a href="registrati.html" class="btn-fill">Registrati</a>
+      <button onclick="document.getElementById('loginWrap').classList.add('open')" class="btn-outline-dark">Accedi</button>
+    </div>
+  </div>
+
+  <!-- Contenuto principale -->
+  <div class="col-wrap" id="colContent" style="display:none">
+    <div class="col-layout">
+
+      <!-- FORM AGGIUNGI -->
+      <div class="col-form-panel">
+        <div class="col-panel-title">✨ Aggiungi carta</div>
+
+        <!-- Lingua -->
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Lingua</div>
+        <div class="col-lingua-group">
+          <button class="col-lingua-btn active" id="btn-ITA" onclick="setLingua('ITA')">🇮🇹 ITA</button>
+          <button class="col-lingua-btn" id="btn-ENG" onclick="setLingua('ENG')">🇬🇧 ENG</button>
+          <button class="col-lingua-btn" id="btn-JP"  onclick="setLingua('JP')">🇯🇵 JP</button>
+        </div>
+
+        <!-- Ricerca -->
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Cerca carta</div>
+        <div class="col-search-wrap">
+          <span class="col-search-icon">🔍</span>
+          <input type="text" id="colSearch" placeholder="Nome carta, es. Charizard..."
+            oninput="colOnInput()" autocomplete="off">
+        </div>
+
+        <!-- Spinner ricerca -->
+        <div class="col-searching" id="colSearching">
+          <span class="spinner"></span> Ricerca in corso...
+        </div>
+
+        <!-- Risultati -->
+        <div class="col-results" id="colResults"></div>
+
+        <!-- Carta selezionata -->
+        <div class="col-selected" id="colSelected">
+          <img id="colSelImg" src="" alt="">
+          <div class="col-selected-info">
+            <div class="col-selected-name" id="colSelName"></div>
+            <div class="col-selected-sub" id="colSelSub"></div>
+          </div>
+          <button onclick="clearSelection()"
+            style="background:none;border:none;color:var(--light);font-size:18px;cursor:pointer;padding:0">×</button>
+        </div>
+
+        <!-- Messaggio -->
+        <div id="colAddMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
+
+        <button onclick="colAggiungi()" id="colAddBtn" disabled
+          style="width:100%;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                 background:rgba(26,10,46,.15);color:var(--muted);border:1px solid var(--border);
+                 padding:12px;border-radius:8px;cursor:not-allowed;transition:all .2s">
+          + Aggiungi alla collezione
+        </button>
+      </div>
+
+      <!-- LISTA COLLEZIONE -->
+      <div>
+        <div class="col-list-wrap">
+          <div class="col-list-header">
+            <div class="col-list-title">La mia collezione <span id="colCount" style="font-family:inherit;font-size:12px;color:var(--muted);font-weight:400"></span></div>
+            <div class="col-filters">
+              <button class="col-filter-btn active" onclick="setFiltroCol('tutti',this)">Tutte</button>
+              <button class="col-filter-btn" onclick="setFiltroCol('in_market',this)">✅ Nel market</button>
+              <button class="col-filter-btn" onclick="setFiltroCol('non_disponibile',this)">⏳ Non disponibili</button>
+            </div>
+          </div>
+          <div id="colList">
+            <div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">
+              <span class="spinner"></span> Caricamento...
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:11px;color:var(--light);margin-top:14px;line-height:1.7">
+          Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market CardPioneer.
+          Aggiungile alla <a href="wishlist.html" style="color:var(--pink)">wishlist</a> per acquistarle.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  MY COLLECTION — TCGdex API
+//  Docs: https://tcgdex.dev
+// ══════════════════════════════════════════════════════
+
+const TCGDEX_LANGS = { ITA: 'it', ENG: 'en', JP: 'ja' };
+const TCGDEX_BASE  = 'https://api.tcgdex.net/v2';
+
+let currentLingua    = 'ITA';
+let selectedCard     = null;  // { id, nome, set, numero, img, lingua }
+let allCollezione    = [];
+let filtroCol        = 'tutti';
+let searchTimeout    = null;
+let currentUser      = null;
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Lingua ──
+function setLingua(l) {
+  currentLingua = l;
+  ['ITA','ENG','JP'].forEach(x => {
+    document.getElementById('btn-' + x).classList.toggle('active', x === l);
+  });
+  clearSearch();
+}
+
+// ── Ricerca TCGdex ──
+function colOnInput() {
+  clearTimeout(searchTimeout);
+  const q = document.getElementById('colSearch').value.trim();
+  if (q.length < 2) { hideResults(); return; }
+  searchTimeout = setTimeout(() => searchCards(q), 400);
+}
+
+async function searchCards(q) {
+  const lang = TCGDEX_LANGS[currentLingua];
+  document.getElementById('colSearching').classList.add('show');
+  hideResults();
+
+  try {
+    // TCGdex: cerca per nome in lingua
+    const url = `${TCGDEX_BASE}/${lang}/cards?name=${encodeURIComponent(q)}`;
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+
+    document.getElementById('colSearching').classList.remove('show');
+
+    if (!data?.length) {
+      showResults('<div style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Nessuna carta trovata. Prova un altro nome.</div>');
+      return;
+    }
+
+    // Mostra max 20 risultati
+    const items = data.slice(0, 20);
+    const html = items.map(card => {
+      const img   = card.image ? card.image + '/low.png' : '';
+      const set   = card.set?.name || card.set?.id || '';
+      const num   = card.localId || card.id || '';
+      return `<div class="col-result-item" onclick="selectCard(${JSON.stringify({
+        id:     card.id,
+        nome:   card.name,
+        set:    set,
+        numero: num,
+        img:    img,
+        lingua: currentLingua
+      }).replace(/"/g, '&quot;')})">
+        ${img ? `<img class="col-result-img" src="${esc(img)}" onerror="this.style.display='none'">` : '<div class="col-result-img"></div>'}
+        <div>
+          <div class="col-result-name">${esc(card.name)}</div>
+          <div class="col-result-sub">${esc(set)}</div>
+        </div>
+        <div class="col-result-num">${esc(num)}</div>
+      </div>`;
+    }).join('');
+
+    showResults(html);
+  } catch(e) {
+    document.getElementById('colSearching').classList.remove('show');
+    showResults('<div style="padding:14px;text-align:center;font-size:12px;color:#dc2626">Errore di connessione all\'API. Riprova.</div>');
+  }
+}
+
+function showResults(html) {
+  const el = document.getElementById('colResults');
+  el.innerHTML = html;
+  el.classList.add('show');
+}
+
+function hideResults() {
+  document.getElementById('colResults').classList.remove('show');
+  document.getElementById('colSearching').classList.remove('show');
+}
+
+function selectCard(card) {
+  selectedCard = card;
+  hideResults();
+  document.getElementById('colSearch').value = card.nome;
+
+  // Mostra card selezionata
+  document.getElementById('colSelImg').src = card.img || '';
+  document.getElementById('colSelImg').style.display = card.img ? '' : 'none';
+  document.getElementById('colSelName').textContent = card.nome;
+  document.getElementById('colSelSub').textContent  = `${card.lingua} · ${card.set} · ${card.numero}`;
+  document.getElementById('colSelected').classList.add('show');
+
+  // Abilita pulsante
+  const btn = document.getElementById('colAddBtn');
+  btn.disabled = false;
+  btn.style.cssText = 'width:100%;font-family:\'Unbounded\',sans-serif;font-size:11px;font-weight:700;background:var(--yellow);color:var(--dark);border:none;padding:12px;border-radius:8px;cursor:pointer;transition:all .2s';
+}
+
+function clearSelection() {
+  selectedCard = null;
+  document.getElementById('colSearch').value = '';
+  document.getElementById('colSelected').classList.remove('show');
+  const btn = document.getElementById('colAddBtn');
+  btn.disabled = true;
+  btn.style.cssText = 'width:100%;font-family:\'Unbounded\',sans-serif;font-size:11px;font-weight:700;background:rgba(26,10,46,.15);color:var(--muted);border:1px solid var(--border);padding:12px;border-radius:8px;cursor:not-allowed;transition:all .2s';
+}
+
+function clearSearch() {
+  clearSelection();
+  hideResults();
+}
+
+// ── Aggiungi alla collezione ──
+async function colAggiungi() {
+  if (!selectedCard || !currentUser) return;
+  const msg = document.getElementById('colAddMsg');
+
+  const { error } = await window.sb.from('collezione').insert([{
+    user_id:   currentUser.id,
+    lingua:    selectedCard.lingua,
+    espansione:selectedCard.set,
+    nome:      selectedCard.nome,
+    numero:    selectedCard.numero,
+  }]);
+
+  if (error) {
+    msg.style.display = 'block';
+    msg.style.cssText += ';background:rgba(248,113,113,.08);color:#dc2626;border:1px solid rgba(248,113,113,.2)';
+    msg.textContent = error.message.includes('unique')
+      ? 'Carta già presente nella collezione.'
+      : 'Errore: ' + error.message;
+    return;
+  }
+
+  msg.style.display = 'block';
+  msg.style.cssText += ';background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)';
+  msg.textContent = `✅ "${selectedCard.nome}" aggiunta alla collezione!`;
+  setTimeout(() => { msg.style.display = 'none'; }, 2500);
+
+  clearSelection();
+  loadCollezione();
+}
+
+// ── Carica collezione da Supabase ──
+async function loadCollezione() {
+  if (!currentUser) return;
+  const { data } = await window.sb.from('collezione')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  allCollezione = data || [];
+
+  // Controlla disponibilità nel market per ogni carta
+  await Promise.all(allCollezione.map(async c => {
+    const { data: found } = await window.sb.from('prodotti')
+      .select('sku, disponibile')
+      .eq('lingua', c.lingua)
+      .ilike('nome', c.nome)
+      .gt('disponibile', 0)
+      .limit(1);
+    c._inMarket = found?.length > 0;
+  }));
+
+  renderCollezione();
+}
+
+function setFiltroCol(f, btn) {
+  filtroCol = f;
+  document.querySelectorAll('.col-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCollezione();
+}
+
+function renderCollezione() {
+  const inMarket = allCollezione.filter(c => c._inMarket).length;
+  document.getElementById('colCount').textContent =
+    `(${allCollezione.length} carte · ${inMarket} nel market)`;
+
+  let items = allCollezione;
+  if (filtroCol === 'in_market')       items = allCollezione.filter(c => c._inMarket);
+  if (filtroCol === 'non_disponibile') items = allCollezione.filter(c => !c._inMarket);
+
+  const list = document.getElementById('colList');
+
+  if (!items.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">
+      ${allCollezione.length === 0
+        ? 'Nessuna carta nella collezione. Cercane una a sinistra!'
+        : 'Nessuna carta con questo filtro.'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(c => `
+    <div class="col-card ${c._inMarket ? 'in-market' : ''}">
+      <div class="col-card-info">
+        <div class="col-card-name">${esc(c.nome)}</div>
+        <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.espansione)} · ${esc(c.numero)}</div>
+      </div>
+      <div class="col-card-actions">
+        ${c._inMarket
+          ? `<a href="acquista.html" class="col-market-badge" style="text-decoration:none">✅ In market</a>`
+          : `<span style="font-size:10px;color:var(--light)">⏳ Non disp.</span>`}
+        <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function colRimuovi(id) {
+  if (!confirm('Rimuovere questa carta dalla collezione?')) return;
+  await window.sb.from('collezione').delete().eq('id', id);
+  allCollezione = allCollezione.filter(c => c.id !== id);
+  renderCollezione();
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Badge carrello
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+
+  // Attendi auth
+  const check = setInterval(async () => {
+    if (!window.sb) return;
+    clearInterval(check);
+
+    const { data: { user } } = await window.sb.auth.getUser();
+    if (!user) {
+      document.getElementById('loginPrompt').style.display = 'block';
+      return;
+    }
+    currentUser = user;
+    document.getElementById('colContent').style.display = 'block';
+    loadCollezione();
+
+    window.sb.auth.onAuthStateChange((_, session) => {
+      if (!session) { location.href = 'index.html'; }
+    });
+  }, 100);
+});
+</script>
+</body>
+</html>
