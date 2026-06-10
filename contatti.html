@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contatti — CardPioneer</title>
+  <meta name="description" content="Contatta CardPioneer. Sede legale a Como, email info@cardpioneer.it.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <script src="tracker.js"></script>
+  <style>
+    .contatti-wrap { max-width: 600px; }
+
+    .contatti-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .contatti-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .contatti-card-icon {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .contatti-card-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--pink);
+    }
+
+    .contatti-card-value {
+      font-family: var(--fu);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -.02em;
+      line-height: 1.4;
+    }
+
+    .contatti-card-sub {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .contatti-card a {
+      color: var(--pink);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .contatti-card a:hover { text-decoration: underline; }
+
+    /* Card intera cliccabile */
+    .contatti-card.clickable {
+      cursor: pointer;
+      transition: box-shadow .2s, transform .2s;
+      text-decoration: none;
+    }
+    .contatti-card.clickable:hover {
+      box-shadow: 0 6px 24px rgba(26,10,46,.1);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 600px) {
+      .contatti-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+  </div>
+  <div class="cp-nav-r">
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page">
+  <div class="cp-hero-label">Siamo qui per te</div>
+  <h1 class="cp-hero-title">Contatti</h1>
+  <p class="cp-hero-sub">Hai domande, dubbi o vuoi semplicemente salutarci? Scrivici.</p>
+</section>
+
+<section class="cp-section alt">
+  <div class="contatti-wrap">
+
+    <div class="contatti-grid">
+
+      <!-- Email -->
+      <a href="mailto:info@cardpioneer.it" class="contatti-card clickable" style="text-decoration:none;color:inherit">
+        <div class="contatti-card-icon">✉️</div>
+        <div class="contatti-card-label">Email</div>
+        <div class="contatti-card-value">info@cardpioneer.it</div>
+        <div class="contatti-card-sub">Risposta entro 24 ore lavorative.</div>
+      </a>
+
+      <!-- Instagram -->
+      <a href="https://www.instagram.com/cardpioneer" target="_blank" class="contatti-card clickable" style="text-decoration:none;color:inherit">
+        <div class="contatti-card-icon">📸</div>
+        <div class="contatti-card-label">Instagram</div>
+        <div class="contatti-card-value">@cardpioneer</div>
+        <div class="contatti-card-sub">Seguici per novità, arrivi e promozioni.</div>
+      </a>
+
+    </div>
+
+    <!-- Sede legale -->
+    <div class="contatti-card" style="grid-column:1/-1">
+      <div class="contatti-card-icon">🏢</div>
+      <div class="contatti-card-label">Sede legale</div>
+      <div class="contatti-card-value">LADEGU SRLS</div>
+      <div class="contatti-card-sub">
+        Via Morazzone 21<br>
+        22100 Como (CO)<br>
+        P.IVA 04255650139
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:8px">
+      Per resi e rimborsi scrivi a <a href="mailto:rimborsi@cardpioneer.it" style="color:var(--pink)">rimborsi@cardpioneer.it</a> ·
+      Per la privacy <a href="mailto:privacy@cardpioneer.it" style="color:var(--pink)">privacy@cardpioneer.it</a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
