@@ -132,8 +132,8 @@
   <a href="acquista.html#type=buste" class="cp-cat"><div class="cp-cat-icon">📦</div><span>Buste nuove</span></a>
   <a href="acquista.html#type=etb" class="cp-cat"><div class="cp-cat-icon">🎁</div><span>ETB</span></a>
   <a href="acquista.html#type=altro" class="cp-cat"><div class="cp-cat-icon">✨</div><span>Altro</span></a>
-  <a href="#" class="cp-cat" style="opacity:.35;pointer-events:none;cursor:default" id="cat-mysecret">
-    <div class="cp-cat-icon">🔮</div><span>My Secret</span>
+  <a href="#" class="cp-cat" id="cat-mycollection" onclick="openMyCollection();return false">
+    <div class="cp-cat-icon">🔮</div><span>My Collection</span>
   </a>
 </div>
 
@@ -184,6 +184,65 @@
 </div>
 
 <!-- FOOTER -->
+<!-- MY COLLECTION MODAL -->
+<div class="modal-overlay" id="modalCollection" onclick="if(event.target===this)closeMyCollection()">
+  <div class="modal-box" style="max-width:700px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <button onclick="closeMyCollection()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;line-height:1">×</button>
+    <div class="modal-title">🔮 My Collection</div>
+    <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.6">
+      Registra le carte che vuoi e le troverai automaticamente nella wishlist quando disponibili nel market.
+    </p>
+
+    <!-- FORM AGGIUNGI -->
+    <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:18px;margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px">Aggiungi carta</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:5px">Lingua *</label>
+          <select id="col-lingua" onchange="colLoadEspansioni()"
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:12px;outline:none">
+            <option value="">Seleziona...</option>
+            <option value="ITA">🇮🇹 ITA</option>
+            <option value="ENG">🇬🇧 ENG</option>
+            <option value="JP">🇯🇵 JP</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:5px">Espansione *</label>
+          <select id="col-esp" onchange="colLoadNomi()" disabled
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:12px;outline:none">
+            <option value="">Prima seleziona la lingua</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:5px">Nome carta *</label>
+          <input type="text" id="col-nome" list="col-nome-list" placeholder="es. Bulbasaur"
+            oninput="colAutoNome()" onchange="colAutoNumero()"
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:12px;outline:none">
+          <datalist id="col-nome-list"></datalist>
+        </div>
+        <div>
+          <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:5px">Numero *</label>
+          <input type="text" id="col-numero" placeholder="es. 1/165" list="col-numero-list"
+            style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:12px;outline:none">
+          <datalist id="col-numero-list"></datalist>
+        </div>
+      </div>
+      <div id="col-add-msg" style="display:none;font-size:11px;padding:7px 12px;border-radius:6px;margin-bottom:10px"></div>
+      <button onclick="colAggiungi()"
+        style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;
+               background:#f5e642;color:#1a0a2e;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">
+        + Aggiungi alla collezione
+      </button>
+    </div>
+
+    <!-- LISTA COLLEZIONE -->
+    <div id="colList">
+      <div style="text-align:center;padding:24px;font-size:12px;color:rgba(255,255,255,.3)">Caricamento...</div>
+    </div>
+  </div>
+</div>
+
 <footer class="cp-footer">
   <div class="cp-footer-grid">
     <div>
@@ -383,6 +442,197 @@
         grid.innerHTML = featured.map((c, i) => cardHTML(c, i < 4)).join('');
       }
     } catch (e) { console.warn('Featured:', e); }
+  }
+
+  // ══════════════════════════════════════════
+  //  MY COLLECTION
+  // ══════════════════════════════════════════
+  let colDati = []; // dati da elxmycol.csv
+
+  async function loadColDati() {
+    if (colDati.length) return;
+    try {
+      const res  = await fetch('elxmycol.csv?v=' + Date.now());
+      if (!res.ok) return;
+      const text = await res.text();
+      const rows = text.split(/\r?\n/).filter(l => l.trim()).slice(1);
+      rows.forEach(row => {
+        const cols = row.split(';');
+        const esp  = (cols[0] || '').trim();
+        const nome = (cols[1] || '').trim();
+        const num  = (cols[2] || '').trim();
+        if (nome) colDati.push({ esp, nome, num });
+      });
+    } catch(e) { console.warn('elxmycol.csv non trovato'); }
+  }
+
+  function colEspansioni(lingua) {
+    // Usa anche ESPANSIONI_MAP se disponibile, altrimenti dal CSV
+    const fromCsv = [...new Set(colDati.map(d => d.esp).filter(Boolean))].sort();
+    const fromMap = window.ESPANSIONI_MAP?.[lingua] || [];
+    const merged  = [...new Set([...fromMap, ...fromCsv])].sort();
+    return merged;
+  }
+
+  function colLoadEspansioni() {
+    const lingua = document.getElementById('col-lingua').value;
+    const sel    = document.getElementById('col-esp');
+    document.getElementById('col-nome').value  = '';
+    document.getElementById('col-numero').value = '';
+    document.getElementById('col-nome-list').innerHTML = '';
+    document.getElementById('col-numero-list').innerHTML = '';
+    if (!lingua) { sel.disabled = true; sel.innerHTML = '<option>Prima seleziona la lingua</option>'; return; }
+    const lista = colEspansioni(lingua);
+    sel.innerHTML = '<option value="">Seleziona espansione...</option>' +
+      lista.map(e => `<option value="${e}">${e}</option>`).join('') +
+      '<option value="__altro__">Altra espansione</option>';
+    sel.disabled = false;
+  }
+
+  function colLoadNomi() {
+    const esp = document.getElementById('col-esp').value;
+    document.getElementById('col-nome').value = '';
+    document.getElementById('col-numero').value = '';
+    if (!esp || esp === '__altro__') return;
+    const nomi = [...new Set(colDati.filter(d => d.esp === esp).map(d => d.nome))].sort();
+    const dl = document.getElementById('col-nome-list');
+    dl.innerHTML = nomi.map(n => `<option value="${n}">`).join('');
+  }
+
+  function colAutoNome() {
+    // Aggiorna datalist numeri in base al nome digitato
+    const esp  = document.getElementById('col-esp').value;
+    const nome = document.getElementById('col-nome').value.trim();
+    const numeri = colDati
+      .filter(d => d.esp === esp && d.nome.toLowerCase() === nome.toLowerCase())
+      .map(d => d.num).filter(Boolean);
+    const dl = document.getElementById('col-numero-list');
+    dl.innerHTML = numeri.map(n => `<option value="${n}">`).join('');
+  }
+
+  function colAutoNumero() {
+    const esp  = document.getElementById('col-esp').value;
+    const nome = document.getElementById('col-nome').value.trim();
+    if (!nome) return;
+    const match = colDati.find(d =>
+      d.esp === esp && d.nome.toLowerCase() === nome.toLowerCase()
+    );
+    if (match?.num && !document.getElementById('col-numero').value) {
+      document.getElementById('col-numero').value = match.num;
+    }
+  }
+
+  async function openMyCollection() {
+    const user = window.getCurrentUser?.();
+    if (!user) {
+      document.getElementById('loginWrap')?.classList.add('open');
+      return;
+    }
+    await loadColDati();
+    document.getElementById('modalCollection').classList.add('open');
+    colRenderLista();
+  }
+
+  function closeMyCollection() {
+    document.getElementById('modalCollection').classList.remove('open');
+  }
+
+  async function colRenderLista() {
+    const user = window.getCurrentUser?.();
+    if (!user) return;
+    const sb = window.sb;
+    const { data } = await sb.from('collezione').select('*')
+      .eq('user_id', user.id).order('created_at', { ascending: false });
+
+    const list = document.getElementById('colList');
+    if (!data?.length) {
+      list.innerHTML = '<div style="text-align:center;padding:24px;font-size:12px;color:rgba(255,255,255,.3)">Nessuna carta nella collezione. Aggiungine una sopra.</div>';
+      return;
+    }
+
+    // Controlla quali sono disponibili nel market
+    const skuCheck = await Promise.all(data.map(async c => {
+      const { data: found } = await sb.from('prodotti')
+        .select('sku, disponibile')
+        .eq('lingua', c.lingua)
+        .ilike('set_name', c.espansione)
+        .ilike('nome', c.nome)
+        .gt('disponibile', 0)
+        .limit(1);
+      return { id: c.id, disponibile: found?.length > 0 };
+    }));
+
+    const dispMap = {};
+    skuCheck.forEach(s => { dispMap[s.id] = s.disponibile; });
+
+    list.innerHTML = `
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px">
+        ${data.length} carte in collezione · <span style="color:#34d399">${skuCheck.filter(s=>s.disponibile).length} disponibili nel market</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${data.map(c => {
+          const disp = dispMap[c.id];
+          return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;
+                              padding:10px 14px;border-radius:8px;
+                              background:${disp ? 'rgba(52,211,153,.08)' : 'rgba(255,255,255,.04)'};
+                              border:1px solid ${disp ? 'rgba(52,211,153,.2)' : 'rgba(255,255,255,.08)'}">
+            <div>
+              <span style="font-size:13px;font-weight:600;color:${disp ? '#34d399' : '#fff'}">${esc(c.nome)}</span>
+              <span style="font-size:11px;color:rgba(255,255,255,.35);margin-left:8px">${esc(c.lingua)} · ${esc(c.espansione)} · ${esc(c.numero)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${disp ? '<span style="font-size:10px;background:rgba(52,211,153,.15);color:#34d399;padding:2px 8px;border-radius:100px;font-weight:600">✅ In market</span>' : ''}
+              <button onclick="colRimuovi('${c.id}')"
+                style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  async function colAggiungi() {
+    const user    = window.getCurrentUser?.();
+    const lingua  = document.getElementById('col-lingua').value;
+    const espSel  = document.getElementById('col-esp').value;
+    const esp     = espSel === '__altro__'
+      ? prompt('Scrivi il nome dell\'espansione:') || ''
+      : espSel;
+    const nome    = document.getElementById('col-nome').value.trim();
+    const numero  = document.getElementById('col-numero').value.trim();
+    const msg     = document.getElementById('col-add-msg');
+
+    const showMsg = (text, ok) => {
+      msg.style.display = 'block';
+      msg.style.background = ok ? 'rgba(52,211,153,.1)' : 'rgba(248,113,113,.1)';
+      msg.style.color = ok ? '#34d399' : '#f87171';
+      msg.style.border = `1px solid ${ok ? 'rgba(52,211,153,.3)' : 'rgba(248,113,113,.3)'}`;
+      msg.textContent = text;
+    };
+
+    if (!lingua) { showMsg('Seleziona la lingua.', false); return; }
+    if (!esp)    { showMsg('Seleziona l\'espansione.', false); return; }
+    if (!nome)   { showMsg('Inserisci il nome della carta.', false); return; }
+    if (!numero) { showMsg('Inserisci il numero della carta.', false); return; }
+
+    const { error } = await window.sb.from('collezione').insert([{
+      user_id: user.id, lingua, espansione: esp, nome, numero
+    }]);
+
+    if (error) {
+      showMsg(error.message.includes('unique') ? 'Carta già presente nella collezione.' : 'Errore: ' + error.message, false);
+      return;
+    }
+
+    showMsg('✅ Carta aggiunta!', true);
+    document.getElementById('col-nome').value = '';
+    document.getElementById('col-numero').value = '';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    colRenderLista();
+  }
+
+  async function colRimuovi(id) {
+    await window.sb.from('collezione').delete().eq('id', id);
+    colRenderLista();
   }
 
   document.addEventListener('DOMContentLoaded', () => {

@@ -99,8 +99,13 @@
     .wish-avail.ok  { background: rgba(52,211,153,.12); color: #059669; }
     .wish-avail.low { background: rgba(251,191,36,.12);  color: #d97706; }
 
-    /* Empty state */
-    .wish-empty { text-align: center; padding: 64px 20px; }
+    .wish-card.in-collezione {
+      border-color: #16a34a;
+      box-shadow: 0 0 0 2px rgba(22,163,74,.2);
+    }
+    .wish-card.in-collezione .wish-card-set::before {
+      content: '🔮 ';
+    }
     .wish-empty-icon { font-size: 56px; margin-bottom: 16px; }
 
     /* Login prompt */
@@ -120,9 +125,10 @@
 
 <nav class="cp-nav">
   <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
     Card<span style="color:#ff6b1a">Pioneer</span>
   </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
     <a href="index.html">Home</a>
     <a href="acquista.html">Market</a>
@@ -224,6 +230,24 @@ async function loadWishlist() {
     return 0;
   });
 
+  // Controlla se carta è nella collezione utente
+  let collezioneMatch = new Set();
+  try {
+    const { data: colItems } = await sb.from('collezione')
+      .select('lingua, espansione, nome, numero')
+      .eq('user_id', user.id);
+    if (colItems?.length) {
+      sorted.forEach(p => {
+        const match = colItems.some(c =>
+          c.lingua.toLowerCase() === (p.lingua||'').toLowerCase() &&
+          (p.set_name||'').toLowerCase().includes(c.espansione.toLowerCase()) &&
+          (p.nome||'').toLowerCase() === c.nome.toLowerCase()
+        );
+        if (match && p.disponibile > 0) collezioneMatch.add(p.sku);
+      });
+    }
+  } catch(e) {}
+
   const dispCount = sorted.filter(p => p.disponibile > 0).length;
   const esauritiCount = sorted.length - dispCount;
 
@@ -232,14 +256,15 @@ async function loadWishlist() {
       <div style="font-size:13px;color:var(--muted)">
         <span style="color:#059669;font-weight:600">${dispCount} disponibili</span>
         ${esauritiCount > 0 ? ` · <span style="color:var(--light)">${esauritiCount} esaurite</span>` : ''}
+        ${collezioneMatch.size > 0 ? ` · <span style="color:#16a34a;font-weight:600">🔮 ${collezioneMatch.size} dalla tua collezione</span>` : ''}
       </div>
     </div>
     <div class="wish-grid">
-      ${sorted.map(p => renderWishCard(p)).join('')}
+      ${sorted.map(p => renderWishCard(p, collezioneMatch.has(p.sku))).join('')}
     </div>`;
 }
 
-function renderWishCard(p) {
+function renderWishCard(p, inCollezione = false) {
   const disponibile = p.disponibile > 0;
   const imgSrc = p.immagine || '';
   const price  = '€ ' + parseFloat(p.prezzo).toFixed(2).replace('.',',');
@@ -253,7 +278,7 @@ function renderWishCard(p) {
     ? `<span class="wish-avail ${p.disponibile <= 2 ? 'low' : 'ok'}">${p.disponibile <= 2 ? `Ultimi ${p.disponibile}` : '✅ Disponibile'}</span>`
     : '';
 
-  return `<div class="wish-card ${disponibile ? '' : 'esaurita'}" data-prod="${prodData}">
+  return `<div class="wish-card ${disponibile ? '' : 'esaurita'} ${inCollezione ? 'in-collezione' : ''}" data-prod="${prodData}">
     <div class="wish-card-img">
       <img src="${esc(imgSrc)}" alt="${esc(p.nome)}" loading="lazy" onerror="this.style.display='none'">
       <button class="wish-remove" onclick="rimuoviWishlist('${esc(p.sku)}',this.closest('.wish-card'))" title="Rimuovi dai preferiti">♥</button>
@@ -263,7 +288,7 @@ function renderWishCard(p) {
       <div class="wish-card-set">${esc(p.lingua)} · ${esc(p.set_name)}</div>
       <div class="wish-card-name">${esc(p.nome)}</div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="wish-card-price">${price}</div>
+        <div class="wish-card-price" style="color:var(--price)">${price}</div>
         ${availBadge}
       </div>
       ${disponibile ? `
