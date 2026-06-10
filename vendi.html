@@ -170,9 +170,10 @@
 
 <nav class="cp-nav">
   <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="22" height="22" style="object-fit:contain;display:block"></div>
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
     Card<span style="color:#ff6b1a">Pioneer</span>
   </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
     <a href="index.html">Home</a>
     <a href="acquista.html">Market</a>
@@ -182,7 +183,7 @@
     <a href="vendi.html" class="active">Vendi</a>
   </div>
   <div class="cp-nav-r">
-    <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
     <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
@@ -328,8 +329,9 @@ let ESPANSIONI_MAP = {};
 async function loadEspansioni() {
   try {
     const res  = await fetch('espansioni.csv?v=' + Date.now());
+    if (!res.ok) throw new Error('CSV non trovato');
     const text = await res.text();
-    const rows = text.split(/\r?\n/).filter(r => r.trim()).slice(1); // salta header
+    const rows = text.split(/\r?\n/).filter(r => r.trim()).slice(1);
     rows.forEach(row => {
       const cols = row.split(';');
       const naz  = (cols[1] || '').trim();
@@ -338,23 +340,45 @@ async function loadEspansioni() {
       if (!ESPANSIONI_MAP[naz]) ESPANSIONI_MAP[naz] = [];
       if (!ESPANSIONI_MAP[naz].includes(esp)) ESPANSIONI_MAP[naz].push(esp);
     });
-    // Ordina alfabeticamente
     Object.keys(ESPANSIONI_MAP).forEach(k => ESPANSIONI_MAP[k].sort());
     console.log('Espansioni caricate:', Object.keys(ESPANSIONI_MAP).map(k => k + ':' + ESPANSIONI_MAP[k].length));
   } catch(e) {
-    console.warn('CSV espansioni non trovato — uso lista vuota');
+    // CSV non trovato — le espansioni saranno vuote, l'utente può usare "Altro"
+    console.warn('espansioni.csv non trovato. Seleziona "Altro" e scrivi il nome manualmente.');
   }
 }
 
 function caricaEspansioni(n) {
   const naz = document.getElementById(`naz-carta-${n}`).value;
   const sel = document.getElementById(`esp-carta-${n}`);
-  if (!naz) { sel.innerHTML = '<option value="">Prima seleziona la nazionalità</option>'; sel.disabled = true; return; }
+  if (!naz) {
+    sel.innerHTML = '<option value="">Prima seleziona la nazionalità</option>';
+    sel.disabled = true;
+    const custom = document.getElementById(`esp-custom-${n}`);
+    if (custom) custom.style.display = 'none';
+    return;
+  }
   const lista = ESPANSIONI_MAP[naz] || [];
   sel.innerHTML = '<option value="">Seleziona espansione...</option>' +
     lista.map(e => `<option value="${e}">${e}</option>`).join('') +
-    '<option value="Altro">Altro</option>';
+    '<option value="__altro__">Altro (specifica)</option>';
   sel.disabled = false;
+  // Nascondi campo custom
+  const custom = document.getElementById(`esp-custom-${n}`);
+  if (custom) custom.style.display = 'none';
+}
+
+function onChangeEspansione(n) {
+  const sel    = document.getElementById(`esp-carta-${n}`);
+  const custom = document.getElementById(`esp-custom-${n}`);
+  if (sel.value === '__altro__') {
+    custom.style.display = 'block';
+    custom.required = true;
+  } else {
+    custom.style.display = 'none';
+    custom.required = false;
+    custom.value = '';
+  }
 }
 
 const STATI   = ['MT','NM','EX','GD','OL','PL','PO'];
@@ -379,7 +403,7 @@ function cartaHTML(n) {
     `<button type="button" class="stato-btn ${s}" onclick="setStato(${n},'${s}',this)">${s}</button>`
   ).join('');
   const raritaHTML = RARITA.map(r =>
-    `<label class="rarita-chip" onclick="toggleRarita(this)">
+    `<label class="rarita-chip" onclick="toggleRarita(event,this)">
       <input type="checkbox" value="${r}"> ${r}
     </label>`
   ).join('');
@@ -410,9 +434,12 @@ function cartaHTML(n) {
         </div>
         <div class="form-group" style="flex:2">
           <label class="form-label">Espansione *</label>
-          <select id="esp-carta-${n}" class="form-select" disabled>
+          <select id="esp-carta-${n}" class="form-select" disabled onchange="onChangeEspansione(${n})">
             <option value="">Prima seleziona la nazionalità</option>
           </select>
+          <input type="text" id="esp-custom-${n}" class="form-input"
+            placeholder="Scrivi il nome dell'espansione..."
+            style="display:none;margin-top:8px">
         </div>
       </div>
       <div class="form-group">
@@ -468,7 +495,8 @@ function setStato(n, stato, btn) {
   btn.classList.add('active');
 }
 
-function toggleRarita(label) {
+function toggleRarita(e, label) {
+  e.preventDefault();
   label.classList.toggle('checked');
   label.querySelector('input').checked = label.classList.contains('checked');
 }
@@ -513,7 +541,11 @@ async function inviaPropostaVendita() {
   for (let i = 1; i <= numCarte; i++) {
     if (!document.getElementById(`carta-${i}`)) continue;
     if (!document.getElementById(`nome-carta-${i}`).value.trim()) { showErr(`Carta #${i}: inserisci il nome.`); return; }
-    if (!document.getElementById(`esp-carta-${i}`).value)         { showErr(`Carta #${i}: seleziona l'espansione.`); return; }
+    const espVal = document.getElementById(`esp-carta-${i}`).value;
+    if (!espVal) { showErr(`Carta #${i}: seleziona l'espansione.`); return; }
+    if (espVal === '__altro__' && !document.getElementById(`esp-custom-${i}`).value.trim()) {
+      showErr(`Carta #${i}: specifica il nome dell'espansione nel campo di testo.`); return;
+    }
     if (!document.getElementById(`numero-carta-${i}`).value.trim()){ showErr(`Carta #${i}: inserisci il numero.`); return; }
     if (!document.getElementById(`stato-${i}`).value)             { showErr(`Carta #${i}: seleziona lo stato.`); return; }
     const raritaChecked = [...document.querySelectorAll(`#carta-${i} .rarita-chip.checked`)].length;
@@ -534,7 +566,10 @@ async function inviaPropostaVendita() {
         .map(el => el.value).join(', ');
       carte.push({
         nome:      document.getElementById(`nome-carta-${i}`).value.trim(),
-        espansione:document.getElementById(`esp-carta-${i}`).value,
+        espansione: (() => {
+          const v = document.getElementById(`esp-carta-${i}`).value;
+          return v === '__altro__' ? document.getElementById(`esp-custom-${i}`).value.trim() : v;
+        })(),
         numero:    document.getElementById(`numero-carta-${i}`).value.trim(),
         stato:     document.getElementById(`stato-${i}`).value,
         rarita:    rarita || null,
