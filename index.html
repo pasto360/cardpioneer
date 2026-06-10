@@ -523,7 +523,12 @@
   }
 
   async function openMyCollection() {
-    const user = window.getCurrentUser?.();
+    // Se non loggato apri il login
+    if (!window.sb) {
+      alert('Caricamento in corso, riprova tra un secondo.');
+      return;
+    }
+    const { data: { user } } = await window.sb.auth.getUser();
     if (!user) {
       document.getElementById('loginWrap')?.classList.add('open');
       return;
