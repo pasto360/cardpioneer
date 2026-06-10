@@ -436,24 +436,19 @@ async function searchCards(q) {
       return;
     }
 
-    // Mostra max 20 risultati
+    // Mostra max 20 risultati — il set.name arriva solo con la chiamata dettaglio
+    // Mostriamo l'ID del set come anteprima, il nome completo arriva al click
     const items = data.slice(0, 20);
     const html = items.map(card => {
-      const img   = card.image ? card.image + '/low.png' : '';
-      const set   = card.set?.name || card.set?.id || '';
-      const num   = card.localId || card.id || '';
-      return `<div class="col-result-item" onclick="selectCard(${JSON.stringify({
-        id:     card.id,
-        nome:   card.name,
-        set:    set,
-        numero: num,
-        img:    img,
-        lingua: currentLingua
-      }).replace(/"/g, '&quot;')})">
-        ${img ? `<img class="col-result-img" src="${esc(img)}" onerror="this.style.display='none'">` : '<div class="col-result-img"></div>'}
+      const img    = card.image ? card.image + '/low.png' : '';
+      // L'id della card è tipo "base1-4" → il set è "base1"
+      const setId  = card.id ? card.id.split('-').slice(0,-1).join('-') : '';
+      const num    = card.localId || '';
+      return `<div class="col-result-item" onclick='selectCardById(${JSON.stringify(card.id)}, "${lang}")'>
+        ${img ? `<img class="col-result-img" src="${img}" onerror="this.style.display='none'">` : '<div class="col-result-img"></div>'}
         <div>
           <div class="col-result-name">${esc(card.name)}</div>
-          <div class="col-result-sub">${esc(set)}</div>
+          <div class="col-result-sub">${setId}</div>
         </div>
         <div class="col-result-num">${esc(num)}</div>
       </div>`;
@@ -476,6 +471,30 @@ function hideResults() {
   document.getElementById('colResults').classList.remove('show');
   document.getElementById('colSearching').classList.remove('show');
 }
+
+// Click su risultato — carica dettaglio completo per avere set.name
+async function selectCardById(cardId, lang) {
+  hideResults();
+  document.getElementById('colSearching').classList.add('show');
+  try {
+    const res  = await fetch(`${TCGDEX_BASE}/${lang}/cards/${cardId}`);
+    if (!res.ok) throw new Error();
+    const card = await res.json();
+    document.getElementById('colSearching').classList.remove('show');
+    selectCard({
+      id:     card.id,
+      nome:   card.name,
+      set:    card.set?.name || card.set?.id || '',
+      numero: card.localId || '',
+      img:    card.image ? card.image + '/low.png' : '',
+      lingua: currentLingua,
+    });
+  } catch(e) {
+    document.getElementById('colSearching').classList.remove('show');
+    alert('Errore nel caricamento del dettaglio carta.');
+  }
+}
+window.selectCardById = selectCardById;
 
 function selectCard(card) {
   selectedCard = card;
