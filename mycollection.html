@@ -168,30 +168,66 @@
     .col-filter-btn.active { background: var(--dark); border-color: var(--dark); color: #fff; }
 
     /* Card nella lista */
+    .col-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      padding: 16px 20px;
+    }
     .col-card {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border);
-      transition: background .15s;
+      flex-direction: column;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--white);
+      transition: box-shadow .2s, transform .15s;
+      position: relative;
     }
-    .col-card:last-child { border-bottom: none; }
-    .col-card:hover { background: var(--bg); }
-    .col-card.in-market {
-      background: rgba(22,163,74,.04);
-      border-left: 3px solid #16a34a;
-      padding-left: 17px;
+    .col-card:hover { box-shadow: 0 4px 16px rgba(26,10,46,.1); transform: translateY(-2px); }
+    .col-card.in-market { border-color: #16a34a; }
+    .col-card-img-wrap {
+      aspect-ratio: .72/1;
+      background: var(--bg);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
     .col-card img {
-      width: 36px; height: 50px;
-      object-fit: contain; border-radius: 3px;
-      flex-shrink: 0; background: var(--bg);
+      width: 100%; height: 100%;
+      object-fit: cover;
     }
-    .col-card-info { flex: 1; min-width: 0; }
-    .col-card-name { font-size: 13px; font-weight: 600; color: var(--dark); }
-    .col-card-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .col-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .col-card-body { padding: 8px; }
+    .col-card-name { font-size: 11px; font-weight: 600; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .col-card-meta { font-size: 9px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .col-card-actions { padding: 0 8px 8px; display: flex; gap: 4px; }
+    .col-card-del {
+      flex: 1;
+      height: 26px;
+      background: rgba(248,113,113,.1); color: #dc2626;
+      border: 1px solid rgba(248,113,113,.2);
+      border-radius: 6px; cursor: pointer; font-size: 11px;
+      transition: all .15s;
+    }
+    .col-card-del:hover { background: rgba(248,113,113,.2); }
+    .in-market-dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 8px; height: 8px;
+      background: #16a34a; border-radius: 50%;
+      border: 1.5px solid #fff;
+    }
+    /* Paginazione */
+    .col-pagination {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 16px 20px; border-top: 1px solid var(--border);
+    }
+    .col-page-btn {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--white); color: var(--dark);
+      font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .col-page-btn.active { background: var(--dark); color: #fff; border-color: var(--dark); }
+    .col-page-btn:disabled { opacity: .4; cursor: not-allowed; }
     .col-card-del {
       width: 28px; height: 28px;
       background: rgba(248,113,113,.1); color: #dc2626;
@@ -300,12 +336,33 @@
           <button class="col-lingua-btn" id="btn-JP"  onclick="setLingua('JP')">🇯🇵 JP</button>
         </div>
 
-        <!-- Ricerca -->
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Cerca carta</div>
-        <div class="col-search-wrap">
-          <span class="col-search-icon">🔍</span>
-          <input type="text" id="colSearch" placeholder="Nome carta, es. Charizard..."
-            oninput="colOnInput()" autocomplete="off">
+        <!-- Tab ricerca -->
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button class="col-lingua-btn active" id="tab-nome" onclick="setSearchTab('nome')" style="font-size:10px">🎴 Per nome</button>
+          <button class="col-lingua-btn" id="tab-set" onclick="setSearchTab('set')" style="font-size:10px">📦 Per set</button>
+        </div>
+        <!-- Ricerca per nome -->
+        <div id="searchByNome">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Nome carta</div>
+          <div class="col-search-wrap">
+            <span class="col-search-icon">🔍</span>
+            <input type="text" id="colSearch" placeholder="es. Charizard..."
+              oninput="colOnInput()" autocomplete="off">
+          </div>
+        </div>
+        <!-- Ricerca per set -->
+        <div id="searchBySet" style="display:none">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Nome set / espansione</div>
+          <div class="col-search-wrap">
+            <span class="col-search-icon">📦</span>
+            <input type="text" id="colSearchSet" placeholder="es. Ascesa Eroica..."
+              oninput="colOnInputSet()" autocomplete="off">
+          </div>
+          <div id="colSetResults" class="col-results" style="max-height:200px"></div>
+          <div id="colSetCards" style="display:none;margin-top:8px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500" id="colSetName"></div>
+            <div id="colSetCardsList" class="col-results show" style="max-height:320px"></div>
+          </div>
         </div>
 
         <!-- Spinner ricerca -->
@@ -408,6 +465,84 @@ function setLingua(l) {
   });
   clearSearch();
 }
+
+// ── Tab ricerca ──
+let searchTab = 'nome';
+let setSearchTimeout2 = null;
+
+function setSearchTab(tab) {
+  searchTab = tab;
+  document.getElementById('tab-nome').classList.toggle('active', tab === 'nome');
+  document.getElementById('tab-set').classList.toggle('active',  tab === 'set');
+  document.getElementById('searchByNome').style.display = tab === 'nome' ? '' : 'none';
+  document.getElementById('searchBySet').style.display  = tab === 'set'  ? '' : 'none';
+  clearSelection();
+  hideResults();
+}
+window.setSearchTab = setSearchTab;
+
+function colOnInputSet() {
+  clearTimeout(setSearchTimeout2);
+  const q = document.getElementById('colSearchSet')?.value.trim();
+  document.getElementById('colSetCards').style.display = 'none';
+  if (!q || q.length < 2) { document.getElementById('colSetResults').classList.remove('show'); return; }
+  setSearchTimeout2 = setTimeout(() => searchSets(q), 400);
+}
+window.colOnInputSet = colOnInputSet;
+
+async function searchSets(q) {
+  const lang = TCGDEX_LANGS[currentLingua];
+  document.getElementById('colSearching').classList.add('show');
+  try {
+    const res  = await fetch(`${TCGDEX_BASE}/${lang}/sets`);
+    if (!res.ok) throw new Error();
+    const sets = await res.json();
+    document.getElementById('colSearching').classList.remove('show');
+    const filtered = sets.filter(s =>
+      (s.name||'').toLowerCase().includes(q.toLowerCase()) ||
+      (s.id||'').toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 12);
+    const el = document.getElementById('colSetResults');
+    if (!filtered.length) {
+      el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--muted)">Nessun set trovato.</div>';
+      el.classList.add('show'); return;
+    }
+    el.innerHTML = filtered.map(s =>
+      `<div class="col-result-item" onclick="loadSetCards('${s.id}','${(s.name||s.id).replace(/'/g,"\\'")}','${lang}')">
+        <div><div class="col-result-name">${esc(s.name||s.id)}</div><div class="col-result-sub">${esc(s.id)}</div></div>
+        <div class="col-result-num" style="font-size:10px">${s.cardCount?.total||''} carte</div>
+      </div>`).join('');
+    el.classList.add('show');
+  } catch(e) { document.getElementById('colSearching').classList.remove('show'); }
+}
+
+async function loadSetCards(setId, setName, lang) {
+  document.getElementById('colSetResults').classList.remove('show');
+  document.getElementById('colSearching').classList.add('show');
+  try {
+    const res  = await fetch(`${TCGDEX_BASE}/${lang}/sets/${setId}`);
+    if (!res.ok) throw new Error();
+    const data  = await res.json();
+    document.getElementById('colSearching').classList.remove('show');
+    const cards = (data.cards||[]).sort((a,b) => (parseInt(a.localId)||9999)-(parseInt(b.localId)||9999));
+    document.getElementById('colSetName').textContent = `${setName} — ${cards.length} carte`;
+    document.getElementById('colSetCardsList').innerHTML = cards.map(card => {
+      const img = card.image ? card.image + '/low.png' : '';
+      const safeNome = (card.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const safeSet  = setName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<div class="col-result-item" onclick="selectCard({id:'${card.id}',nome:'${safeNome}',set:'${safeSet}',numero:'${card.localId||''}',img:'${img}',lingua:currentLingua})">
+        ${img ? `<img class="col-result-img" src="${img}" onerror="this.style.display='none'">` : '<div class="col-result-img"></div>'}
+        <div><div class="col-result-name">${esc(card.name||'')}</div></div>
+        <div class="col-result-num">${esc(card.localId||'')}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('colSetCards').style.display = 'block';
+  } catch(e) {
+    document.getElementById('colSearching').classList.remove('show');
+    alert('Errore nel caricamento del set.');
+  }
+}
+window.loadSetCards = loadSetCards;
 
 // ── Ricerca TCGdex ──
 function colOnInput() {
@@ -591,8 +726,12 @@ async function loadCollezione() {
   renderStatistiche();
 }
 
+const COL_PER_PAGE = 20;
+let colPage = 1;
+
 function setFiltroCol(f, btn) {
   filtroCol = f;
+  colPage   = 1;
   document.querySelectorAll('.col-filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderCollezione();
@@ -607,36 +746,64 @@ function renderCollezione() {
   if (filtroCol === 'in_market')       items = allCollezione.filter(c => c._inMarket);
   if (filtroCol === 'non_disponibile') items = allCollezione.filter(c => !c._inMarket);
 
-  const list = document.getElementById('colList');
+  const list     = document.getElementById('colList');
+  const totalP   = Math.ceil(items.length / COL_PER_PAGE);
+  if (colPage > totalP) colPage = Math.max(1, totalP);
+  const pageItems = items.slice((colPage-1)*COL_PER_PAGE, colPage*COL_PER_PAGE);
 
   if (!items.length) {
     list.innerHTML = `<div style="text-align:center;padding:32px;font-size:13px;color:var(--muted)">
-      ${allCollezione.length === 0
-        ? 'Nessuna carta nella collezione. Cercane una a sinistra!'
-        : 'Nessuna carta con questo filtro.'}
+      ${allCollezione.length === 0 ? 'Nessuna carta. Cercane una a sinistra!' : 'Nessuna carta con questo filtro.'}
     </div>`;
     return;
   }
 
-  list.innerHTML = items.map(c => {
-    const wishBtn = c._inMarket
-      ? `<button onclick="colAddToWishlist('${c._sku||''}','${c.id}')" class="col-wish-btn" title="Aggiungi alla wishlist">♡ Wishlist</button>`
-      : `<span style="font-size:10px;color:var(--light)">⏳ Non disp.</span>`;
-    const imgHTML = c.img
-      ? `<img src="${esc(c.img)}" onerror="this.style.display='none'" alt="" style="width:36px;height:50px;object-fit:contain;border-radius:3px;flex-shrink:0;background:var(--bg)">`
-      : `<div style="width:36px;height:50px;background:var(--bg);border-radius:3px;flex-shrink:0"></div>`;
-    return `<div class="col-card ${c._inMarket ? 'in-market' : ''}">
-      ${imgHTML}
-      <div class="col-card-info">
+  const cardsHTML = pageItems.map(c => `
+    <div class="col-card ${c._inMarket ? 'in-market' : ''}">
+      ${c._inMarket ? '<div class="in-market-dot" title="Disponibile nel market"></div>' : ''}
+      <div class="col-card-img-wrap">
+        ${c.img
+          ? `<img src="${esc(c.img)}" loading="lazy" onerror="this.style.display='none'" alt="${esc(c.nome)}">`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--border)">🎴</div>`}
+      </div>
+      <div class="col-card-body">
         <div class="col-card-name">${esc(c.nome)}</div>
-        <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.espansione)} · ${esc(c.numero)}</div>
+        <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.numero)}</div>
+        <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
       <div class="col-card-actions">
-        ${wishBtn}
-        <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
+        ${c._inMarket
+          ? `<button onclick="colAddToWishlist('${c._sku||''}','${c.id}')" class="col-wish-btn" style="flex:1;height:26px;font-size:9px" title="Aggiungi alla wishlist">♡</button>`
+          : ''}
+        <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi" style="${c._inMarket ? '' : 'flex:1'}">🗑</button>
       </div>
+    </div>`).join('');
+
+  // Paginazione
+  let pagHTML = '';
+  if (totalP > 1) {
+    pagHTML = `<div class="col-pagination">
+      <button class="col-page-btn" onclick="goColPage(${colPage-1})" ${colPage===1?'disabled':''}>‹</button>
+      ${Array.from({length:totalP},(_,i)=>i+1)
+        .filter(p => p===1||p===totalP||Math.abs(p-colPage)<=1)
+        .reduce((acc,p,idx,arr) => {
+          if(idx>0&&arr[idx-1]!==p-1) acc.push('…');
+          acc.push(p); return acc;
+        },[])
+        .map(p => typeof p==='number'
+          ? `<button class="col-page-btn${p===colPage?' active':''}" onclick="goColPage(${p})">${p}</button>`
+          : `<span style="font-size:12px;color:var(--light)">…</span>`).join('')}
+      <button class="col-page-btn" onclick="goColPage(${colPage+1})" ${colPage===totalP?'disabled':''}>›</button>
     </div>`;
-  }).join('');
+  }
+
+  list.innerHTML = `<div class="col-cards-grid">${cardsHTML}</div>${pagHTML}`;
+}
+
+function goColPage(p) {
+  colPage = p;
+  renderCollezione();
+  document.getElementById('colList').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function colAddToWishlist(sku, colId) {
