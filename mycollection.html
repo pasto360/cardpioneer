@@ -208,6 +208,16 @@
       border: 1px solid rgba(22,163,74,.2);
     }
 
+    .col-wish-btn {
+      font-size: 10px; font-weight: 600;
+      padding: 4px 10px; border-radius: 100px;
+      background: rgba(22,163,74,.08); color: #16a34a;
+      border: 1px solid rgba(22,163,74,.2);
+      cursor: pointer; white-space: nowrap;
+      transition: all .15s;
+    }
+    .col-wish-btn:hover { background: rgba(22,163,74,.2); }
+
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
       width: 18px; height: 18px;
@@ -306,6 +316,9 @@
         <!-- Risultati -->
         <div class="col-results" id="colResults"></div>
 
+        <!-- Numero/Set dalla API -->
+        <div id="colSetInfo" style="display:none;font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:var(--bg);border-radius:6px"></div>
+
         <!-- Carta selezionata -->
         <div class="col-selected" id="colSelected">
           <img id="colSelImg" src="" alt="">
@@ -347,9 +360,12 @@
         </div>
 
         <p style="font-size:11px;color:var(--light);margin-top:14px;line-height:1.7">
-          Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market CardPioneer.
-          Aggiungile alla <a href="wishlist.html" style="color:var(--pink)">wishlist</a> per acquistarle.
+          Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market.
+          Clicca <strong>♡ Wishlist</strong> per salvarle e acquistarle quando vuoi.
         </p>
+
+        <!-- Statistiche collezione -->
+        <div id="colStats" style="margin-top:16px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px"></div>
       </div>
 
     </div>
@@ -471,6 +487,9 @@ function selectCard(card) {
   document.getElementById('colSelImg').style.display = card.img ? '' : 'none';
   document.getElementById('colSelName').textContent = card.nome;
   document.getElementById('colSelSub').textContent  = `${card.lingua} · ${card.set} · ${card.numero}`;
+  const setInfo = document.getElementById('colSetInfo');
+  setInfo.style.display = 'block';
+  setInfo.textContent = `📦 Set: ${card.set} · Numero: ${card.numero}`;
   document.getElementById('colSelected').classList.add('show');
 
   // Abilita pulsante
@@ -483,6 +502,7 @@ function clearSelection() {
   selectedCard = null;
   document.getElementById('colSearch').value = '';
   document.getElementById('colSelected').classList.remove('show');
+  document.getElementById('colSetInfo').style.display = 'none';
   const btn = document.getElementById('colAddBtn');
   btn.disabled = true;
   btn.style.cssText = 'width:100%;font-family:\'Unbounded\',sans-serif;font-size:11px;font-weight:700;background:rgba(26,10,46,.15);color:var(--muted);border:1px solid var(--border);padding:12px;border-radius:8px;cursor:not-allowed;transition:all .2s';
@@ -504,6 +524,7 @@ async function colAggiungi() {
     espansione:selectedCard.set,
     nome:      selectedCard.nome,
     numero:    selectedCard.numero,
+    img:       selectedCard.img || null,
   }]);
 
   if (error) {
@@ -540,12 +561,15 @@ async function loadCollezione() {
       .select('sku, disponibile')
       .eq('lingua', c.lingua)
       .ilike('nome', c.nome)
+      .ilike('set_name', c.espansione)
       .gt('disponibile', 0)
       .limit(1);
     c._inMarket = found?.length > 0;
+    c._sku      = found?.[0]?.sku || null;
   }));
 
   renderCollezione();
+  renderStatistiche();
 }
 
 function setFiltroCol(f, btn) {
@@ -575,19 +599,63 @@ function renderCollezione() {
     return;
   }
 
-  list.innerHTML = items.map(c => `
-    <div class="col-card ${c._inMarket ? 'in-market' : ''}">
+  list.innerHTML = items.map(c => {
+    const wishBtn = c._inMarket
+      ? `<button onclick="colAddToWishlist('${c._sku||''}','${c.id}')" class="col-wish-btn" title="Aggiungi alla wishlist">♡ Wishlist</button>`
+      : `<span style="font-size:10px;color:var(--light)">⏳ Non disp.</span>`;
+    const imgHTML = c.img
+      ? `<img src="${esc(c.img)}" onerror="this.style.display='none'" alt="" style="width:36px;height:50px;object-fit:contain;border-radius:3px;flex-shrink:0;background:var(--bg)">`
+      : `<div style="width:36px;height:50px;background:var(--bg);border-radius:3px;flex-shrink:0"></div>`;
+    return `<div class="col-card ${c._inMarket ? 'in-market' : ''}">
+      ${imgHTML}
       <div class="col-card-info">
         <div class="col-card-name">${esc(c.nome)}</div>
         <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.espansione)} · ${esc(c.numero)}</div>
       </div>
       <div class="col-card-actions">
-        ${c._inMarket
-          ? `<a href="acquista.html" class="col-market-badge" style="text-decoration:none">✅ In market</a>`
-          : `<span style="font-size:10px;color:var(--light)">⏳ Non disp.</span>`}
+        ${wishBtn}
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+async function colAddToWishlist(sku, colId) {
+  if (!sku) { alert('SKU non trovato. Riprova.'); return; }
+  const user = cpCurrentUser;
+  if (!user) return;
+  const { error } = await window.sb.from('wishlist').upsert([{
+    user_id: user.id, prodotto_sku: sku, era_disponibile: true
+  }], { onConflict: 'user_id,prodotto_sku' });
+  if (error) { alert('Errore: ' + error.message); return; }
+  // Feedback visivo
+  const btn = document.querySelector(`button[onclick*="colAddToWishlist('${sku}'"]`);
+  if (btn) { btn.textContent = '♥ Aggiunta!'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; }
+  setTimeout(() => loadCollezione(), 1500);
+}
+
+function renderStatistiche() {
+  if (!allCollezione.length) return;
+  // Per lingua
+  const perLingua = {};
+  const perEsp    = {};
+  allCollezione.forEach(c => {
+    perLingua[c.lingua]    = (perLingua[c.lingua]    || 0) + 1;
+    perEsp[c.espansione]   = (perEsp[c.espansione]   || 0) + 1;
+  });
+  const topEsp = Object.entries(perEsp).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const statsEl = document.getElementById('colStats');
+  if (!statsEl) return;
+  statsEl.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      ${Object.entries(perLingua).map(([l,n]) =>
+        `<span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:100px;color:var(--muted)">
+          ${l === 'ITA' ? '🇮🇹' : l === 'ENG' ? '🇬🇧' : '🇯🇵'} ${l}: <strong>${n}</strong>
+        </span>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--muted)">
+      Top espansioni: ${topEsp.map(([e,n]) => `<strong>${esc(e)}</strong> (${n})`).join(' · ')}
+    </div>`;
 }
 
 async function colRimuovi(id) {
