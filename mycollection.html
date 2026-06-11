@@ -815,8 +815,7 @@ function goColPage(p) {
 }
 
 async function colAddToWishlist(sku, colId, inMarket, btnEl) {
-  // Salva riferimento al bottone PRIMA degli await (event non sopravvive agli async)
-  const btn = btnEl || event?.currentTarget || event?.target;
+  const btn = btnEl;
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
 
   const { data: { user } } = await window.sb.auth.getUser();
