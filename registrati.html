@@ -4,225 +4,198 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registrati — CardPioneer</title>
-  <meta name="description" content="Crea il tuo account CardPioneer per acquistare e vendere carte Pokémon singole.">
+  <link rel="icon" href="images/logo.png" type="image/png">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
+  <script src="carrello.js"></script>
   <style>
     .auth-layout {
-      min-height: calc(100vh - 64px);
       display: grid;
       grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 60px);
     }
+
+    /* Side panel */
     .auth-side {
       background: var(--dark);
-      padding: 64px 56px;
+      padding: 48px 40px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       position: relative;
       overflow: hidden;
     }
-    .auth-side-bg {
+    .auth-side::before {
+      content: 'CP';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 30% 60%, rgba(255,107,26,0.08) 0%, transparent 70%);
+      top: -20px; right: -20px;
+      font-family: var(--fu);
+      font-size: 220px;
+      font-weight: 900;
+      color: rgba(255,255,255,.03);
+      line-height: 1;
       pointer-events: none;
     }
-    .auth-side-mark {
-      font-family: var(--font-display);
-      font-size: 120px;
-      font-weight: 700;
-      color: rgba(255,107,26,0.04);
-      line-height: 1;
-      position: absolute;
-      right: -20px;
-      bottom: 40px;
-      user-select: none;
-    }
-    .auth-side-logo {
-      font-family: var(--font-display);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--orange);
-      position: relative;
-    }
-    .auth-side-logo span { color: rgba(255,255,255,0.85); }
-    .auth-side-content { position: relative; }
     .auth-side-label {
-      font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: 0.2em;
+      font-weight: 700;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      color: var(--orange);
-      opacity: 0.8;
-      margin-bottom: 16px;
+      color: var(--pink);
+      margin-bottom: 14px;
     }
     .auth-side-title {
-      font-family: var(--font-display);
-      font-size: 36px;
-      font-weight: 700;
-      line-height: 1.15;
-      color: rgba(255,255,255,0.9);
+      font-family: var(--fu);
+      font-size: 32px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -.03em;
       margin-bottom: 16px;
+      line-height: 1.15;
     }
-    .auth-side-title em { font-style: normal; color: var(--orange); }
+    .auth-side-title em { color: var(--yellow); font-style: normal; }
     .auth-side-desc {
-      font-size: 14px;
-      color: rgba(255,255,255,0.35);
-      line-height: 1.75;
-      font-weight: 300;
+      font-size: 13px;
+      color: rgba(255,255,255,.5);
+      line-height: 1.7;
+      margin-bottom: 28px;
       max-width: 340px;
     }
     .auth-side-perks {
       list-style: none;
+      padding: 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      position: relative;
     }
     .auth-side-perks li {
+      font-size: 12px;
+      color: rgba(255,255,255,.6);
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      font-weight: 300;
     }
     .auth-side-perks li::before {
-      content: '';
-      width: 6px;
-      height: 6px;
+      content: '✓';
+      width: 20px; height: 20px;
+      background: rgba(245,230,66,.15);
+      color: var(--yellow);
       border-radius: 50%;
-      background: var(--orange);
-      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
       flex-shrink: 0;
     }
+
+    /* Form side */
     .auth-form-side {
-      background: var(--gray-bg);
-      padding: 64px 56px;
+      background: var(--bg);
       display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: center;
+      padding: 40px 32px;
     }
     .auth-form-card {
       background: var(--white);
       border: 1px solid var(--border);
-      border-top: 2px solid var(--orange);
-      padding: 40px;
-      max-width: 440px;
+      border-radius: 16px;
+      padding: 36px 32px;
       width: 100%;
+      max-width: 420px;
     }
     .auth-form-title {
-      font-family: var(--font-display);
-      font-size: 20px;
+      font-family: var(--fu);
+      font-size: 22px;
+      font-weight: 700;
       color: var(--dark);
-      letter-spacing: 0.04em;
-      margin-bottom: 4px;
+      letter-spacing: -.03em;
+      margin-bottom: 6px;
     }
     .auth-form-sub {
       font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 28px;
-      font-weight: 300;
+      color: var(--muted);
+      margin-bottom: 24px;
     }
-    .auth-form { display: flex; flex-direction: column; gap: 16px; }
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 4px 0;
-    }
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .auth-divider span {
-      font-family: var(--font-mono);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      color: var(--text-light);
-      text-transform: uppercase;
-    }
-    .auth-login-link {
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    .auth-login-link a { color: var(--orange); font-weight: 500; }
-    .password-hint {
-      font-size: 11px;
-      color: var(--text-light);
-      margin-top: 2px;
-    }
+
+    /* Password strength */
     .password-strength {
-      display: flex;
-      gap: 4px;
-      margin-top: 6px;
+      display: flex; gap: 4px; margin-top: 6px;
     }
     .strength-bar {
-      height: 3px;
-      flex: 1;
-      background: var(--border);
-      transition: background 0.3s;
+      flex: 1; height: 3px; border-radius: 2px;
+      background: var(--border); transition: background .2s;
     }
+    .password-hint {
+      font-size: 11px; color: var(--light); margin-top: 4px; display: block;
+    }
+
+    /* Terms */
     .terms-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      cursor: pointer;
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+      cursor: pointer; margin-bottom: 10px;
     }
-    .terms-check input { margin-top: 2px; accent-color: var(--orange); flex-shrink: 0; }
-    .terms-check a { color: var(--orange); }
+    .terms-check input {
+      margin-top: 2px; accent-color: var(--pink); flex-shrink: 0;
+    }
+    .terms-check a { color: var(--pink); }
+
+    .auth-divider {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--light);
+      margin: 16px 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .auth-login-link {
+      text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px;
+    }
+    .auth-login-link a { color: var(--pink); font-weight: 600; }
+
     @media (max-width: 768px) {
       .auth-layout { grid-template-columns: 1fr; }
       .auth-side { display: none; }
-      .auth-form-side { padding: 32px 20px; }
-      .auth-form-card { max-width: 100%; }
+      .auth-form-side { padding: 24px 16px; }
+      .auth-form-card { padding: 28px 20px; }
     }
   </style>
 </head>
 <body>
 
+<div class="topbar">
+  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-links">
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+  </div>
+</div>
+
 <nav class="cp-nav">
-  <a href="index.html" class="cp-logo"><span class="cp-logo-dot"></span><img src="logo.png" alt="logo" width="30px"> Card<span>Pioneer</span></a>
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
-    <a href="utility.html">Utility</a>
-    <a href="contatti.html">Contatti</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
   </div>
-  <div class="cp-nav-right">
-    <a href="acquista.html" class="cp-nav-cta">Sfoglia il market</a>
-    <div class="cp-login-wrap" id="loginWrap">
-      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Accedi
-      </button>
-      <div class="cp-login-dropdown">
-        <div class="cp-login-dropdown-title">Accedi a CardPioneer</div>
-        <div class="cp-login-form">
-          <div class="cp-login-field">
-            <label class="cp-login-label">Email</label>
-            <input type="email" class="cp-login-input" placeholder="La tua email">
-          </div>
-          <div class="cp-login-field">
-            <label class="cp-login-label">Password</label>
-            <input type="password" class="cp-login-input" placeholder="••••••••">
-          </div>
-          <div class="cp-login-forgot">Password dimenticata?</div>
-          <button class="cp-login-submit">Accedi</button>
-        </div>
-        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
-      </div>
-    </div>
+  <div class="cp-nav-r">
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
 </nav>
 
@@ -230,14 +203,9 @@
 
   <!-- SIDE PANEL -->
   <div class="auth-side">
-    <div class="auth-side-bg"></div>
-    <div class="auth-side-mark" aria-hidden="true">CP</div>
-    <a href="index.html" class="auth-side-logo">Card<span>Pioneer</span></a>
-    <div class="auth-side-content">
-      <p class="auth-side-label">Benvenuto nel marketplace</p>
-      <h2 class="auth-side-title">Crea il tuo<br>account <em>gratuito</em></h2>
-      <p class="auth-side-desc">Registrati per acquistare e vendere carte Pokémon singole, tenere traccia dei tuoi ordini e gestire la tua collezione.</p>
-    </div>
+    <p class="auth-side-label">Benvenuto nel marketplace</p>
+    <h2 class="auth-side-title">Crea il tuo<br>account <em>gratuito</em></h2>
+    <p class="auth-side-desc">Registrati per acquistare e vendere carte Pokémon singole, tenere traccia dei tuoi ordini e gestire la tua collezione.</p>
     <ul class="auth-side-perks">
       <li>Accesso al catalogo completo di carte singole</li>
       <li>Storico ordini e spedizioni in tempo reale</li>
@@ -253,106 +221,104 @@
       <h1 class="auth-form-title">Crea account</h1>
       <p class="auth-form-sub">Registrati gratuitamente in pochi secondi</p>
 
-      <div class="auth-form" id="registerForm">
+      <div id="registerForm">
+        <div class="cp-form">
 
-        <div class="form-row">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome *</label>
+              <input type="text" id="regNome" class="form-input" placeholder="Es. Marco" autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cognome *</label>
+              <input type="text" id="regCognome" class="form-input" placeholder="Es. Rossi" autocomplete="family-name">
+            </div>
+          </div>
+
           <div class="form-group">
-            <label class="form-label">Nome *</label>
-            <input type="text" id="regNome" class="form-input" placeholder="Es. Marco" autocomplete="given-name">
+            <label class="form-label">Città</label>
+            <input type="text" id="regCitta" class="form-input" placeholder="Es. Milano" autocomplete="address-level2">
           </div>
+
           <div class="form-group">
-            <label class="form-label">Cognome *</label>
-            <input type="text" id="regCognome" class="form-input" placeholder="Es. Rossi" autocomplete="family-name">
+            <label class="form-label">Indirizzo email *</label>
+            <input type="email" id="regEmail" class="form-input" placeholder="tua@email.it" autocomplete="email">
+            <span class="password-hint">Riceverai una email di conferma per attivare l'account.</span>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Indirizzo email *</label>
-          <input type="email" id="regEmail" class="form-input" placeholder="tua@email.it" autocomplete="email">
-          <span class="password-hint">Riceverai una email di conferma per attivare l'account.</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Password *</label>
-          <input type="password" id="regPassword" class="form-input"
-                 placeholder="Minimo 8 caratteri" autocomplete="new-password"
-                 oninput="checkStrength(this.value)">
-          <div class="password-strength">
-            <div class="strength-bar" id="s1"></div>
-            <div class="strength-bar" id="s2"></div>
-            <div class="strength-bar" id="s3"></div>
-            <div class="strength-bar" id="s4"></div>
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <input type="password" id="regPassword" class="form-input"
+                   placeholder="Minimo 8 caratteri" autocomplete="new-password"
+                   oninput="checkStrength(this.value)">
+            <div class="password-strength">
+              <div class="strength-bar" id="s1"></div>
+              <div class="strength-bar" id="s2"></div>
+              <div class="strength-bar" id="s3"></div>
+              <div class="strength-bar" id="s4"></div>
+            </div>
+            <span class="password-hint">Almeno 8 caratteri, una lettera maiuscola e un numero.</span>
           </div>
-          <span class="password-hint">Almeno 8 caratteri, una lettera maiuscola e un numero.</span>
+
+          <div class="form-group">
+            <label class="form-label">Conferma password *</label>
+            <input type="password" id="regConfirm" class="form-input"
+                   placeholder="Ripeti la password" autocomplete="new-password">
+          </div>
+
+          <div class="auth-divider"><span>Condizioni</span></div>
+
+          <label class="terms-check">
+            <input type="checkbox" id="regTerms">
+            <span>Ho letto e accetto le <a href="norme-legali.html">condizioni generali di vendita</a> e la <a href="privacy.html">Privacy Policy</a> di CardPioneer. *</span>
+          </label>
+
+          <label class="terms-check">
+            <input type="checkbox" id="regNewsletter">
+            <span>Acconsento a ricevere comunicazioni commerciali (newsletter, offerte, novità). Facoltativo.</span>
+          </label>
+
+          <div id="regMsg" style="display:none;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-top:4px"></div>
+
+          <button class="btn-fill" id="regBtn"
+                  style="width:100%;padding:14px;font-size:11px;margin-top:8px"
+                  onclick="handleRegister()">
+            Crea il mio account
+          </button>
+
+          <div class="auth-login-link">
+            Hai già un account? <a href="#" onclick="document.getElementById('loginWrap').classList.toggle('open');return false">Accedi</a>
+          </div>
+
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Conferma password *</label>
-          <input type="password" id="regConfirm" class="form-input"
-                 placeholder="Ripeti la password" autocomplete="new-password">
-        </div>
-
-        <div class="auth-divider"><span>Condizioni</span></div>
-
-        <label class="terms-check">
-          <input type="checkbox" id="regTerms">
-          Ho letto e accetto le <a href="norme-legali.html">condizioni generali di vendita</a> e la <a href="privacy.html">Privacy Policy</a> di CardPioneer. *
-        </label>
-
-        <label class="terms-check">
-          <input type="checkbox" id="regNewsletter">
-          Acconsento a ricevere comunicazioni commerciali (newsletter, offerte, novità). Facoltativo.
-        </label>
-
-        <!-- Messaggio errore/successo -->
-        <div id="regMsg" style="display:none;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500"></div>
-
-        <button class="btn-fill" id="regBtn"
-                style="width:100%;padding:14px;font-size:11px;margin-top:4px;"
-                onclick="handleRegister()">
-          Crea il mio account
-        </button>
-
-        <div class="auth-login-link">
-          Hai già un account? <a href="#" onclick="document.getElementById('loginWrap').classList.toggle('open'); return false;">Accedi</a>
-        </div>
-
       </div>
 
-      <!-- Pannello successo (nascosto inizialmente) -->
+      <!-- Successo -->
       <div id="registerSuccess" style="display:none;text-align:center;padding:32px 0">
         <div style="font-size:48px;margin-bottom:16px">📧</div>
-        <h2 style="font-family:var(--fu);font-size:20px;color:var(--dark);margin-bottom:10px;letter-spacing:-0.02em">
-          Controlla la tua email!
-        </h2>
+        <h2 style="font-family:var(--fu);font-size:20px;color:var(--dark);margin-bottom:10px;letter-spacing:-.02em">Controlla la tua email!</h2>
         <p style="font-size:13px;color:var(--muted);line-height:1.7;max-width:320px;margin:0 auto 24px">
           Ti abbiamo inviato un link di conferma. Clicca sul link per attivare il tuo account CardPioneer.
         </p>
-        <a href="index.html" class="btn-dark" style="display:inline-block">Torna alla home</a>
+        <a href="index.html" class="btn-fill" style="display:inline-block">Torna alla home</a>
       </div>
 
     </div>
   </div>
 
+</div>
 
 <footer class="cp-footer">
-  <div class="cp-footer-logo">CardPioneer</div>
-  <div class="cp-footer-links">
-    <a href="come-funziona.html">Come funziona</a>
-    <a href="norme-legali.html">Norme legali</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="contatti.html">Contatti</a>
+  <div class="cp-footer-grid">
+    <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
-  <div class="cp-footer-ig">📸 @cardpioneer</div>
-  <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
 </footer>
 
 <script>
-const SUPABASE_URL = 'https://nzjwpdbljfwrspmepoqo.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ── Indicatore forza password ──
 function checkStrength(val) {
   const bars   = ['s1','s2','s3','s4'];
   const colors = ['#f87171','#fbbf24','#a78bfa','#34d399'];
@@ -367,40 +333,42 @@ function checkStrength(val) {
   });
 }
 
-// ── Mostra messaggio ──
 function showMsg(text, type) {
   const el = document.getElementById('regMsg');
-  el.style.display = 'block';
-  el.style.background  = type === 'error' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.1)';
-  el.style.border      = `1px solid ${type === 'error' ? '#f87171' : '#34d399'}`;
-  el.style.color       = type === 'error' ? '#f87171' : '#34d399';
-  el.textContent       = text;
+  el.style.display    = 'block';
+  el.style.background = type === 'error' ? 'rgba(248,113,113,.1)' : 'rgba(52,211,153,.1)';
+  el.style.border     = `1px solid ${type === 'error' ? '#f87171' : '#34d399'}`;
+  el.style.color      = type === 'error' ? '#f87171' : '#34d399';
+  el.textContent      = text;
 }
 
-// ── Registrazione ──
 async function handleRegister() {
   const nome      = document.getElementById('regNome').value.trim();
   const cognome   = document.getElementById('regCognome').value.trim();
+  const citta     = document.getElementById('regCitta').value.trim();
   const email     = document.getElementById('regEmail').value.trim();
   const password  = document.getElementById('regPassword').value;
   const confirm   = document.getElementById('regConfirm').value;
   const terms     = document.getElementById('regTerms').checked;
 
-  // Validazioni
-  if (!nome || !cognome) { showMsg('Inserisci nome e cognome.', 'error'); return; }
-  if (!email)            { showMsg('Inserisci una email valida.', 'error'); return; }
-  if (password.length < 8) { showMsg('La password deve essere di almeno 8 caratteri.', 'error'); return; }
-  if (!/[A-Z]/.test(password)) { showMsg('La password deve contenere almeno una lettera maiuscola.', 'error'); return; }
-  if (!/[0-9]/.test(password)) { showMsg('La password deve contenere almeno un numero.', 'error'); return; }
-  if (password !== confirm)  { showMsg('Le password non coincidono.', 'error'); return; }
-  if (!terms) { showMsg('Devi accettare le condizioni per procedere.', 'error'); return; }
+  if (!nome || !cognome)        { showMsg('Inserisci nome e cognome.', 'error'); return; }
+  if (!email)                   { showMsg('Inserisci una email valida.', 'error'); return; }
+  if (password.length < 8)      { showMsg('La password deve essere di almeno 8 caratteri.', 'error'); return; }
+  if (!/[A-Z]/.test(password))  { showMsg('La password deve contenere almeno una lettera maiuscola.', 'error'); return; }
+  if (!/[0-9]/.test(password))  { showMsg('La password deve contenere almeno un numero.', 'error'); return; }
+  if (password !== confirm)     { showMsg('Le password non coincidono.', 'error'); return; }
+  if (!terms)                   { showMsg('Devi accettare le condizioni per procedere.', 'error'); return; }
 
-  // Disabilita bottone durante richiesta
   const btn = document.getElementById('regBtn');
-  btn.disabled  = true;
+  btn.disabled    = true;
   btn.textContent = '⏳ Registrazione in corso...';
 
   try {
+    const sb = window.sb || supabase.createClient(
+      'https://nzjwpdbljfwrspmepoqo.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
+    );
+
     const { data, error } = await sb.auth.signUp({
       email,
       password,
@@ -408,6 +376,7 @@ async function handleRegister() {
         data: {
           nome,
           cognome,
+          citta,
           full_name: nome + ' ' + cognome,
           newsletter: document.getElementById('regNewsletter').checked,
         }
@@ -416,39 +385,26 @@ async function handleRegister() {
 
     if (error) throw error;
 
-    // Successo — mostra pannello conferma email
     document.getElementById('registerForm').style.display    = 'none';
     document.getElementById('registerSuccess').style.display = 'block';
 
-  } catch (err) {
-    console.error(err);
-    let msg = 'Errore durante la registrazione. Riprova.';
-    if (err.message?.includes('already registered')) {
-      msg = 'Questa email è già registrata. Prova ad accedere.';
-    } else if (err.message?.includes('invalid email')) {
-      msg = 'Indirizzo email non valido.';
-    } else if (err.message?.includes('Password')) {
-      msg = 'Password non valida: usa almeno 8 caratteri con maiuscola e numero.';
-    }
+  } catch(e) {
+    const msg = e.message?.includes('already registered')
+      ? 'Email già registrata. Prova ad accedere.'
+      : (e.message || 'Errore durante la registrazione.');
     showMsg(msg, 'error');
     btn.disabled    = false;
     btn.textContent = 'Crea il mio account';
   }
 }
 
-// ── Invio con tasto Enter ──
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.activeElement.closest('#registerForm')) {
-    handleRegister();
-  }
-});
-
-// ── Chiudi login dropdown ──
-document.addEventListener('click', function(e) {
-  const wrap = document.getElementById('loginWrap');
-  if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open');
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
 });
 </script>
-
 </body>
 </html>

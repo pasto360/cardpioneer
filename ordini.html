@@ -8,6 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
+  <script src="carrello.js"></script>
   <style>
     /* Filtri stato */
     .stato-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
@@ -124,9 +126,11 @@
     <a href="classificazione.html">Classificazione</a>
     <a href="utility.html">Utility</a>
     <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
     <div class="cp-nav-icon">♡<span class="cp-nav-badge">0</span></div>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
     <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
@@ -184,7 +188,8 @@
 <footer class="cp-footer">
   <div class="cp-footer-grid">
     <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
-    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
     <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
     <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
