@@ -773,7 +773,7 @@ function renderCollezione() {
       ${c._inMarket ? '<div class="in-market-dot" title="Disponibile nel market"></div>' : ''}
       <div class="col-card-img-wrap">
         ${c.img
-          ? `<img src="${esc(c.img)}" loading="lazy" onerror="this.style.display='none'" alt="${esc(c.nome)}">`
+          ? `<img src="${esc(c.img)}" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--border)\\'>🎴</div>'" alt="${esc(c.nome)}">`
           : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--border)">🎴</div>`}
       </div>
       <div class="col-card-body">
@@ -782,7 +782,7 @@ function renderCollezione() {
         <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
       <div class="col-card-actions">
-        <button onclick="colAddToWishlist('${c._sku||''}','${c.id}',${c._inMarket})" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
+        <button onclick="colAddToWishlist('${c._sku||''}','${c.id}',${c._inMarket},this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
     </div>`).join('');
@@ -814,17 +814,17 @@ function goColPage(p) {
   document.getElementById('colList').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function colAddToWishlist(sku, colId, inMarket) {
-  const { data: { user } } = await window.sb.auth.getUser();
-  if (!user) { alert('Accedi per usare la wishlist.'); return; }
+async function colAddToWishlist(sku, colId, inMarket, btnEl) {
+  // Salva riferimento al bottone PRIMA degli await (event non sopravvive agli async)
+  const btn = btnEl || event?.currentTarget || event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
 
-  // Se non disponibile nel market non abbiamo lo SKU — salviamo la carta
-  // dalla collezione cercando lo SKU se disponibile
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) { alert('Accedi per usare la wishlist.'); if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
+
   let skuToUse = sku;
 
   if (!skuToUse) {
-    // Carta non disponibile — la aggiungiamo comunque alla wishlist cercando lo SKU
-    // dal prodotto corrispondente (anche se disponibile = 0)
     const col = allCollezione.find(c => c.id === colId);
     if (col) {
       const { data: found } = await window.sb.from('prodotti')
@@ -838,10 +838,8 @@ async function colAddToWishlist(sku, colId, inMarket) {
   }
 
   if (!skuToUse) {
-    // SKU non trovato nel market — non possiamo ancora aggiungere alla wishlist
-    event.target.textContent = '—';
-    event.target.title = 'Carta non ancora nel catalogo CardPioneer';
-    setTimeout(() => { event.target.textContent = '♡'; }, 2000);
+    if (btn) { btn.textContent = '—'; btn.title = 'Carta non ancora nel catalogo CardPioneer'; btn.disabled = false; }
+    setTimeout(() => { if (btn) btn.textContent = '♡'; }, 2000);
     return;
   }
 
@@ -851,13 +849,15 @@ async function colAddToWishlist(sku, colId, inMarket) {
     era_disponibile: inMarket === true || inMarket === 'true',
   }], { onConflict: 'user_id,prodotto_sku' });
 
-  if (error) { alert('Errore: ' + error.message); return; }
+  if (error) { alert('Errore: ' + error.message); if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
 
-  event.target.textContent = '♥';
-  event.target.style.color = '#16a34a';
-  event.target.style.background = 'rgba(22,163,74,.2)';
-  event.target.disabled = true;
-  event.target.title = 'Aggiunta alla wishlist!';
+  if (btn) {
+    btn.textContent = '♥';
+    btn.style.color = '#16a34a';
+    btn.style.background = 'rgba(22,163,74,.2)';
+    btn.disabled = true;
+    btn.title = 'Aggiunta alla wishlist!';
+  }
 }
 
 function renderStatistiche() {
