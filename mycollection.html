@@ -782,7 +782,7 @@ function renderCollezione() {
         <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
       <div class="col-card-actions">
-        <button onclick="colAddToWishlist('${c._sku||''}','${c.id}',${c._inMarket},this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
+        <button onclick="colAddToWishlist('${c._sku||''}','${c.id}','${c._inMarket}',this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
     </div>`).join('');
