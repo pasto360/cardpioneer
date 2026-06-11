@@ -815,39 +815,43 @@ function goColPage(p) {
 }
 
 async function colAddToWishlist(sku, colId, inMarket, btnEl) {
-  const btn = btnEl;
+  const btn = btnEl || null;
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
 
   const { data: { user } } = await window.sb.auth.getUser();
   if (!user) { alert('Accedi per usare la wishlist.'); if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
 
-  let skuToUse = sku;
+  let skuToUse = sku || null;
+  const col = allCollezione.find(x => x.id === colId);
 
-  if (!skuToUse) {
-    const col = allCollezione.find(c => c.id === colId);
-    if (col) {
-      const { data: found } = await window.sb.from('prodotti')
-        .select('sku')
-        .eq('lingua', col.lingua)
-        .ilike('nome', col.nome)
-        .ilike('set_name', col.espansione)
-        .limit(1);
-      skuToUse = found?.[0]?.sku || null;
-    }
+  if (!skuToUse && col) {
+    // Cerca nel catalogo anche tra esauriti
+    const { data: found } = await window.sb.from('prodotti')
+      .select('sku')
+      .eq('lingua', col.lingua)
+      .ilike('nome', col.nome)
+      .ilike('set_name', col.espansione)
+      .limit(1);
+    skuToUse = found?.[0]?.sku || null;
   }
 
-  if (!skuToUse) {
-    if (btn) { btn.textContent = '—'; btn.title = 'Carta non ancora nel catalogo CardPioneer'; btn.disabled = false; }
-    setTimeout(() => { if (btn) btn.textContent = '♡'; }, 2000);
+  let record;
+  if (skuToUse) {
+    record = { user_id: user.id, prodotto_sku: skuToUse, era_disponibile: inMarket === 'true' || inMarket === true };
+  } else if (col) {
+    // Non nel catalogo CardPioneer — salvo i dati collezione
+    record = { user_id: user.id, prodotto_sku: null, era_disponibile: false,
+               collezione_lingua: col.lingua, collezione_nome: col.nome, collezione_esp: col.espansione };
+  }
+
+  if (!record) { if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
+
+  const { error } = await window.sb.from('wishlist').insert([record]);
+
+  if (error?.message?.includes('unique')) {
+    if (btn) { btn.textContent='♥'; btn.style.color='#16a34a'; btn.disabled=true; btn.title='Già nella wishlist'; }
     return;
   }
-
-  const { error } = await window.sb.from('wishlist').upsert([{
-    user_id: user.id,
-    prodotto_sku: skuToUse,
-    era_disponibile: inMarket === true || inMarket === 'true',
-  }], { onConflict: 'user_id,prodotto_sku' });
-
   if (error) { alert('Errore: ' + error.message); if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
 
   if (btn) {
@@ -855,7 +859,7 @@ async function colAddToWishlist(sku, colId, inMarket, btnEl) {
     btn.style.color = '#16a34a';
     btn.style.background = 'rgba(22,163,74,.2)';
     btn.disabled = true;
-    btn.title = 'Aggiunta alla wishlist!';
+    btn.title = skuToUse ? 'Aggiunta alla wishlist!' : 'Salvata — ti avvisiamo quando arriva nel catalogo';
   }
 }
 

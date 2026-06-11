@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="images/logo.png" type="image/png">
   <title>La mia Wishlist — CardPioneer</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -136,6 +137,7 @@
     <a href="classificazione.html">Classificazione</a>
     <a href="utility.html">FAQ</a>
     <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
     <a href="wishlist.html" class="cp-nav-icon active" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
@@ -160,7 +162,8 @@
 <footer class="cp-footer">
   <div class="cp-footer-grid">
     <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
-    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
     <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
     <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
@@ -196,7 +199,7 @@ async function loadWishlist() {
   // Carica SKU dalla wishlist
   const { data: wishItems } = await sb
     .from('wishlist')
-    .select('prodotto_sku')
+    .select('prodotto_sku, era_disponibile, collezione_lingua, collezione_nome, collezione_esp')
     .eq('user_id', user.id);
 
   if (!wishItems?.length) {
@@ -210,21 +213,26 @@ async function loadWishlist() {
     return;
   }
 
-  const skus = wishItems.map(w => w.prodotto_sku);
+  const skus = wishItems.filter(w => w.prodotto_sku).map(w => w.prodotto_sku);
+  // Carte senza SKU (solo in collezione, non ancora nel catalogo)
+  const noSku = wishItems.filter(w => !w.prodotto_sku);
 
-  // Carica dettagli prodotti
-  const { data: prodotti } = await sb
-    .from('prodotti')
-    .select('sku, nome, set_name, lingua, condizione, prezzo, disponibile, immagine')
-    .in('sku', skus);
+  let prodotti = [];
+  if (skus.length) {
+    const { data: p } = await sb
+      .from('prodotti')
+      .select('sku, nome, set_name, lingua, condizione, prezzo, disponibile, immagine')
+      .in('sku', skus);
+    prodotti = p || [];
+  }
 
-  if (!prodotti?.length) {
+  if (!prodotti?.length && !noSku.length) {
     section.innerHTML = '<div class="wish-empty"><div class="wish-empty-icon">♡</div><p>Nessun prodotto trovato.</p></div>';
     return;
   }
 
-  // Ordina: disponibili prima, esauriti dopo
-  const sorted = [...prodotti].sort((a, b) => {
+  // Ordina: disponibili prima, esauriti dopo, poi quelli senza SKU
+  const sorted = [...(prodotti||[])].sort((a, b) => {
     if (a.disponibile > 0 && b.disponibile <= 0) return -1;
     if (a.disponibile <= 0 && b.disponibile > 0) return 1;
     return 0;
@@ -251,16 +259,32 @@ async function loadWishlist() {
   const dispCount = sorted.filter(p => p.disponibile > 0).length;
   const esauritiCount = sorted.length - dispCount;
 
+  // Carte senza SKU (in collezione ma non nel catalogo)
+  const noSkuHTML = noSku.map(w => `
+    <div class="wish-card esaurita" style="opacity:.5">
+      <div class="wish-card-img">
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎴</div>
+        <div class="wish-esaurito-badge">Non in catalogo</div>
+      </div>
+      <div class="wish-card-body">
+        <div class="wish-card-set">${esc(w.collezione_lingua||'')} · ${esc(w.collezione_esp||'')}</div>
+        <div class="wish-card-name">${esc(w.collezione_nome||'')}</div>
+        <div style="font-size:10px;color:var(--light);margin-top:4px">⏳ Ti avvisiamo quando arriva</div>
+      </div>
+    </div>`).join('');
+
   section.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
       <div style="font-size:13px;color:var(--muted)">
         <span style="color:#059669;font-weight:600">${dispCount} disponibili</span>
         ${esauritiCount > 0 ? ` · <span style="color:var(--light)">${esauritiCount} esaurite</span>` : ''}
+        ${noSku.length > 0 ? ` · <span style="color:var(--light)">${noSku.length} in attesa dal catalogo</span>` : ''}
         ${collezioneMatch.size > 0 ? ` · <span style="color:#16a34a;font-weight:600">🔮 ${collezioneMatch.size} dalla tua collezione</span>` : ''}
       </div>
     </div>
     <div class="wish-grid">
       ${sorted.map(p => renderWishCard(p, collezioneMatch.has(p.sku))).join('')}
+      ${noSkuHTML}
     </div>`;
 }
 
