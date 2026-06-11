@@ -293,6 +293,7 @@
     <a href="classificazione.html">Classificazione</a>
     <a href="utility.html">FAQ</a>
     <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
     <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
@@ -403,10 +404,18 @@
         <div class="col-list-wrap">
           <div class="col-list-header">
             <div class="col-list-title">La mia collezione <span id="colCount" style="font-family:inherit;font-size:12px;color:var(--muted);font-weight:400"></span></div>
-            <div class="col-filters">
-              <button class="col-filter-btn active" onclick="setFiltroCol('tutti',this)">Tutte</button>
-              <button class="col-filter-btn" onclick="setFiltroCol('in_market',this)">✅ Nel market</button>
-              <button class="col-filter-btn" onclick="setFiltroCol('non_disponibile',this)">⏳ Non disponibili</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="col-filters">
+                <button class="col-filter-btn active" onclick="setFiltroCol('tutti',this)">Tutte</button>
+                <button class="col-filter-btn" onclick="setFiltroCol('in_market',this)">✅ Nel market</button>
+                <button class="col-filter-btn" onclick="setFiltroCol('non_disponibile',this)">⏳ Non disponibili</button>
+              </div>
+              <button onclick="esportaCollezioneJpg()"
+                style="font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;
+                       background:var(--dark);color:var(--yellow);border:1px solid rgba(245,230,66,.3);
+                       padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap">
+                📸 Esporta JPG
+              </button>
             </div>
           </div>
           <div id="colList">
@@ -433,7 +442,8 @@
 <footer class="cp-footer">
   <div class="cp-footer-grid">
     <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
-    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
     <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
     <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
@@ -873,6 +883,216 @@ function renderStatistiche() {
       Top espansioni: ${topEsp.map(([e,n]) => `<strong>${esc(e)}</strong> (${n})`).join(' · ')}
     </div>`;
 }
+
+// ── ESPORTA COLLEZIONE IN JPG ──
+function esportaCollezioneJpg() {
+  if (!allCollezione.length) { alert('Nessuna carta nella collezione.'); return; }
+
+  const SIZE   = 1080; // formato quadrato Instagram
+  const BG     = '#f7f5f2';
+  const DARK   = '#1a0a2e';
+  const PINK   = '#e8107a';
+  const MUTED  = '#888';
+  const YELLOW = '#f5e642';
+  const FONT   = 'bold 28px system-ui, Arial, sans-serif';
+
+  // Raggruppa per espansione
+  const grouped = {};
+  allCollezione.forEach(c => {
+    const key = c.espansione || 'Senza espansione';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(c);
+  });
+  // Ordina espansioni alfabeticamente, carte per numero
+  const sets = Object.keys(grouped).sort();
+  sets.forEach(s => {
+    grouped[s].sort((a,b) => {
+      const na = parseInt(a.numero) || 9999;
+      const nb = parseInt(b.numero) || 9999;
+      return na - nb;
+    });
+  });
+
+  const totCarte = allCollezione.length;
+  const totSets  = sets.length;
+
+  // ── Funzione helper per disegnare un canvas ──
+  function makeCanvas() {
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    return c;
+  }
+
+  function drawBg(ctx) {
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+    // Bordo sottile
+    ctx.strokeStyle = 'rgba(26,10,46,.08)';
+    ctx.lineWidth   = 3;
+    ctx.strokeRect(24, 24, SIZE-48, SIZE-48);
+  }
+
+  function drawBrand(ctx) {
+    ctx.fillStyle   = MUTED;
+    ctx.font        = '500 22px system-ui, Arial';
+    ctx.textAlign   = 'right';
+    ctx.fillText('cardpioneer.it', SIZE-40, SIZE-32);
+    ctx.textAlign   = 'left';
+  }
+
+  function downloadCanvas(canvas, name) {
+    const a = document.createElement('a');
+    a.href     = canvas.toDataURL('image/jpeg', .92);
+    a.download = name;
+    a.click();
+  }
+
+  // ── PAGINA 1: Statistiche ──
+  const c1  = makeCanvas();
+  const ctx1 = c1.getContext('2d');
+  drawBg(ctx1);
+
+  // Logo badge
+  ctx1.fillStyle = DARK;
+  ctx1.fillRect(40, 40, 12, 56);
+
+  // Titolo
+  ctx1.fillStyle   = DARK;
+  ctx1.font        = 'bold 52px system-ui, Arial';
+  ctx1.fillText('My Collection', 68, 86);
+
+  // Linea separatrice
+  ctx1.fillStyle = PINK;
+  ctx1.fillRect(68, 106, 120, 4);
+
+  // Stats grandi
+  ctx1.font      = 'bold 140px system-ui, Arial';
+  ctx1.fillStyle = DARK;
+  ctx1.fillText(totCarte, 68, 320);
+
+  ctx1.font      = 'bold 36px system-ui, Arial';
+  ctx1.fillStyle = MUTED;
+  ctx1.fillText('carte in collezione', 72, 370);
+
+  // Separatore
+  ctx1.fillStyle = 'rgba(26,10,46,.1)';
+  ctx1.fillRect(68, 420, SIZE-136, 2);
+
+  ctx1.font      = 'bold 120px system-ui, Arial';
+  ctx1.fillStyle = DARK;
+  ctx1.fillText(totSets, 68, 590);
+
+  ctx1.font      = 'bold 36px system-ui, Arial';
+  ctx1.fillStyle = MUTED;
+  ctx1.fillText('espansioni', 72, 640);
+
+  // Separatore basso
+  ctx1.fillStyle = 'rgba(26,10,46,.1)';
+  ctx1.fillRect(68, 700, SIZE-136, 2);
+
+  // Elenco espansioni compatto
+  ctx1.font      = '500 22px system-ui, Arial';
+  ctx1.fillStyle = MUTED;
+  let x = 68, y = 742;
+  sets.forEach(s => {
+    const txt = s + '  ';
+    if (x + ctx1.measureText(txt).width > SIZE - 68) { x = 68; y += 32; }
+    if (y > 1020) return;
+    ctx1.fillStyle = DARK;
+    ctx1.fillText(s, x, y);
+    x += ctx1.measureText(s).width + 24;
+  });
+
+  drawBrand(ctx1);
+  setTimeout(() => downloadCanvas(c1, 'mycollection_stats.jpg'), 100);
+
+  // ── PAGINE successive: una per espansione (max 30 carte per pagina) ──
+  const CARDS_PER_PAGE = 30;
+  const LINE_H = 30;
+  const MARGIN = 68;
+  const TOP    = 140;
+
+  let pageNum = 1;
+  sets.forEach((setName, si) => {
+    const cards  = grouped[setName];
+    const chunks = [];
+    for (let i = 0; i < cards.length; i += CARDS_PER_PAGE) {
+      chunks.push(cards.slice(i, i + CARDS_PER_PAGE));
+    }
+
+    chunks.forEach((chunk, ci) => {
+      const cn  = makeCanvas();
+      const ctx = cn.getContext('2d');
+      drawBg(ctx);
+
+      // Header set
+      ctx.fillStyle = DARK;
+      ctx.fillRect(MARGIN, 48, 8, 60);
+
+      ctx.font      = 'bold 44px system-ui, Arial';
+      ctx.fillStyle = DARK;
+      ctx.fillText(setName.toUpperCase(), MARGIN + 24, 94);
+
+      if (ci > 0) {
+        ctx.font      = '500 24px system-ui, Arial';
+        ctx.fillStyle = MUTED;
+        ctx.fillText(`(continua — parte ${ci+1})`, MARGIN + 24, 128);
+      }
+
+      // Linea
+      ctx.fillStyle = PINK;
+      ctx.fillRect(MARGIN, 112, 200, 3);
+
+      // Numero pagina
+      ctx.font      = '500 20px system-ui, Arial';
+      ctx.fillStyle = MUTED;
+      ctx.textAlign = 'right';
+      ctx.fillText(`${setName} · ${groupedIndex(sets, si, chunks.length, ci)}`, SIZE - MARGIN, 72);
+      ctx.textAlign = 'left';
+
+      // Carte in due colonne
+      const col1 = chunk.slice(0, Math.ceil(chunk.length / 2));
+      const col2 = chunk.slice(Math.ceil(chunk.length / 2));
+      const colW = (SIZE - MARGIN*2 - 40) / 2;
+
+      [[col1, 0], [col2, colW + 40]].forEach(([list, offsetX]) => {
+        list.forEach((c, idx) => {
+          const y = TOP + idx * LINE_H;
+          // Numero
+          ctx.font      = '600 20px system-ui, Arial';
+          ctx.fillStyle = PINK;
+          const num = c.numero ? c.numero.padStart(3, '0') : '???';
+          ctx.fillText(num, MARGIN + offsetX, y);
+          // Nome
+          ctx.font      = '500 22px system-ui, Arial';
+          ctx.fillStyle = DARK;
+          // Tronca nome se troppo lungo
+          let nome = c.nome;
+          while (ctx.measureText(nome).width > colW - 56 && nome.length > 3) nome = nome.slice(0,-1);
+          if (nome !== c.nome) nome += '…';
+          ctx.fillText(nome, MARGIN + offsetX + 56, y);
+          // Lingua badge
+          ctx.font      = '500 16px system-ui, Arial';
+          ctx.fillStyle = MUTED;
+          ctx.fillText(c.lingua, MARGIN + offsetX + colW - 36, y);
+        });
+      });
+
+      drawBrand(ctx);
+      const fname = `mycollection_${String(pageNum).padStart(2,'0')}_${setName.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase()}.jpg`;
+      setTimeout(() => downloadCanvas(cn, fname), 200 + pageNum * 150);
+      pageNum++;
+    });
+  });
+}
+
+function groupedIndex(sets, si, chunks, ci) {
+  let total = 0;
+  for (let i = 0; i < si; i++) total++;
+  total += ci + 1;
+  return `${total}`;
+}
+window.esportaCollezioneJpg = esportaCollezioneJpg;
 
 async function colRimuovi(id) {
   if (!confirm('Rimuovere questa carta dalla collezione?')) return;
