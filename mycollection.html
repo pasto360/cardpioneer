@@ -885,16 +885,22 @@ function renderStatistiche() {
 }
 
 // ── ESPORTA COLLEZIONE IN JPG ──
-function esportaCollezioneJpg() {
+async function esportaCollezioneJpg() {
   if (!allCollezione.length) { alert('Nessuna carta nella collezione.'); return; }
 
-  const SIZE   = 1080; // formato quadrato Instagram
+  const SIZE   = 1080;
   const BG     = '#f7f5f2';
   const DARK   = '#1a0a2e';
   const PINK   = '#e8107a';
   const MUTED  = '#888';
   const YELLOW = '#f5e642';
-  const FONT   = 'bold 28px system-ui, Arial, sans-serif';
+
+  // Monogramma utente
+  const { data: { user } } = await window.sb.auth.getUser();
+  const meta     = user?.user_metadata || {};
+  const nome     = meta.nome    || '';
+  const cognome  = meta.cognome || '';
+  const initials = ((nome[0]||'') + (cognome[0]||'')).toUpperCase() || 'CP';
 
   // Raggruppa per espansione
   const grouped = {};
@@ -948,62 +954,81 @@ function esportaCollezioneJpg() {
   }
 
   // ── PAGINA 1: Statistiche ──
-  const c1  = makeCanvas();
+  const c1   = makeCanvas();
   const ctx1 = c1.getContext('2d');
-  drawBg(ctx1);
 
-  // Logo badge
+  // Sfondo scuro per la prima pagina
   ctx1.fillStyle = DARK;
-  ctx1.fillRect(40, 40, 12, 56);
+  ctx1.fillRect(0, 0, SIZE, SIZE);
 
-  // Titolo
-  ctx1.fillStyle   = DARK;
-  ctx1.font        = 'bold 52px system-ui, Arial';
-  ctx1.fillText('My Collection', 68, 86);
+  // Pattern decorativo — puntini
+  ctx1.fillStyle = 'rgba(255,255,255,.03)';
+  for (let x = 40; x < SIZE; x += 60) {
+    for (let y = 40; y < SIZE; y += 60) {
+      ctx1.beginPath();
+      ctx1.arc(x, y, 2, 0, Math.PI*2);
+      ctx1.fill();
+    }
+  }
 
-  // Linea separatrice
+  // Rettangolo accent giallo verticale
+  ctx1.fillStyle = YELLOW;
+  ctx1.fillRect(60, 60, 8, SIZE-120);
+
+  // Monogramma utente in alto a destra
+  const mono = initials || 'CP';
+  ctx1.fillStyle = 'rgba(245,230,66,.08)';
+  ctx1.font = `bold 420px system-ui, Arial`;
+  ctx1.textAlign = 'right';
+  ctx1.fillText(mono, SIZE - 40, SIZE - 60);
+  ctx1.textAlign = 'left';
+
+  // Label "MY COLLECTION"
+  ctx1.font      = `bold 22px system-ui, Arial`;
+  ctx1.fillStyle = YELLOW;
+  ctx1.letterSpacing = '0.18em';
+  ctx1.fillText('MY COLLECTION', 92, 112);
+
+  // Monogramma piccolo
+  ctx1.font      = `bold 22px system-ui, Arial`;
+  ctx1.fillStyle = 'rgba(255,255,255,.4)';
+  ctx1.textAlign = 'right';
+  ctx1.fillText(mono, SIZE - 72, 112);
+  ctx1.textAlign = 'left';
+
+  // Numero espansioni
+  ctx1.font      = `bold 220px system-ui, Arial`;
+  ctx1.fillStyle = '#fff';
+  ctx1.fillText(String(totSets), 92, 440);
+
+  ctx1.font      = `bold 32px system-ui, Arial`;
+  ctx1.fillStyle = 'rgba(255,255,255,.5)';
+  ctx1.fillText(totSets === 1 ? 'espansione' : 'espansioni', 96, 490);
+
+  // Linea divisoria
+  ctx1.fillStyle = 'rgba(255,255,255,.1)';
+  ctx1.fillRect(92, 530, SIZE - 164, 1);
+
+  // Numero carte
+  ctx1.font      = `bold 220px system-ui, Arial`;
+  ctx1.fillStyle = YELLOW;
+  ctx1.fillText(String(totCarte), 92, 800);
+
+  ctx1.font      = `bold 32px system-ui, Arial`;
+  ctx1.fillStyle = 'rgba(255,255,255,.5)';
+  ctx1.fillText(totCarte === 1 ? 'carta' : 'carte', 96, 848);
+
+  // Linea decorativa bassa
   ctx1.fillStyle = PINK;
-  ctx1.fillRect(68, 106, 120, 4);
+  ctx1.fillRect(92, 920, 80, 4);
 
-  // Stats grandi
-  ctx1.font      = 'bold 140px system-ui, Arial';
-  ctx1.fillStyle = DARK;
-  ctx1.fillText(totCarte, 68, 320);
-
-  ctx1.font      = 'bold 36px system-ui, Arial';
-  ctx1.fillStyle = MUTED;
-  ctx1.fillText('carte in collezione', 72, 370);
-
-  // Separatore
-  ctx1.fillStyle = 'rgba(26,10,46,.1)';
-  ctx1.fillRect(68, 420, SIZE-136, 2);
-
-  ctx1.font      = 'bold 120px system-ui, Arial';
-  ctx1.fillStyle = DARK;
-  ctx1.fillText(totSets, 68, 590);
-
-  ctx1.font      = 'bold 36px system-ui, Arial';
-  ctx1.fillStyle = MUTED;
-  ctx1.fillText('espansioni', 72, 640);
-
-  // Separatore basso
-  ctx1.fillStyle = 'rgba(26,10,46,.1)';
-  ctx1.fillRect(68, 700, SIZE-136, 2);
-
-  // Elenco espansioni compatto
+  // Brand
   ctx1.font      = '500 22px system-ui, Arial';
-  ctx1.fillStyle = MUTED;
-  let x = 68, y = 742;
-  sets.forEach(s => {
-    const txt = s + '  ';
-    if (x + ctx1.measureText(txt).width > SIZE - 68) { x = 68; y += 32; }
-    if (y > 1020) return;
-    ctx1.fillStyle = DARK;
-    ctx1.fillText(s, x, y);
-    x += ctx1.measureText(s).width + 24;
-  });
+  ctx1.fillStyle = 'rgba(255,255,255,.3)';
+  ctx1.textAlign = 'right';
+  ctx1.fillText('cardpioneer.it', SIZE-60, SIZE-40);
+  ctx1.textAlign = 'left';
 
-  drawBrand(ctx1);
   setTimeout(() => downloadCanvas(c1, 'mycollection_stats.jpg'), 100);
 
   // ── PAGINE successive: una per espansione (max 30 carte per pagina) ──
