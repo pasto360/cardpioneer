@@ -602,10 +602,15 @@
       <div class="admin-page" id="page-wishlist">
         <div class="admin-table-wrap">
           <div class="admin-table-header">
-            <div class="admin-table-title">♥ Prodotti più desiderati</div>
+            <div class="admin-table-title">♥ Wishlist utenti</div>
+            <select id="wishlistUserSelect" onchange="loadUserWishlist()"
+              style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;
+                     font-family:inherit;font-size:12px;padding:7px 12px;border-radius:8px;outline:none;min-width:220px">
+              <option value="">— Seleziona un utente —</option>
+            </select>
           </div>
           <div id="wishlistWrap">
-            <div class="admin-loading">Caricamento wishlist...</div>
+            <div class="admin-empty">Seleziona un utente per vedere la sua wishlist.</div>
           </div>
         </div>
       </div>
@@ -1575,50 +1580,99 @@ function renderUtenti() {
 //  WISHLIST ADMIN
 // ═══════════════════════════════════════════════════════
 async function loadWishlistAdmin() {
-  const { data, error } = await sb
-    .from('wishlist')
-    .select('prodotto_sku');
+  // Carica lista utenti per il select
+  const { data: utenti } = await sb.rpc('get_utenti_admin');
+  const sel = document.getElementById('wishlistUserSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Seleziona un utente —</option>' +
+    (utenti||[]).map(u =>
+      `<option value="${u.id}">${esc(u.email||'—')}</option>`
+    ).join('');
+  if (prev) { sel.value = prev; loadUserWishlist(); }
+}
 
-  if (error || !data?.length) {
-    document.getElementById('wishlistWrap').innerHTML =
-      '<div class="admin-empty">Nessun prodotto nella wishlist degli utenti.</div>';
+async function loadUserWishlist() {
+  const userId = document.getElementById('wishlistUserSelect').value;
+  const wrap   = document.getElementById('wishlistWrap');
+  if (!userId) { wrap.innerHTML = '<div class="admin-empty">Seleziona un utente per vedere la sua wishlist.</div>'; return; }
+
+  wrap.innerHTML = '<div class="admin-loading">Caricamento...</div>';
+
+  // Carica wishlist dell'utente
+  const { data: items } = await sb
+    .from('wishlist')
+    .select('prodotto_sku, era_disponibile, collezione_lingua, collezione_nome, collezione_esp, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (!items?.length) {
+    wrap.innerHTML = '<div class="admin-empty">Questo utente non ha carte nella wishlist.</div>';
     return;
   }
 
-  // Conta per SKU
-  const counts = {};
-  data.forEach(r => { counts[r.prodotto_sku] = (counts[r.prodotto_sku]||0) + 1; });
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 50);
+  // Separa carte con e senza SKU
+  const withSku = items.filter(i => i.prodotto_sku);
+  const noSku   = items.filter(i => !i.prodotto_sku);
 
-  // Recupera dettagli prodotti
-  const skus = sorted.map(([sku]) => sku);
-  const { data: prodotti } = await sb
-    .from('prodotti')
-    .select('sku, nome, set_name, lingua, prezzo, disponibile')
-    .in('sku', skus);
+  // Carica dettagli prodotti per quelli con SKU
+  let prodMap = {};
+  if (withSku.length) {
+    const { data: prodotti } = await sb
+      .from('prodotti')
+      .select('sku, nome, set_name, lingua, prezzo, disponibile, immagine')
+      .in('sku', withSku.map(i => i.prodotto_sku));
+    (prodotti||[]).forEach(p => { prodMap[p.sku] = p; });
+  }
 
-  const prodMap = {};
-  (prodotti||[]).forEach(p => { prodMap[p.sku] = p; });
+  const totale = items.length;
+  const dispCount = withSku.filter(i => {
+    const p = prodMap[i.prodotto_sku];
+    return p && p.disponibile > 0;
+  }).length;
 
-  const rows = sorted.map(([sku, n]) => {
-    const p = prodMap[sku];
-    const disponibile = p ? p.disponibile : '?';
-    const qtyClass = disponibile === 0 ? 'qty-zero' : disponibile <= 2 ? 'qty-low' : 'qty-ok';
-    return `<tr>
-      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3)">${esc(sku)}</td>
-      <td style="color:#fff;font-weight:500">${p ? esc(p.nome) : '—'}</td>
-      <td style="font-size:11px;color:rgba(255,255,255,.4)">${p ? esc(p.set_name)+' · '+esc(p.lingua) : '—'}</td>
-      <td style="font-family:var(--fu);font-size:13px;color:#e8107a;font-weight:700">${n} ♥</td>
-      <td><span class="qty-badge ${qtyClass}">${disponibile}</span></td>
-      <td style="font-size:12px;color:rgba(255,255,255,.5)">${p ? '€ '+parseFloat(p.prezzo).toFixed(2).replace('.',',') : '—'}</td>
+  // Header stats
+  let html = `<div style="padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:rgba(255,255,255,.4)">
+    ${totale} carte in wishlist · <span style="color:#34d399">${dispCount} disponibili</span>
+    ${noSku.length ? ` · <span style="color:rgba(255,255,255,.3)">${noSku.length} non nel catalogo</span>` : ''}
+  </div>
+  <table class="admin-table">
+    <thead><tr><th>Carta</th><th>Set · Lingua</th><th>Stato</th><th>Stock</th><th>Prezzo</th></tr></thead>
+    <tbody>`;
+
+  // Righe con SKU
+  withSku.forEach(item => {
+    const p    = prodMap[item.prodotto_sku];
+    const nome = p ? esc(p.nome) : esc(item.prodotto_sku||'—');
+    const set  = p ? esc(p.set_name) + ' · ' + esc(p.lingua) : '—';
+    const disp = p ? p.disponibile : 0;
+    const qtyClass = disp === 0 ? 'qty-zero' : disp <= 2 ? 'qty-low' : 'qty-ok';
+    const prezzo = p ? '€ ' + parseFloat(p.prezzo).toFixed(2).replace('.',',') : '—';
+    const statoIcon = disp > 0
+      ? '<span style="color:#34d399;font-size:11px">✅ Disponibile</span>'
+      : '<span style="color:rgba(255,255,255,.3);font-size:11px">⏳ Esaurito</span>';
+    html += `<tr>
+      <td style="color:#fff;font-weight:500">${nome}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.4)">${set}</td>
+      <td>${statoIcon}</td>
+      <td><span class="qty-badge ${qtyClass}">${disp}</span></td>
+      <td style="font-size:12px;color:rgba(255,255,255,.5)">${prezzo}</td>
     </tr>`;
-  }).join('');
+  });
 
-  document.getElementById('wishlistWrap').innerHTML = `
-    <table class="admin-table">
-      <thead><tr><th>SKU</th><th>Prodotto</th><th>Set · Lingua</th><th>Desideri</th><th>Stock</th><th>Prezzo</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+  // Righe senza SKU (dalla collezione)
+  noSku.forEach(item => {
+    html += `<tr>
+      <td style="color:rgba(255,255,255,.5);font-style:italic">${esc(item.collezione_nome||'—')}</td>
+      <td style="font-size:11px;color:rgba(255,255,255,.3)">${esc(item.collezione_esp||'')} · ${esc(item.collezione_lingua||'')}</td>
+      <td><span style="color:rgba(255,255,255,.25);font-size:11px">🔮 Non nel catalogo</span></td>
+      <td>—</td>
+      <td>—</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════
