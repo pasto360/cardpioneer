@@ -603,14 +603,28 @@
         <div class="admin-table-wrap">
           <div class="admin-table-header">
             <div class="admin-table-title">♥ Wishlist utenti</div>
-            <select id="wishlistUserSelect" onchange="loadUserWishlist()"
-              style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#fff;
-                     font-family:inherit;font-size:12px;padding:7px 12px;border-radius:8px;outline:none;min-width:220px">
-              <option value="">— Seleziona un utente —</option>
-            </select>
+            <div style="position:relative;width:280px">
+              <input type="text" id="wishlistUserSearch"
+                class="admin-search" placeholder="Cerca utente per email..."
+                oninput="filterWishlistUsers()"
+                autocomplete="off"
+                style="width:100%;padding-right:32px">
+              <div id="wishlistUserDropdown"
+                style="display:none;position:absolute;top:100%;left:0;right:0;
+                       background:#1a0a2e;border:1px solid rgba(255,255,255,.12);
+                       border-radius:0 0 8px 8px;z-index:100;max-height:240px;overflow-y:auto">
+              </div>
+            </div>
+          </div>
+          <div id="wishlistSelectedUser" style="display:none;padding:10px 20px;
+            border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;
+            color:rgba(255,255,255,.5);display:flex;align-items:center;gap:10px">
+            <span id="wishlistSelectedEmail"></span>
+            <button onclick="clearWishlistUser()"
+              style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:14px">×</button>
           </div>
           <div id="wishlistWrap">
-            <div class="admin-empty">Seleziona un utente per vedere la sua wishlist.</div>
+            <div class="admin-empty">Cerca un utente per vedere la sua wishlist.</div>
           </div>
         </div>
       </div>
@@ -1579,23 +1593,78 @@ function renderUtenti() {
 // ═══════════════════════════════════════════════════════
 //  WISHLIST ADMIN
 // ═══════════════════════════════════════════════════════
+let allWishlistUtenti = [];
+let selectedWishlistUserId = null;
+
 async function loadWishlistAdmin() {
-  // Carica lista utenti per il select
-  const { data: utenti } = await sb.rpc('get_utenti_admin');
-  const sel = document.getElementById('wishlistUserSelect');
-  if (!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">— Seleziona un utente —</option>' +
-    (utenti||[]).map(u =>
-      `<option value="${u.id}">${esc(u.email||'—')}</option>`
-    ).join('');
-  if (prev) { sel.value = prev; loadUserWishlist(); }
+  // Carica tutti gli utenti in background per la ricerca
+  const { data } = await sb.rpc('get_utenti_admin');
+  allWishlistUtenti = data || [];
+  document.getElementById('wishlistUserSearch').value = '';
+  document.getElementById('wishlistUserDropdown').style.display = 'none';
+  document.getElementById('wishlistSelectedUser').style.display = 'none';
+  document.getElementById('wishlistWrap').innerHTML =
+    '<div class="admin-empty">Cerca un utente per vedere la sua wishlist.</div>';
 }
 
-async function loadUserWishlist() {
-  const userId = document.getElementById('wishlistUserSelect').value;
-  const wrap   = document.getElementById('wishlistWrap');
-  if (!userId) { wrap.innerHTML = '<div class="admin-empty">Seleziona un utente per vedere la sua wishlist.</div>'; return; }
+function filterWishlistUsers() {
+  const q   = document.getElementById('wishlistUserSearch').value.trim().toLowerCase();
+  const dd  = document.getElementById('wishlistUserDropdown');
+  if (!q || q.length < 2) { dd.style.display = 'none'; return; }
+
+  const filtered = allWishlistUtenti
+    .filter(u => (u.email||'').toLowerCase().includes(q))
+    .slice(0, 15);
+
+  if (!filtered.length) {
+    dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:rgba(255,255,255,.3)">Nessun utente trovato</div>';
+    dd.style.display = 'block';
+    return;
+  }
+
+  dd.innerHTML = filtered.map(u => `
+    <div onclick="selectWishlistUser('${u.id}','${esc(u.email||'')}')"
+      style="padding:10px 14px;cursor:pointer;font-size:12px;color:#fff;
+             border-bottom:1px solid rgba(255,255,255,.06);transition:background .15s"
+      onmouseover="this.style.background='rgba(255,255,255,.06)'"
+      onmouseout="this.style.background='none'">
+      ${esc(u.email||'—')}
+      <span style="font-size:10px;color:rgba(255,255,255,.3);margin-left:8px">
+        ${u.created_at ? new Date(u.created_at).toLocaleDateString('it-IT') : ''}
+      </span>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectWishlistUser(userId, email) {
+  selectedWishlistUserId = userId;
+  document.getElementById('wishlistUserSearch').value = email;
+  document.getElementById('wishlistUserDropdown').style.display = 'none';
+  document.getElementById('wishlistSelectedEmail').textContent = '👤 ' + email;
+  document.getElementById('wishlistSelectedUser').style.display = 'flex';
+  loadUserWishlist(userId);
+}
+
+function clearWishlistUser() {
+  selectedWishlistUserId = null;
+  document.getElementById('wishlistUserSearch').value = '';
+  document.getElementById('wishlistSelectedUser').style.display = 'none';
+  document.getElementById('wishlistWrap').innerHTML =
+    '<div class="admin-empty">Cerca un utente per vedere la sua wishlist.</div>';
+}
+
+// Chiudi dropdown cliccando fuori
+document.addEventListener('click', e => {
+  if (!e.target.closest('#wishlistUserSearch') && !e.target.closest('#wishlistUserDropdown')) {
+    const dd = document.getElementById('wishlistUserDropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+async function loadUserWishlist(userId) {
+  if (!userId) userId = selectedWishlistUserId;
+  const wrap = document.getElementById('wishlistWrap');
+  if (!userId) { wrap.innerHTML = '<div class="admin-empty">Cerca un utente per vedere la sua wishlist.</div>'; return; }
 
   wrap.innerHTML = '<div class="admin-loading">Caricamento...</div>';
 
