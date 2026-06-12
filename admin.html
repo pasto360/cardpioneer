@@ -563,6 +563,28 @@
         <div class="stats-grid" id="statsGrid">
           <div class="admin-loading" style="grid-column:1/-1">Calcolo statistiche...</div>
         </div>
+
+        <!-- Immagine sfondo hero -->
+        <div class="admin-table-wrap" style="margin-top:20px">
+          <div class="admin-table-header">
+            <div class="admin-table-title">🖼️ Sfondo hero home</div>
+          </div>
+          <div style="padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${[1,2,3,4,5,6,7,8,9].map(n => `
+              <button onclick="setHeroBg(${n})" id="herobg-btn-${n}"
+                style="font-size:11px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;
+                       background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);
+                       border:1px solid rgba(255,255,255,.1);transition:all .2s"
+                onmouseover="this.style.borderColor='#f5e642'"
+                onmouseout="if(!this.classList.contains('active'))this.style.borderColor='rgba(255,255,255,.1)'">
+                bg${n}
+              </button>`).join('')}
+            </div>
+            <div id="heroBgMsg" style="font-size:12px;color:rgba(255,255,255,.4)"></div>
+          </div>
+        </div>
+
         <!-- Traffico pagine -->
         <div class="admin-table-wrap" style="margin-top:20px">
           <div class="admin-table-header">
@@ -577,11 +599,17 @@
                 <option value="365">Ultimo anno</option>
                 <option value="9999">Tutto</option>
               </select>
-              <button onclick="resetStatistiche()"
+              <button onclick="resetStatistiche('periodo')"
                 style="font-size:11px;font-weight:600;background:rgba(248,113,113,.1);
                        color:#f87171;border:1px solid rgba(248,113,113,.3);
                        padding:7px 14px;border-radius:8px;cursor:pointer">
-                🗑 Reset dati
+                🗑 Reset periodo
+              </button>
+              <button onclick="resetStatistiche('tutto')"
+                style="font-size:11px;font-weight:600;background:rgba(248,113,113,.15);
+                       color:#f87171;border:1px solid rgba(248,113,113,.4);
+                       padding:7px 14px;border-radius:8px;cursor:pointer">
+                🗑 Reset totale
               </button>
             </div>
           </div>
@@ -712,7 +740,7 @@ function showAdminPage(name, btn) {
     if (name === 'sconti')       loadSconti();
     if (name === 'banner')       loadBannerAdmin();
     if (name === 'impostazioni') loadImpostazioni();
-    if (name === 'stats')        loadStats();
+    if (name === 'stats')        { loadStats(); loadHeroBg(); }
     if (name === 'utenti')       loadUtenti();
     if (name === 'wishlist')     loadWishlistAdmin();
   } catch(e) { console.error('showAdminPage error:', e); }
@@ -1551,12 +1579,51 @@ async function loadStats() {
     }).join('')}`;
 }
 
-async function resetStatistiche() {
-  if (!confirm('Eliminare tutti i dati di tracciamento visite? Questa operazione è irreversibile.')) return;
-  const { error } = await sb.from('visite').delete().gte('created_at', '2020-01-01');
-  if (error) { alert('Errore: ' + error.message); return; }
-  alert('✅ Dati azzerati. Le statistiche ripartiranno da zero.');
+async function resetStatistiche(tipo) {
+  const giorni = parseInt(document.getElementById('trafficoPeriodo')?.value || 30);
+  const dataDa = new Date(Date.now() - giorni * 86400000).toISOString();
+
+  if (tipo === 'periodo') {
+    if (!confirm(`Eliminare le visite degli ultimi ${giorni} giorni?`)) return;
+    const { error } = await sb.from('visite').delete().gte('created_at', dataDa);
+    if (error) { alert('Errore: ' + error.message); return; }
+  } else {
+    if (!confirm('Eliminare TUTTI i dati di traffico? Operazione irreversibile.')) return;
+    const { error } = await sb.from('visite').delete().gte('created_at', '2020-01-01');
+    if (error) { alert('Errore: ' + error.message); return; }
+  }
+  alert('✅ Dati eliminati.');
   loadStats();
+}
+
+async function loadHeroBg() {
+  const { data } = await sb.from('impostazioni').select('valore').eq('chiave', 'hero_bg').single();
+  const val = data?.valore || 'images/hero-bg.jpg';
+  // Determina numero bg attivo
+  const match = val.match(/hero-bg(\d*)\.jpg/);
+  const n = match ? (match[1] || '1') : '1';
+  document.querySelectorAll('[id^="herobg-btn-"]').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.background = 'rgba(255,255,255,.06)';
+    btn.style.color = 'rgba(255,255,255,.6)';
+    btn.style.borderColor = 'rgba(255,255,255,.1)';
+  });
+  const active = document.getElementById(`herobg-btn-${n}`);
+  if (active) {
+    active.classList.add('active');
+    active.style.background = 'rgba(245,230,66,.15)';
+    active.style.color = '#f5e642';
+    active.style.borderColor = '#f5e642';
+  }
+  document.getElementById('heroBgMsg').textContent = 'Attuale: ' + val;
+}
+
+async function setHeroBg(n) {
+  const val = n === 1 ? 'images/hero-bg.jpg' : `images/hero-bg${n}.jpg`;
+  const { error } = await sb.from('impostazioni').upsert([{ chiave: 'hero_bg', valore: val, nota: 'Immagine sfondo hero home' }]);
+  if (error) { alert('Errore: ' + error.message); return; }
+  loadHeroBg();
+  document.getElementById('heroBgMsg').textContent = '✅ Salvato: ' + val;
 }
 
 // ═══════════════════════════════════════════════════════
