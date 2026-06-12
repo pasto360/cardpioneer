@@ -662,12 +662,19 @@
 
   async function loadHeroBg() {
     try {
+      // Aspetta window.sb
+      let attempts = 0;
+      while (!window.sb && attempts < 20) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
       const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       const { data } = await sb.from('impostazioni').select('valore').eq('chiave', 'hero_bg').single();
       if (data?.valore) {
-        document.querySelector('.cp-hero-home').style.backgroundImage = `url('${data.valore}')`;
+        const hero = document.querySelector('.cp-hero-home');
+        if (hero) hero.style.backgroundImage = `url('${data.valore}')`;
       }
-    } catch(e) {}
+    } catch(e) { console.warn('Hero bg:', e); }
   }
     try {
       const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
