@@ -846,12 +846,33 @@ async function colAddToWishlist(sku, colId, inMarket, btnEl) {
 
   if (!record) { if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
 
-  const { error } = await window.sb.from('wishlist').insert([record]);
+  // Controlla se già in wishlist prima di inserire
+  let existsQuery;
+  if (record.prodotto_sku) {
+    existsQuery = window.sb.from('wishlist')
+      .select('id').eq('user_id', user.id).eq('prodotto_sku', record.prodotto_sku).limit(1);
+  } else {
+    existsQuery = window.sb.from('wishlist')
+      .select('id').eq('user_id', user.id)
+      .eq('collezione_nome', record.collezione_nome)
+      .eq('collezione_esp', record.collezione_esp)
+      .eq('collezione_lingua', record.collezione_lingua).limit(1);
+  }
 
-  if (error?.message?.includes('unique')) {
+  // Controlla duplicati prima di inserire
+  let checkQ = window.sb.from('wishlist').select('id').eq('user_id', user.id);
+  if (skuToUse) {
+    checkQ = checkQ.eq('prodotto_sku', skuToUse);
+  } else if (col) {
+    checkQ = checkQ.eq('collezione_lingua', col.lingua).eq('collezione_nome', col.nome).eq('collezione_esp', col.espansione);
+  }
+  const { data: existing } = await checkQ.limit(1);
+  if (existing?.length) {
     if (btn) { btn.textContent='♥'; btn.style.color='#16a34a'; btn.disabled=true; btn.title='Già nella wishlist'; }
     return;
   }
+
+  const { error } = await window.sb.from('wishlist').insert([record]);
   if (error) { alert('Errore: ' + error.message); if (btn) { btn.disabled=false; btn.textContent='♡'; } return; }
 
   if (btn) {

@@ -261,9 +261,10 @@ async function loadWishlist() {
 
   // Carte senza SKU (in collezione ma non nel catalogo)
   const noSkuHTML = noSku.map(w => `
-    <div class="wish-card esaurita" style="opacity:.5">
+    <div class="wish-card esaurita" style="opacity:.6">
       <div class="wish-card-img">
         <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎴</div>
+        <button class="wish-remove" onclick="rimuoviWishlist(null,this.closest('.wish-card'),'${esc(w.collezione_nome||'')}','${esc(w.collezione_esp||'')}','${esc(w.collezione_lingua||'')}')" title="Rimuovi dai preferiti">♥</button>
         <div class="wish-esaurito-badge">Non in catalogo</div>
       </div>
       <div class="wish-card-body">
@@ -325,17 +326,23 @@ function renderWishCard(p, inCollezione = false) {
   </div>`;
 }
 
-async function rimuoviWishlist(sku, cardEl) {
-  const user = window.getCurrentUser?.();
-  if (!user) return;
+async function rimuoviWishlist(sku, cardEl, colNome, colEsp, colLingua) {
   const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  await sb.from('wishlist').delete().eq('user_id', user.id).eq('prodotto_sku', sku);
-  // Animazione rimozione
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  if (sku) {
+    await sb.from('wishlist').delete().eq('user_id', user.id).eq('prodotto_sku', sku);
+  } else if (colNome) {
+    await sb.from('wishlist').delete()
+      .eq('user_id', user.id)
+      .eq('collezione_nome', colNome)
+      .eq('collezione_esp', colEsp)
+      .eq('collezione_lingua', colLingua);
+  }
   cardEl.style.transition = 'opacity .3s, transform .3s';
   cardEl.style.opacity = '0';
   cardEl.style.transform = 'scale(.9)';
   setTimeout(() => { cardEl.remove(); }, 300);
-  // Aggiorna badge
   if (window.cpUpdateWishlistBadge) window.cpUpdateWishlistBadge();
 }
 
