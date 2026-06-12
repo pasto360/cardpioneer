@@ -662,7 +662,6 @@
 
   async function loadHeroBg() {
     try {
-      // Aspetta window.sb
       let attempts = 0;
       while (!window.sb && attempts < 20) {
         await new Promise(r => setTimeout(r, 100));
@@ -676,6 +675,8 @@
       }
     } catch(e) { console.warn('Hero bg:', e); }
   }
+
+  async function loadPromoBar() {
     try {
       const sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       const { data } = await sb
