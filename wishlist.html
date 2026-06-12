@@ -29,11 +29,12 @@
     }
     .wish-card:hover { box-shadow: 0 6px 24px rgba(26,10,46,.1); transform: translateY(-2px); }
     .wish-card.esaurita {
-      opacity: .45;
+      opacity: .5;
       filter: grayscale(60%);
-      pointer-events: none;
     }
     .wish-card.esaurita .wish-card-actions { display: none; }
+    /* Il pulsante rimuovi rimane sempre cliccabile */
+    .wish-card.esaurita .wish-remove { pointer-events: all; opacity: 1; }
 
     .wish-card-img {
       aspect-ratio: .72/1;
@@ -260,19 +261,41 @@ async function loadWishlist() {
   const esauritiCount = sorted.length - dispCount;
 
   // Carte senza SKU (in collezione ma non nel catalogo)
-  const noSkuHTML = noSku.map(w => `
-    <div class="wish-card esaurita" style="opacity:.6">
+  // Carica immagini dalla collezione per le carte senza SKU
+  if (noSku.length) {
+    const { data: colItems } = await sb
+      .from('collezione')
+      .select('nome, espansione, lingua, img')
+      .eq('user_id', user.id);
+    if (colItems) {
+      noSku.forEach(w => {
+        const col = colItems.find(c =>
+          c.nome === w.collezione_nome &&
+          c.espansione === w.collezione_esp &&
+          c.lingua === w.collezione_lingua
+        );
+        w._img = col?.img || null;
+      });
+    }
+  }
+
+    const noSkuHTML = noSku.map(w => {
+    const img = w._img
+      ? `<img src="${w._img}" alt="${w.collezione_nome||''}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">🎴</div>`;
+    return `<div class="wish-card esaurita">
       <div class="wish-card-img">
-        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎴</div>
-        <button class="wish-remove" onclick="rimuoviWishlist(null,this.closest('.wish-card'),'${esc(w.collezione_nome||'')}','${esc(w.collezione_esp||'')}','${esc(w.collezione_lingua||'')}')" title="Rimuovi dai preferiti">♥</button>
-        <div class="wish-esaurito-badge">Non in catalogo</div>
+        ${img}
+        <button class="wish-remove" onclick="rimuoviWishlist(null,this.closest('.wish-card'),'${w.collezione_nome||''}','${w.collezione_esp||''}','${w.collezione_lingua||''}')">♥</button>
+        <div class="wish-esaurito-badge">⏳ Non nel market</div>
       </div>
       <div class="wish-card-body">
-        <div class="wish-card-set">${esc(w.collezione_lingua||'')} · ${esc(w.collezione_esp||'')}</div>
-        <div class="wish-card-name">${esc(w.collezione_nome||'')}</div>
-        <div style="font-size:10px;color:var(--light);margin-top:4px">⏳ Ti avvisiamo quando arriva</div>
+        <div class="wish-card-set">${w.collezione_lingua||''} · ${w.collezione_esp||''}</div>
+        <div class="wish-card-name">${w.collezione_nome||''}</div>
+        <div style="font-size:10px;color:var(--light);margin-top:4px">Ti avvisiamo quando arriva</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   section.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
