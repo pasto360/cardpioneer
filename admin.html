@@ -96,6 +96,9 @@
     /* Filtri */
     .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .filter-btn { font-size: 11px; font-weight: 500; padding: 6px 14px; border-radius: 100px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.4); transition: all 0.2s; }
+    .herobg-btn { font-size: 11px; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,.06); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.15); transition: all .2s; }
+    .herobg-btn:hover { border-color: #f5e642; color: #f5e642; }
+    .herobg-btn.active { background: rgba(245,230,66,.15); color: #f5e642; border-color: #f5e642; }
     .filter-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
     .filter-btn.active { background: #f5e642; border-color: #f5e642; color: #1a0a2e; font-weight: 700; }
 
@@ -570,18 +573,18 @@
             <div class="admin-table-title">🖼️ Sfondo hero home</div>
           </div>
           <div style="padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              ${[1,2,3,4,5,6,7,8,9].map(n => `
-              <button onclick="setHeroBg(${n})" id="herobg-btn-${n}"
-                style="font-size:11px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;
-                       background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);
-                       border:1px solid rgba(255,255,255,.1);transition:all .2s"
-                onmouseover="this.style.borderColor='#f5e642'"
-                onmouseout="if(!this.classList.contains('active'))this.style.borderColor='rgba(255,255,255,.1)'">
-                bg${n}
-              </button>`).join('')}
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="heroBgBtns">
+              <button onclick="setHeroBg(1)" id="herobg-btn-1" class="herobg-btn">bg1</button>
+              <button onclick="setHeroBg(2)" id="herobg-btn-2" class="herobg-btn">bg2</button>
+              <button onclick="setHeroBg(3)" id="herobg-btn-3" class="herobg-btn">bg3</button>
+              <button onclick="setHeroBg(4)" id="herobg-btn-4" class="herobg-btn">bg4</button>
+              <button onclick="setHeroBg(5)" id="herobg-btn-5" class="herobg-btn">bg5</button>
+              <button onclick="setHeroBg(6)" id="herobg-btn-6" class="herobg-btn">bg6</button>
+              <button onclick="setHeroBg(7)" id="herobg-btn-7" class="herobg-btn">bg7</button>
+              <button onclick="setHeroBg(8)" id="herobg-btn-8" class="herobg-btn">bg8</button>
+              <button onclick="setHeroBg(9)" id="herobg-btn-9" class="herobg-btn">bg9</button>
             </div>
-            <div id="heroBgMsg" style="font-size:12px;color:rgba(255,255,255,.4)"></div>
+            <div id="heroBgMsg" style="font-size:12px;color:rgba(255,255,255,.6)"></div>
           </div>
         </div>
 
@@ -1587,12 +1590,15 @@ async function resetStatistiche(tipo) {
     if (!confirm(`Eliminare le visite degli ultimi ${giorni} giorni?`)) return;
     const { error } = await sb.from('visite').delete().gte('created_at', dataDa);
     if (error) { alert('Errore: ' + error.message); return; }
+    alert('✅ Visite del periodo eliminate.');
   } else {
-    if (!confirm('Eliminare TUTTI i dati di traffico? Operazione irreversibile.')) return;
-    const { error } = await sb.from('visite').delete().gte('created_at', '2020-01-01');
+    if (!confirm('Eliminare TUTTI i dati di traffico? Questa operazione è irreversibile.')) return;
+    if (!confirm('Sei sicuro? Non sarà possibile recuperare i dati.')) return;
+    // Elimina tutti i record usando un filtro che matcha sempre
+    const { error } = await sb.from('visite').delete().not('id', 'is', null);
     if (error) { alert('Errore: ' + error.message); return; }
+    alert('✅ Tutte le statistiche sono state azzerate.');
   }
-  alert('✅ Dati eliminati.');
   loadStats();
 }
 
