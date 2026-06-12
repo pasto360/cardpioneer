@@ -1526,8 +1526,12 @@ async function loadStats() {
   const esauriti   = (prodotti||[]).filter(p => p.disponibile === 0).length;
   const totUtenti  = (utenti||[]).length;
 
-  // Sessioni univoche nel periodo
-  const sessioniUniche = new Set((visite||[]).map(v => v.session_id).filter(Boolean)).size;
+  // Sessioni univoche — null session_id conta come sessione singola per record
+  const allSessions = new Set();
+  (visite||[]).forEach((v, idx) => {
+    allSessions.add(v.session_id || `_null_${idx}`);
+  });
+  const sessioniUniche = allSessions.size;
   // Utenti loggati univoci nel periodo
   const utentiAttivi = new Set((visite||[]).map(v => v.user_id).filter(Boolean)).size;
 
@@ -1545,10 +1549,10 @@ async function loadStats() {
 
   // Per ogni pagina: sessioni univoche che l'hanno visitata
   const pagineSessions = {};
-  (visite||[]).forEach(v => {
-    if (!v.pagina || !v.session_id) return;
+  (visite||[]).forEach((v, idx) => {
+    if (!v.pagina) return;
     if (!pagineSessions[v.pagina]) pagineSessions[v.pagina] = new Set();
-    pagineSessions[v.pagina].add(v.session_id);
+    pagineSessions[v.pagina].add(v.session_id || `_null_${idx}`);
   });
 
   // Conta visite totali per pagina (per ordinare)
