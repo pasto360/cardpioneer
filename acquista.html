@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="cookie-banner.js"></script>
+  <script src="tracker.js"></script>
   <script src="carrello.js"></script>
   <style>
     .market-layout{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
@@ -109,7 +110,7 @@
     .mcard-name{font-size:12px;font-weight:600;color:var(--dark);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
     .mcard-full{font-size:10px;color:var(--light);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .mcard-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px}
-    .mcard-price{font-family:var(--fu);font-size:11px;font-weight:700;color:var(--pink)}
+    .mcard-price{font-family:var(--fu);font-size:11px;font-weight:700;color:var(--price)}
     .mcard-qty{font-size:8px;font-weight:600;color:var(--muted);background:var(--bg);padding:1px 5px;border-radius:4px;white-space:nowrap}
     .mcard-qty.low{background:#fff3cd;color:#856404}
 
@@ -142,16 +143,12 @@
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="cp-nav">
-  <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="CardPioneer logo" width="30" height="30" style="object-fit:contain;display:block"></div>
-    Card<span style="color:#ff6b1a">Pioneer</span>
-  </a>
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
   <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
-    <a href="index.html" class="active">Home</a>
-    <a href="acquista.html">Market</a>
+    <a href="index.html">Home</a>
+    <a href="acquista.html" class="active">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
     <a href="utility.html">Utility</a>
@@ -160,7 +157,7 @@
   </div>
   <div class="cp-nav-r">
     <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
-    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap">
       <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -293,7 +290,8 @@
 <footer class="cp-footer">
   <div class="cp-footer-grid">
     <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
-    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a></div></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
     <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
     <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
