@@ -280,41 +280,25 @@
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="cp-nav">
   <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="CardPioneer logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
     Card<span style="color:#ff6b1a">Pioneer</span>
   </a>
   <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
-    <a href="index.html" class="active">Home</a>
+    <a href="index.html">Home</a>
     <a href="acquista.html">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
-    <a href="utility.html">Utility</a>
+    <a href="utility.html">FAQ</a>
     <a href="vendi.html">Vendi</a>
     <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
-    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
-    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
-    <div class="cp-login-wrap" id="loginWrap">
-      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Accedi
-      </button>
-      <div class="cp-login-dropdown">
-        <div class="cp-login-title">Accedi a CardPioneer</div>
-        <div class="cp-login-form">
-          <div class="cp-login-field"><label class="cp-login-label">Email</label><input type="email" class="cp-login-input" placeholder="tua@email.it"></div>
-          <div class="cp-login-field"><label class="cp-login-label">Password</label><input type="password" class="cp-login-input" placeholder="••••••••"></div>
-          <div class="cp-login-forgot">Password dimenticata?</div>
-          <button class="cp-login-submit">Accedi</button>
-        </div>
-        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
-      </div>
-    </div>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
 </nav>
 
@@ -357,7 +341,10 @@
         <div style="display:flex;gap:6px;margin-bottom:10px">
           <button class="col-lingua-btn active" id="tab-nome" onclick="setSearchTab('nome')" style="font-size:10px">🎴 Per nome</button>
           <button class="col-lingua-btn" id="tab-set" onclick="setSearchTab('set')" style="font-size:10px">📦 Per set</button>
+          <button class="col-lingua-btn" id="tab-manuale" onclick="setSearchTab('manuale')" style="font-size:10px">✏️ Manuale</button>
+          <button class="col-lingua-btn" id="tab-manuale" onclick="setSearchTab('manuale')" style="font-size:10px">✏️ Manuale</button>
         </div>
+
         <!-- Ricerca per nome -->
         <div id="searchByNome">
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Nome carta</div>
@@ -367,6 +354,7 @@
               oninput="colOnInput()" autocomplete="off">
           </div>
         </div>
+
         <!-- Ricerca per set -->
         <div id="searchBySet" style="display:none">
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500">Nome set / espansione</div>
@@ -379,6 +367,48 @@
           <div id="colSetCards" style="display:none;margin-top:8px">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500" id="colSetName"></div>
             <div id="colSetCardsList" class="col-results show" style="max-height:320px"></div>
+          </div>
+        </div>
+
+        <!-- Inserimento manuale -->
+        <div id="searchByManuale" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Set / Espansione *</label>
+              <input type="text" id="manSet" class="form-input" placeholder="es. Set Base, 151..."
+                style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Nome carta *</label>
+              <input type="text" id="manNome" class="form-input" placeholder="es. Charizard"
+                style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Codice univoco (COD)</label>
+              <input type="text" id="manCod" class="form-input" placeholder="es. BS40, 151-001..."
+                style="font-size:12px;padding:9px 12px;text-transform:uppercase"
+                oninput="this.value=this.value.toUpperCase();updateManuale()">
+              <span style="font-size:10px;color:var(--light)">Facoltativo — aiuta a identificare la carta nel market</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inserimento manuale -->
+        <div id="searchByManuale" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Set / Espansione *</label>
+              <input type="text" id="manSet" class="form-input" placeholder="es. Set Base, 151..." style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Nome carta *</label>
+              <input type="text" id="manNome" class="form-input" placeholder="es. Charizard" style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Codice (COD)</label>
+              <input type="text" id="manCod" class="form-input" placeholder="es. BS40, 001/165..." style="font-size:12px;padding:9px 12px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase();updateManuale()">
+              <span style="font-size:10px;color:var(--light)">Facoltativo — es. numero o codice della carta</span>
+            </div>
           </div>
         </div>
 
@@ -498,12 +528,17 @@ let setSearchTimeout2 = null;
 
 function setSearchTab(tab) {
   searchTab = tab;
-  document.getElementById('tab-nome').classList.toggle('active', tab === 'nome');
-  document.getElementById('tab-set').classList.toggle('active',  tab === 'set');
-  document.getElementById('searchByNome').style.display = tab === 'nome' ? '' : 'none';
-  document.getElementById('searchBySet').style.display  = tab === 'set'  ? '' : 'none';
+  ['nome','set','manuale'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t === tab);
+    const el = document.getElementById('searchBy'+t.charAt(0).toUpperCase()+t.slice(1));
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
   clearSelection();
   hideResults();
+  // Mostra/nascondi pulsante aggiungi per manuale
+  if (tab === 'manuale') {
+    updateManuale();
+  }
 }
 window.setSearchTab = setSearchTab;
 
@@ -693,13 +728,63 @@ function clearSearch() {
   hideResults();
 }
 
-// ── Aggiungi alla collezione ──
+function updateManuale() {
+  const set  = document.getElementById('manSet')?.value.trim();
+  const nome = document.getElementById('manNome')?.value.trim();
+  const btn  = document.getElementById('colAddBtn');
+  if (set && nome) {
+    btn.disabled = false;
+    btn.style.cssText = "width:100%;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;background:var(--yellow);color:var(--dark);border:none;padding:12px;border-radius:8px;cursor:pointer;transition:all .2s";
+  } else {
+    btn.disabled = true;
+    btn.style.cssText = "width:100%;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;background:rgba(26,10,46,.15);color:var(--muted);border:1px solid var(--border);padding:12px;border-radius:8px;cursor:not-allowed;transition:all .2s";
+  }
+}
+window.updateManuale = updateManuale;
 async function colAggiungi() {
-  if (!selectedCard || !window.getCurrentUser()) return;
+  const user = window.getCurrentUser ? window.getCurrentUser() : null;
+  const { data: { user: sbUser } } = await window.sb.auth.getUser();
+  const uid = user?.id || sbUser?.id;
+  if (!uid) return;
   const msg = document.getElementById('colAddMsg');
 
+  const showMsg = (text, ok) => {
+    msg.style.display = 'block';
+    msg.style.background = ok ? 'rgba(22,163,74,.08)' : 'rgba(248,113,113,.08)';
+    msg.style.color      = ok ? '#16a34a' : '#dc2626';
+    msg.style.border     = ok ? '1px solid rgba(22,163,74,.2)' : '1px solid rgba(248,113,113,.2)';
+    msg.textContent = text;
+    if (ok) setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  };
+
+  // ── MODALITÀ MANUALE ──
+  if (searchTab === 'manuale') {
+    const set  = (document.getElementById('manSet')?.value||'').trim();
+    const nome = (document.getElementById('manNome')?.value||'').trim();
+    const cod  = (document.getElementById('manCod')?.value||'').trim() || '—';
+    if (!set || !nome) return;
+
+    const { error } = await window.sb.from('collezione').insert([{
+      user_id: uid, lingua: currentLingua, espansione: set, nome, numero: cod, img: null
+    }]);
+
+    if (error?.message?.includes('unique')) { showMsg('Carta già presente nella collezione.', false); return; }
+    if (error) { showMsg('Errore: ' + error.message, false); return; }
+
+    showMsg(`✅ "${nome}" aggiunta!`, true);
+    document.getElementById('manSet').value = '';
+    document.getElementById('manNome').value = '';
+    document.getElementById('manCod').value = '';
+    updateManuale();
+    loadCollezione();
+    return;
+  }
+
+  // ── MODALITÀ API ──
+  if (!selectedCard) return;
+
   const { error } = await window.sb.from('collezione').insert([{
-    user_id:   window.getCurrentUser().id,
+    user_id:   uid,
     lingua:    selectedCard.lingua,
     espansione:selectedCard.set,
     nome:      selectedCard.nome,
@@ -707,20 +792,10 @@ async function colAggiungi() {
     img:       selectedCard.img || null,
   }]);
 
-  if (error) {
-    msg.style.display = 'block';
-    msg.style.cssText += ';background:rgba(248,113,113,.08);color:#dc2626;border:1px solid rgba(248,113,113,.2)';
-    msg.textContent = error.message.includes('unique')
-      ? 'Carta già presente nella collezione.'
-      : 'Errore: ' + error.message;
-    return;
-  }
+  if (error?.message?.includes('unique')) { showMsg('Carta già presente nella collezione.', false); return; }
+  if (error) { showMsg('Errore: ' + error.message, false); return; }
 
-  msg.style.display = 'block';
-  msg.style.cssText += ';background:rgba(22,163,74,.08);color:#16a34a;border:1px solid rgba(22,163,74,.2)';
-  msg.textContent = `✅ "${selectedCard.nome}" aggiunta alla collezione!`;
-  setTimeout(() => { msg.style.display = 'none'; }, 2500);
-
+  showMsg(`✅ "${selectedCard.nome}" aggiunta alla collezione!`, true);
   clearSelection();
   loadCollezione();
 }
