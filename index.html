@@ -67,7 +67,7 @@
     <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
-    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
     <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap">
       <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
@@ -317,7 +317,7 @@
     const nome     = esc(card.nome || '');
     const badge    = isFirst4
       ? '<span class="pcard-badge new">NEW</span>'
-      : (card.condizione ? `<span class="pcard-badge">${esc(card.condizione)}</span>` : '');
+      : (card.condizione ? `<span class="pcard-badge ${['NM','Near Mint','Mint','M'].includes(card.condizione)?'nm':''}">${esc(card.condizione)}</span>` : '');
 
     // Dati prodotto serializzati in modo sicuro tramite data attribute
     const prodData = esc(JSON.stringify({

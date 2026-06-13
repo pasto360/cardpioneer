@@ -363,7 +363,7 @@
     <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7">Tieni traccia delle carte che cerchi e scopri quando sono disponibili nel market.</p>
     <div style="display:flex;gap:12px;justify-content:center">
       <a href="registrati.html" class="btn-fill">Registrati</a>
-      <button onclick="document.getElementById('loginWrap').classList.add('open')" class="btn-outline-dark">Accedi</button>
+      <button onclick="openLoginFromPrompt()" class="btn-outline-dark">Accedi</button>
     </div>
   </div>
 
@@ -936,7 +936,7 @@ function renderCollezione() {
       </div>
 
       <div class="col-card-actions">
-        ${(!c.img || !c.img.includes('tcgdex')) ? `<button onclick="proponiCarta('${c.id}','${esc(c.nome)}','${esc(c.espansione)}','${esc(c.lingua)}','${esc(c.numero||'')}',this)" class="col-propose-btn" title="Proponi la vendita a CardPioneer">💰</button>` : ''}
+        <button onclick="proponiCarta('${c.id}','${esc(c.nome)}','${esc(c.espansione)}','${esc(c.lingua)}','${esc(c.numero||'')}',this)" class="col-propose-btn" title="Proponi la vendita a CardPioneer">💰</button>
         <button onclick="colAddToWishlist('${c._sku||''}','${c.id}','${c._inMarket}',this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
@@ -1415,6 +1415,16 @@ async function colRimuovi(id) {
   allCollezione = allCollezione.filter(c => c.id !== id);
   renderCollezione();
   renderStatistiche();
+}
+
+function openLoginFromPrompt() {
+  // Prova ad aprire il dropdown login nella navbar
+  const wrap = document.getElementById('loginWrap');
+  if (wrap) {
+    wrap.classList.add('open');
+    // Su mobile scroll up per vedere il dropdown
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 // ── Boot ──
