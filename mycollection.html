@@ -170,7 +170,7 @@
     /* Card nella lista */
     .col-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: repeat(5, 1fr);
       gap: 12px;
       padding: 16px 20px;
     }
@@ -254,7 +254,49 @@
     }
     .col-wish-btn:hover { background: rgba(22,163,74,.2); }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .col-propose-btn {
+      font-size: 9px; font-weight: 700; padding: 3px 7px;
+      border-radius: 5px; cursor: pointer; white-space: nowrap;
+      background: rgba(232,16,122,.1); color: var(--pink);
+      border: 1px solid rgba(232,16,122,.25);
+      transition: all .15s;
+    }
+    .col-propose-btn:hover { background: rgba(232,16,122,.2); }
+
+    /* Carrello proposta */
+    .propose-cart {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-top: 24px;
+      overflow: hidden;
+    }
+    .propose-cart-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .propose-cart-title {
+      font-family: var(--fu); font-size: 13px; font-weight: 700;
+      color: var(--dark); letter-spacing: -.02em;
+    }
+    .propose-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+    }
+    .propose-item:last-child { border-bottom: none; }
+    .propose-item-name { font-size: 12px; font-weight: 600; color: var(--dark); flex: 1; }
+    .propose-item-meta { font-size: 10px; color: var(--muted); }
+    .grading-select {
+      font-size: 11px; padding: 4px 8px; border: 1px solid var(--border);
+      border-radius: 6px; outline: none; cursor: pointer;
+      background: var(--white); color: var(--dark);
+    }
+    .propose-remove {
+      width: 24px; height: 24px; border-radius: 5px; border: none;
+      background: rgba(248,113,113,.1); color: #dc2626;
+      cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+    }
     .spinner {
       width: 18px; height: 18px;
       border: 2px solid var(--border);
@@ -267,6 +309,10 @@
     @media (max-width: 700px) {
       .col-layout { grid-template-columns: 1fr; }
       .col-form-panel { position: static; }
+      .col-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+    }
+    @media (max-width: 1100px) and (min-width: 701px) {
+      .col-cards-grid { grid-template-columns: repeat(3, 1fr); }
     }
   </style>
 </head>
@@ -342,7 +388,6 @@
           <button class="col-lingua-btn active" id="tab-nome" onclick="setSearchTab('nome')" style="font-size:10px">🎴 Per nome</button>
           <button class="col-lingua-btn" id="tab-set" onclick="setSearchTab('set')" style="font-size:10px">📦 Per set</button>
           <button class="col-lingua-btn" id="tab-manuale" onclick="setSearchTab('manuale')" style="font-size:10px">✏️ Manuale</button>
-          <button class="col-lingua-btn" id="tab-manuale" onclick="setSearchTab('manuale')" style="font-size:10px">✏️ Manuale</button>
         </div>
 
         <!-- Ricerca per nome -->
@@ -384,30 +429,16 @@
                 style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
             </div>
             <div>
-              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Codice univoco (COD)</label>
-              <input type="text" id="manCod" class="form-input" placeholder="es. BS40, 151-001..."
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Codice (COD)</label>
+              <input type="text" id="manCod" class="form-input" placeholder="es. BS40, 001/165..."
                 style="font-size:12px;padding:9px 12px;text-transform:uppercase"
                 oninput="this.value=this.value.toUpperCase();updateManuale()">
-              <span style="font-size:10px;color:var(--light)">Facoltativo — aiuta a identificare la carta nel market</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Inserimento manuale -->
-        <div id="searchByManuale" style="display:none">
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div>
-              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Set / Espansione *</label>
-              <input type="text" id="manSet" class="form-input" placeholder="es. Set Base, 151..." style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
             </div>
             <div>
-              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Nome carta *</label>
-              <input type="text" id="manNome" class="form-input" placeholder="es. Charizard" style="font-size:12px;padding:9px 12px" oninput="updateManuale()">
-            </div>
-            <div>
-              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">Codice (COD)</label>
-              <input type="text" id="manCod" class="form-input" placeholder="es. BS40, 001/165..." style="font-size:12px;padding:9px 12px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase();updateManuale()">
-              <span style="font-size:10px;color:var(--light)">Facoltativo — es. numero o codice della carta</span>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500">URL immagine</label>
+              <input type="url" id="manImg" class="form-input" placeholder="https://..."
+                style="font-size:12px;padding:9px 12px" oninput="previewManImg()">
+              <img id="manImgPreview" src="" alt="" style="display:none;width:60px;border-radius:4px;margin-top:6px">
             </div>
           </div>
         </div>
@@ -475,6 +506,27 @@
           Le carte <span style="color:#16a34a;font-weight:600">verdi</span> sono disponibili nel market — premi ♡ per acquistarle subito dalla <a href="wishlist.html" style="color:var(--pink)">wishlist</a>.<br>
           Le carte <span style="color:var(--muted)">grigie</span> non sono ancora disponibili — premi ♡ e ti avvisiamo quando arrivano.
         </p>
+
+        <!-- Carrello proposta vendita -->
+        <div class="propose-cart" id="proposeCart" style="display:none">
+          <div class="propose-cart-header">
+            <div class="propose-cart-title">💰 Proponi a CardPioneer</div>
+            <span id="proposeCount" style="font-size:11px;color:var(--muted)"></span>
+          </div>
+          <div id="proposeItems"></div>
+          <div style="padding:16px 20px;border-top:1px solid var(--border)">
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:14px">
+              <input type="checkbox" id="proposeTerms" style="margin-top:2px;accent-color:var(--pink)">
+              <span>Confermo che le carte sono di mia proprietà e accetto le <a href="norme-legali.html" style="color:var(--pink)">condizioni di vendita</a> di CardPioneer.</span>
+            </label>
+            <div id="proposeSendMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
+            <button onclick="inviaPropostaCollezione()"
+              style="width:100%;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+                     background:var(--pink);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer">
+              Invia proposta di vendita →
+            </button>
+          </div>
+        </div>
 
         <!-- Statistiche collezione -->
         <div id="colStats" style="margin-top:16px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px"></div>
@@ -728,6 +780,14 @@ function clearSearch() {
   hideResults();
 }
 
+function previewManImg() {
+  const url = document.getElementById('manImg')?.value.trim();
+  const prev = document.getElementById('manImgPreview');
+  if (url && prev) { prev.src = url; prev.style.display = 'block'; prev.onerror = () => { prev.style.display='none'; }; }
+  else if (prev) prev.style.display = 'none';
+}
+window.previewManImg = previewManImg;
+
 function updateManuale() {
   const set  = document.getElementById('manSet')?.value.trim();
   const nome = document.getElementById('manNome')?.value.trim();
@@ -762,10 +822,11 @@ async function colAggiungi() {
     const set  = (document.getElementById('manSet')?.value||'').trim();
     const nome = (document.getElementById('manNome')?.value||'').trim();
     const cod  = (document.getElementById('manCod')?.value||'').trim() || '—';
+    const img  = (document.getElementById('manImg')?.value||'').trim() || null;
     if (!set || !nome) return;
 
     const { error } = await window.sb.from('collezione').insert([{
-      user_id: uid, lingua: currentLingua, espansione: set, nome, numero: cod, img: null
+      user_id: uid, lingua: currentLingua, espansione: set, nome, numero: cod, img
     }]);
 
     if (error?.message?.includes('unique')) { showMsg('Carta già presente nella collezione.', false); return; }
@@ -775,6 +836,7 @@ async function colAggiungi() {
     document.getElementById('manSet').value = '';
     document.getElementById('manNome').value = '';
     document.getElementById('manCod').value = '';
+    document.getElementById('manImg').value = '';
     updateManuale();
     loadCollezione();
     return;
@@ -872,7 +934,12 @@ function renderCollezione() {
         <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.numero)}</div>
         <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
+      const isManualeCard = !c.img && c.numero; // carta manuale se aggiunta senza img API
+      // Identifichiamo le carte manuali: non hanno id TCGdex (il loro id inizia per uuid, non per codice set)
+      const isManuale = !c.img || (c.img && !c.img.includes('tcgdex'));
+
       <div class="col-card-actions">
+        ${isManuale ? `<button onclick="proponiCarta('${c.id}','${esc(c.nome)}','${esc(c.espansione)}','${esc(c.lingua)}','${esc(c.numero||'')}')" class="col-propose-btn" title="Proponi la vendita a CardPioneer">💰</button>` : ''}
         <button onclick="colAddToWishlist('${c._sku||''}','${c.id}','${c._inMarket}',this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
@@ -1234,11 +1301,123 @@ function groupedIndex(sets, si, chunks, ci) {
 }
 window.esportaCollezioneJpg = esportaCollezioneJpg;
 
+// ── PROPOSTA VENDITA DA COLLEZIONE ──
+const PROPOSE_KEY = 'cp_propose_cart';
+
+function getProposeCart() {
+  try { return JSON.parse(localStorage.getItem(PROPOSE_KEY)) || []; } catch(e) { return []; }
+}
+function saveProposeCart(items) {
+  localStorage.setItem(PROPOSE_KEY, JSON.stringify(items));
+}
+
+const GRADING_OPTS = ['Mint (M)','Near Mint (NM)','Excellent (EX)','Good (GD)','Light Played (LP)','Played (PL)','Poor'];
+
+function proponiCarta(colId, nome, espansione, lingua, numero, btnEl) {
+  const cart  = getProposeCart();
+  if (cart.find(i => i.colId === colId)) {
+    alert('Carta già nel carrello proposta!'); return;
+  }
+  cart.push({ colId, nome, espansione, lingua, numero, grading: 'Near Mint (NM)' });
+  saveProposeCart(cart);
+  if (btnEl) { btnEl.textContent = '✓'; btnEl.style.color = '#16a34a'; btnEl.disabled = true; }
+  renderProposeCart();
+}
+window.proponiCarta = proponiCarta;
+
+function renderProposeCart() {
+  const cart  = getProposeCart();
+  const panel = document.getElementById('proposeCart');
+  const wrap  = document.getElementById('proposeItems');
+  const count = document.getElementById('proposeCount');
+  if (!panel) return;
+
+  if (!cart.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  count.textContent   = cart.length + ' carte';
+
+  wrap.innerHTML = cart.map((item, idx) => `
+    <div class="propose-item">
+      <div style="flex:1">
+        <div class="propose-item-name">${esc(item.nome)}</div>
+        <div class="propose-item-meta">${esc(item.lingua)} · ${esc(item.espansione)} · ${esc(item.numero)}</div>
+      </div>
+      <select class="grading-select" onchange="updateGrading(${idx}, this.value)">
+        ${GRADING_OPTS.map(g => `<option ${g===item.grading?'selected':''}>${g}</option>`).join('')}
+      </select>
+      <button class="propose-remove" onclick="removeFromPropose(${idx})">×</button>
+    </div>`).join('');
+}
+window.renderProposeCart = renderProposeCart;
+
+function updateGrading(idx, val) {
+  const cart = getProposeCart();
+  if (cart[idx]) { cart[idx].grading = val; saveProposeCart(cart); }
+}
+window.updateGrading = updateGrading;
+
+function removeFromPropose(idx) {
+  const cart = getProposeCart();
+  cart.splice(idx, 1);
+  saveProposeCart(cart);
+  renderProposeCart();
+  loadCollezione(); // aggiorna i pulsanti 💰
+}
+window.removeFromPropose = removeFromPropose;
+
+async function inviaPropostaCollezione() {
+  const cart = getProposeCart();
+  if (!cart.length) return;
+  if (!document.getElementById('proposeTerms')?.checked) {
+    showProposeMsg('Devi accettare le condizioni per procedere.', false); return;
+  }
+
+  const { data: { user } } = await window.sb.auth.getUser();
+  if (!user) { showProposeMsg('Devi essere loggato per inviare la proposta.', false); return; }
+
+  const { data: profilo } = await window.sb.from('proposte_vendita').select('email').eq('user_id', user.id).limit(1);
+
+  const carte = cart.map(i => ({
+    nome: i.nome,
+    espansione: i.espansione,
+    lingua: i.lingua,
+    codice: i.numero,
+    grading: i.grading,
+    foto: null
+  }));
+
+  const { error } = await window.sb.from('proposte_vendita').insert([{
+    user_id:    user.id,
+    email_utente: user.email,
+    carte:      carte,
+    stato:      'in_attesa',
+    note_admin: 'Proposta da My Collection',
+  }]);
+
+  if (error) { showProposeMsg('Errore: ' + error.message, false); return; }
+
+  showProposeMsg('✅ Proposta inviata! Ti contatteremo entro 24h.', true);
+  localStorage.removeItem(PROPOSE_KEY);
+  setTimeout(() => { renderProposeCart(); loadCollezione(); }, 2000);
+}
+window.inviaPropostaCollezione = inviaPropostaCollezione;
+
+function showProposeMsg(text, ok) {
+  const el = document.getElementById('proposeSendMsg');
+  if (!el) return;
+  el.style.display  = 'block';
+  el.style.background = ok ? 'rgba(22,163,74,.08)' : 'rgba(248,113,113,.08)';
+  el.style.color      = ok ? '#16a34a' : '#dc2626';
+  el.style.border     = ok ? '1px solid rgba(22,163,74,.2)' : '1px solid rgba(248,113,113,.2)';
+  el.textContent = text;
+}
+
 async function colRimuovi(id) {
   if (!confirm('Rimuovere questa carta dalla collezione?')) return;
   await window.sb.from('collezione').delete().eq('id', id);
   allCollezione = allCollezione.filter(c => c.id !== id);
   renderCollezione();
+  renderStatistiche();
 }
 
 // ── Boot ──
@@ -1271,6 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('colContent').style.display = 'block';
     loadCollezione();
+    renderProposeCart();
 
     window.sb.auth.onAuthStateChange((_, session) => {
       if (!session) { location.href = 'index.html'; }
