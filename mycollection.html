@@ -934,12 +934,9 @@ function renderCollezione() {
         <div class="col-card-meta">${esc(c.lingua)} · ${esc(c.numero)}</div>
         <div class="col-card-meta" style="margin-top:1px">${esc(c.espansione)}</div>
       </div>
-      const isManualeCard = !c.img && c.numero; // carta manuale se aggiunta senza img API
-      // Identifichiamo le carte manuali: non hanno id TCGdex (il loro id inizia per uuid, non per codice set)
-      const isManuale = !c.img || (c.img && !c.img.includes('tcgdex'));
 
       <div class="col-card-actions">
-        ${isManuale ? `<button onclick="proponiCarta('${c.id}','${esc(c.nome)}','${esc(c.espansione)}','${esc(c.lingua)}','${esc(c.numero||'')}')" class="col-propose-btn" title="Proponi la vendita a CardPioneer">💰</button>` : ''}
+        ${(!c.img || !c.img.includes('tcgdex')) ? `<button onclick="proponiCarta('${c.id}','${esc(c.nome)}','${esc(c.espansione)}','${esc(c.lingua)}','${esc(c.numero||'')}',this)" class="col-propose-btn" title="Proponi la vendita a CardPioneer">💰</button>` : ''}
         <button onclick="colAddToWishlist('${c._sku||''}','${c.id}','${c._inMarket}',this)" class="col-wish-btn" style="flex:1;height:26px;font-size:11px" title="${c._inMarket ? 'Disponibile — aggiungi alla wishlist' : 'Non disponibile — ti avvisiamo quando arriva'}">♡</button>
         <button class="col-card-del" onclick="colRimuovi('${c.id}')" title="Rimuovi">🗑</button>
       </div>
