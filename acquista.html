@@ -385,7 +385,7 @@ async function loadAll() {
   // ── Prova la cache prima ──
   const cached = cpCacheLoad();
   if (cached) {
-    console.log(`[Cache] ${cached.length} prodotti da cache locale`);
+    /* log rimosso */;
     allProducts = cached;
     buildFilters();
     updateCounts();
@@ -442,7 +442,7 @@ async function loadAll() {
 
     // Salva in cache per i prossimi 30 minuti
     cpCacheSave(allProducts);
-    console.log(`[Cache] ${allProducts.length} prodotti salvati in cache`);
+    /* log rimosso */;
 
     buildFilters();
     updateCounts();
