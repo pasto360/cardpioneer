@@ -317,7 +317,7 @@
     const nome     = esc(card.nome || '');
     const badge    = isFirst4
       ? '<span class="pcard-badge new">NEW</span>'
-      : (card.condizione ? `<span class="pcard-badge ${['NM','Near Mint','Mint','M'].includes(card.condizione)?'nm':''}">${esc(card.condizione)}</span>` : '');
+      : (card.condizione ? `<span class="pcard-badge cond-${card.condizione.toUpperCase().replace(/[^A-Z]/g,'')}">${esc(card.condizione)}</span>` : '');
 
     // Dati prodotto serializzati in modo sicuro tramite data attribute
     const prodData = esc(JSON.stringify({

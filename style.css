@@ -573,7 +573,15 @@ a.cp-cat { color: inherit; }
 .pcard-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pcard-badge { position: absolute; top: 8px; left: 8px; font-size: 8px; font-weight: 700; letter-spacing: 0.04em; background: var(--pink); color: #fff; padding: 3px 8px; border-radius: 100px; text-transform: uppercase; }
 .pcard-badge.new { background: var(--yellow); color: var(--dark); }
-.pcard-badge.nm  { background: var(--price);  color: #fff; }
+.pcard-badge.nm,
+.pcard-badge.cond-MN,
+.pcard-badge.cond-NM  { background:#16a34a; color:#fff; }
+.pcard-badge.cond-MT  { background:#3b82f6; color:#fff; }
+.pcard-badge.cond-EX  { background:#4ade80; color:#1a1a1a; }
+.pcard-badge.cond-GD  { background:#ca8a04; color:#fff; }
+.pcard-badge.cond-OL  { background:#ea580c; color:#fff; }
+.pcard-badge.cond-PL  { background:#db2777; color:#fff; }
+.pcard-badge.cond-PO  { background:#7f1d1d; color:#fff; }
 .pcard-wish {
   position: absolute;
   top: 8px; right: 8px;
