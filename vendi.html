@@ -160,34 +160,51 @@
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
+  <div class="topbar-msg">&nbsp;</div>
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
-    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
-    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank" rel="noopener">📘 Facebook</a>
   </div>
 </div>
 
+<!-- NAV -->
 <nav class="cp-nav">
   <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="CardPioneer logo" width="30" height="30" style="object-fit:contain;display:block"></div>
     Card<span style="color:#ff6b1a">Pioneer</span>
   </a>
   <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
-    <a href="index.html">Home</a>
+    <a href="index.html" class="active">Home</a>
     <a href="acquista.html">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
-    <a href="utility.html">FAQ</a>
-    <a href="vendi.html" class="active">Vendi</a>
-    <a href="mycollection.html">My Collection</a>
+    <a href="utility.html">Utility</a>
+    <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
   </div>
   <div class="cp-nav-r">
-    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
-    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
-    <div class="cp-login-wrap" id="loginWrap"></div>
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge">0</span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap">
+      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Accedi
+      </button>
+      <div class="cp-login-dropdown">
+        <div class="cp-login-title">Accedi a CardPioneer</div>
+        <div class="cp-login-form">
+          <div class="cp-login-field"><label class="cp-login-label">Email</label><input type="email" class="cp-login-input" placeholder="tua@email.it"></div>
+          <div class="cp-login-field"><label class="cp-login-label">Password</label><input type="password" class="cp-login-input" placeholder="••••••••"></div>
+          <div class="cp-login-forgot">Password dimenticata?</div>
+          <button class="cp-login-submit">Accedi</button>
+        </div>
+        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
+      </div>
+    </div>
   </div>
 </nav>
 
