@@ -136,26 +136,21 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
-    <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
-    <a href="https://www.facebook.com/cardpioneer" target="_blank" rel="noopener">📘 Facebook</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="cp-nav">
-  <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="CardPioneer logo" width="30" height="30" style="object-fit:contain;display:block"></div>
-    Card<span style="color:#ff6b1a">Pioneer</span>
-  </a>
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
   <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
-    <a href="index.html" class="active">Home</a>
-    <a href="acquista.html">Market</a>
+    <a href="index.html">Home</a>
+    <a href="acquista.html" class="active">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
     <a href="utility.html">Utility</a>
@@ -164,7 +159,7 @@
   </div>
   <div class="cp-nav-r">
     <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
-    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
     <div class="cp-login-wrap" id="loginWrap">
       <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -183,6 +178,7 @@
     </div>
   </div>
 </nav>
+
 <section class="cp-hero-page">
   <div class="cp-hero-label">Catalogo completo</div>
   <h1 class="cp-hero-title">Market</h1>
@@ -607,7 +603,7 @@ function renderCard(p) {
       : `<span>${esc(p.displayName.substring(0,10))}</span>`;
 
     return `<div class="mcard${isOut?' out-of-stock':''}" data-prod="${esc(JSON.stringify({sku:p.sku,nome:p.displayName,set_name:p.setName,lingua:p.lang,condizione:p.condition,prezzo:p.price,immagine:p.img,disponibile:p.avail}))}">
-      <div class="mcard-img" onclick="openLightbox('${esc(p.img||'')}','${esc(p.setName+' — '+p.displayName)}','${esc(p.nameRaw+' — '+p.condition)}')">
+      <div class="mcard-img" onclick="openLightbox('${esc(p.img||'')}','${esc(p.setName+' — '+p.displayName)}','${esc(p.nameRaw)}')">
         ${imgHTML}${badge}${langBadge}
         ${isOut ? '<div class="mcard-sold">Esaurito</div>' : ''}
         <button class="cp-wish-btn" data-wish-sku="${esc(p.sku)}"
@@ -763,15 +759,28 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <script>
-function openLightbox(src, line1, line2) {
+function openLightbox(src, line1, nameRaw) {
   const lb  = document.getElementById('cp-lightbox');
   const img = document.getElementById('cp-lightbox-img');
   const sp  = document.getElementById('cp-lightbox-spinner');
   const nm  = document.getElementById('cp-lightbox-name');
 
+  // nameRaw es: "CRI43 - 43/86 Sudowoodo - Comune - NM"
+  // Estrai il codice (prima parte prima del " - ") e aggiungilo alla riga 1
+  let finalLine1 = line1 || '';
+  let line2 = nameRaw || '';
+  if (nameRaw) {
+    const dashIdx = nameRaw.indexOf(' - ');
+    if (dashIdx > 0) {
+      const cod = nameRaw.slice(0, dashIdx).trim();      // es. "CRI43"
+      line2     = nameRaw.slice(dashIdx + 3).trim();     // es. "43/86 Sudowoodo - Comune - NM"
+      finalLine1 = finalLine1 + ' — ' + cod;
+    }
+  }
+
   img.style.display = 'none';
   sp.style.display  = 'block';
-  nm.innerHTML = `<span class="lb-line1">${line1||''}</span>${line2 ? `<span class="lb-line2">${line2}</span>` : ''}`;
+  nm.innerHTML = `<span class="lb-line1">${finalLine1}</span>${line2 ? `<span class="lb-line2">${line2}</span>` : ''}`;
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
 
