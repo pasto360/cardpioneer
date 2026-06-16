@@ -4,7 +4,6 @@
 //  <script src="tracker.js"></script>
 // ══════════════════════════════════════════════════════
 (function() {
-  // Mappa nome pagina leggibile
   const PAGE_NAMES = {
     'index.html':          'Home',
     'acquista.html':       'Market',
@@ -14,6 +13,8 @@
     'registrati.html':     'Registrazione',
     'profilo.html':        'Profilo',
     'ordini.html':         'I miei ordini',
+    'wishlist.html':       'Wishlist',
+    'mycollection.html':   'My Collection',
     'come-funziona.html':  'Come funziona',
     'classificazione.html':'Classificazione',
     'utility.html':        'FAQ',
@@ -22,28 +23,41 @@
     'privacy.html':        'Privacy Policy',
     'cookie.html':         'Cookie Policy',
     'norme-legali.html':   'Norme legali',
-    'admin.html':          null, // non tracciare admin
+    'admin.html':          null, // non tracciare
   };
 
+  // Session ID univoco per sessione browser (si resetta alla chiusura del tab)
+  function getSessionId() {
+    let sid = sessionStorage.getItem('cp_session_id');
+    if (!sid) {
+      sid = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+      sessionStorage.setItem('cp_session_id', sid);
+    }
+    return sid;
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
-    // Aspetta che window.sb sia disponibile
+    const file   = window.location.pathname.split('/').pop() || 'index.html';
+    const nome   = PAGE_NAMES[file];
+    if (nome === null) return; // admin — non tracciare
+    const pagina = nome || file;
+
     const tryTrack = async (attempts) => {
       if (!window.sb) {
         if (attempts < 10) setTimeout(() => tryTrack(attempts + 1), 300);
         return;
       }
-
-      // Identifica pagina corrente
-      const file  = window.location.pathname.split('/').pop() || 'index.html';
-      const nome  = PAGE_NAMES[file];
-      if (nome === null) return; // pagina admin — non tracciare
-      const pagina = nome || file;
-
       try {
-        await window.sb.from('visite').insert([{ pagina }]);
+        const sessionId = getSessionId();
+        // Recupera user_id se loggato
+        const { data: { user } } = await window.sb.auth.getUser();
+        await window.sb.from('visite').insert([{
+          pagina,
+          session_id: sessionId,
+          user_id:    user?.id || null,
+        }]);
       } catch(e) { /* silenzioso */ }
     };
-
     tryTrack(0);
   });
 })();

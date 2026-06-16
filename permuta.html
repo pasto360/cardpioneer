@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permuta — CardPioneer</title>
+  <link rel="icon" href="images/logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="cookie-banner.js"></script>
+  <script src="carrello.js"></script>
+  <script src="tracker.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-links">
+    <a href="registrati.html">Crea account</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+  </div>
+</div>
+
+<nav class="cp-nav">
+  <a href="index.html" class="cp-logo">
+    <div class="cp-logo-icon"><img src="images/logo.png" alt="logo" width="30" height="30" style="object-fit:contain;display:block"></div>
+    Card<span style="color:#ff6b1a">Pioneer</span>
+  </a>
+  <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
+  <div class="cp-nav-links">
+    <a href="index.html">Home</a>
+    <a href="acquista.html">Market</a>
+    <a href="come-funziona.html">Come funziona</a>
+    <a href="classificazione.html">Classificazione</a>
+    <a href="utility.html">FAQ</a>
+    <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
+  </div>
+  <div class="cp-nav-r">
+    <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
+  </div>
+</nav>
+
+<section class="cp-hero-page" style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+  <div style="font-size:72px;margin-bottom:24px">🔄</div>
+  <div class="cp-hero-label">Nuovo servizio</div>
+  <h1 class="cp-hero-title" style="font-size:42px">Permuta</h1>
+  <p class="cp-hero-sub" style="max-width:440px;margin:16px auto 32px">
+    Scambia le tue carte con quelle di altri collezionisti!.<br>
+    Questa funzione sarà disponibile a breve!
+  </p>
+  <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(245,230,66,.12);
+              border:1px solid rgba(245,230,66,.3);border-radius:100px;padding:10px 24px">
+    <span style="width:8px;height:8px;background:var(--yellow);border-radius:50%;display:inline-block;
+                 animation:pulse 1.5s ease-in-out infinite"></span>
+    <span style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.08em">
+      DISPONIBILE A BREVE
+    </span>
+  </div>
+  <div style="margin-top:40px">
+    <a href="index.html" class="btn-fill" style="font-size:11px">← Torna alla home</a>
+  </div>
+</section>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.4); }
+  }
+</style>
+
+<footer class="cp-footer">
+  <div class="cp-footer-grid">
+    <div>
+      <div class="cp-footer-logo">
+        <img src="images/logo.png" alt="logo" width="24" style="border-radius:6px" onerror="this.style.display='none'">
+        Card<span>Pioneer</span>
+      </div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG. <br> 
+	  Acquista e vendi carte singole in modo sicuro e verificato. <br>
+	  Nel nostro market ciò che vedi è quello che realmente ti arriva a casa.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="utility.html">Utility</a>
+        <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer" target="_blank">@cardpioneer</a>
+      </div>
+    </div>
+  </div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const tot = (JSON.parse(localStorage.getItem('cp_cart'))||[]).reduce((s,i)=>s+i.qty,0);
+    const b = document.getElementById('cartBadgeNav');
+    if (b) b.textContent = tot;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

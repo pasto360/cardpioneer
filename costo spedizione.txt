@@ -1,0 +1,9 @@
+Promozione spedizione — si modifica in due posti (devono essere uguali):
+carrello.html  → riga ~198:  const SPEDIZIONE_SOGLIA = 50;
+checkout.html  → riga ~175:  const SPEDIZIONE_SOGLIA = 50;
+Per attivare/disattivare la promo basta:
+
+Spedizione sempre gratuita → metti SPEDIZIONE_SOGLIA = 0
+Spedizione sempre a pagamento → metti SPEDIZIONE_SOGLIA = 99999
+Cambiare soglia → cambia il numero (es. 75 per gratis sopra €75)
+Cambiare costo → modifica SPEDIZIONE_COSTO = 5.90

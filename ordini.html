@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="images/logo.png" type="image/png">
   <title>I miei ordini — CardPioneer</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -114,7 +115,6 @@
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
     <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
-    <a href="https://www.facebook.com/cardpioneer" target="_blank" rel="noopener">📘 Facebook</a>
   </div>
 </div>
 
@@ -207,13 +207,46 @@
 
 <footer class="cp-footer">
   <div class="cp-footer-grid">
-    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
-    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
-    <a href="mycollection.html">🔮 My Collection</a></div></div>
-    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
-    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
+    <div>
+      <div class="cp-footer-logo">
+        <img src="images/logo.png" alt="logo" width="24" style="border-radius:6px" onerror="this.style.display='none'">
+        Card<span>Pioneer</span>
+      </div>
+      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG. <br> 
+	  Acquista e vendi carte singole in modo sicuro e verificato. <br>
+	  Nel nostro market ciò che vedi è quello che realmente ti arriva a casa.</p>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Navigazione</div>
+      <div class="cp-footer-links">
+        <a href="acquista.html">Market</a>
+        <a href="come-funziona.html">Come funziona</a>
+        <a href="classificazione.html">Classificazione</a>
+        <a href="utility.html">Utility</a>
+        <a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Informazioni</div>
+      <div class="cp-footer-links">
+        <a href="norme-legali.html">Norme legali</a>
+        <a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a>
+        <a href="contatti.html">Contatti</a>
+      </div>
+    </div>
+    <div>
+      <div class="cp-footer-col-title">Contatti</div>
+      <div class="cp-footer-links">
+        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
+        <a href="https://instagram.com/cardpioneer" target="_blank">@cardpioneer</a>
+      </div>
+    </div>
   </div>
-  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
+  <div class="cp-footer-bottom">
+    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
+    <div class="cp-footer-ig">📸 @cardpioneer</div>
+  </div>
 </footer>
 
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
