@@ -318,12 +318,11 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-msg" id="promoTopbar">&nbsp;</div>
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
-    <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
   </div>
 </div>
 
@@ -352,7 +351,7 @@
 <section class="cp-hero-page">
   <div class="cp-hero-label">Area personale</div>
   <h1 class="cp-hero-title">🔮 My Collection</h1>
-  <p class="cp-hero-sub">Registra le carte che vuoi collezionare. <br> Crea la tua collezione per sapere quali carte hai o quali vorresti. <br> Insieme alla wishlist ti aiutiamo a completare i tuoi set.</p>
+  <p class="cp-hero-sub">Registra le carte che vuoi collezionare. Ti avvisiamo quando appaiono nel market.</p>
 </section>
 
 <section class="cp-section alt" id="mainSection">
@@ -540,46 +539,13 @@
 
 <footer class="cp-footer">
   <div class="cp-footer-grid">
-    <div>
-      <div class="cp-footer-logo">
-        <img src="images/logo.png" alt="logo" width="24" style="border-radius:6px" onerror="this.style.display='none'">
-        Card<span>Pioneer</span>
-      </div>
-      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG. <br> 
-	  Acquista e vendi carte singole in modo sicuro e verificato. <br>
-	  Nel nostro market ciò che vedi è quello che realmente ti arriva a casa.</p>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Navigazione</div>
-      <div class="cp-footer-links">
-        <a href="acquista.html">Market</a>
-        <a href="come-funziona.html">Come funziona</a>
-        <a href="classificazione.html">Classificazione</a>
-        <a href="utility.html">Utility</a>
-        <a href="vendi.html">Vendi</a>
-    <a href="mycollection.html">🔮 My Collection</a>
-      </div>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Informazioni</div>
-      <div class="cp-footer-links">
-        <a href="norme-legali.html">Norme legali</a>
-        <a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a>
-        <a href="contatti.html">Contatti</a>
-      </div>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Contatti</div>
-      <div class="cp-footer-links">
-        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
-        <a href="https://instagram.com/cardpioneer" target="_blank">@cardpioneer</a>
-      </div>
-    </div>
+    <div><div class="cp-footer-logo"><img src="images/logo.png" alt="logo" width="24" style="border-radius:6px;object-fit:contain" onerror="this.style.display='none'">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="come-funziona.html">Come funziona</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a><a href="https://instagram.com/cardpioneer">@cardpioneer</a></div></div>
   </div>
-  <div class="cp-footer-bottom">
-    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
-    <div class="cp-footer-ig">📸 @cardpioneer</div>
-  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div><div class="cp-footer-ig">📸 @cardpioneer</div></div>
 </footer>
 
 <script>
@@ -1102,40 +1068,43 @@ async function esportaCollezioneJpg() {
   if (!allCollezione.length) { alert('Nessuna carta nella collezione.'); return; }
 
   const SIZE   = 1080;
-  const BG     = '#f7f5f2';
-  const DARK   = '#1a0a2e';
-  const PINK   = '#e8107a';
-  const MUTED  = '#888';
   const YELLOW = '#f5e642';
+  const PINK   = '#e8107a';
+  const LIGHT  = 'rgba(255,255,255,.55)';
+  const WHITE  = '#ffffff';
+  const BG_IMG_SRC = 'images/post.jpg';
 
   // Monogramma utente
   const { data: { user } } = await window.sb.auth.getUser();
   const meta     = user?.user_metadata || {};
-  const nome     = meta.nome    || '';
-  const cognome  = meta.cognome || '';
-  const initials = ((nome[0]||'') + (cognome[0]||'')).toUpperCase() || 'CP';
+  const nomeU    = meta.nome    || '';
+  const cognomeU = meta.cognome || '';
+  const initials = ((nomeU[0]||'') + (cognomeU[0]||'')).toUpperCase() || 'CP';
 
-  // Raggruppa per espansione
+  // Raggruppa per espansione, ordina
   const grouped = {};
   allCollezione.forEach(c => {
     const key = c.espansione || 'Senza espansione';
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(c);
   });
-  // Ordina espansioni alfabeticamente, carte per numero
   const sets = Object.keys(grouped).sort();
   sets.forEach(s => {
-    grouped[s].sort((a,b) => {
-      const na = parseInt(a.numero) || 9999;
-      const nb = parseInt(b.numero) || 9999;
-      return na - nb;
-    });
+    grouped[s].sort((a,b) => (parseInt(a.numero)||9999) - (parseInt(b.numero)||9999));
   });
 
   const totCarte = allCollezione.length;
   const totSets  = sets.length;
 
-  // ── Funzione helper per disegnare un canvas ──
+  // Precarica immagine di sfondo una sola volta
+  const bgImg = await new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = BG_IMG_SRC;
+  });
+
   function makeCanvas() {
     const c = document.createElement('canvas');
     c.width = SIZE; c.height = SIZE;
@@ -1143,19 +1112,19 @@ async function esportaCollezioneJpg() {
   }
 
   function drawBg(ctx) {
-    ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, SIZE, SIZE);
-    // Bordo sottile
-    ctx.strokeStyle = 'rgba(26,10,46,.08)';
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(24, 24, SIZE-48, SIZE-48);
+    if (bgImg) {
+      ctx.drawImage(bgImg, 0, 0, SIZE, SIZE);
+    } else {
+      ctx.fillStyle = '#1a0a2e';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+    }
   }
 
   function drawBrand(ctx) {
-    ctx.fillStyle   = MUTED;
-    ctx.font        = '500 22px system-ui, Arial';
+    ctx.fillStyle   = LIGHT;
+    ctx.font        = '500 20px system-ui, Arial';
     ctx.textAlign   = 'right';
-    ctx.fillText('cardpioneer.it', SIZE-40, SIZE-32);
+    ctx.fillText('cardpioneer.it', SIZE-56, SIZE-40);
     ctx.textAlign   = 'left';
   }
 
@@ -1169,166 +1138,167 @@ async function esportaCollezioneJpg() {
   // ── PAGINA 1: Statistiche ──
   const c1   = makeCanvas();
   const ctx1 = c1.getContext('2d');
+  drawBg(ctx1);
 
-  // Sfondo scuro per la prima pagina
-  ctx1.fillStyle = DARK;
+  // Velo scuro leggero per contrasto testo sopra lo sfondo
+  ctx1.fillStyle = 'rgba(10,5,18,.35)';
   ctx1.fillRect(0, 0, SIZE, SIZE);
 
-  // Pattern decorativo — puntini
-  ctx1.fillStyle = 'rgba(255,255,255,.03)';
-  for (let x = 40; x < SIZE; x += 60) {
-    for (let y = 40; y < SIZE; y += 60) {
-      ctx1.beginPath();
-      ctx1.arc(x, y, 2, 0, Math.PI*2);
-      ctx1.fill();
-    }
-  }
-
-  // Rettangolo accent giallo verticale
-  ctx1.fillStyle = YELLOW;
-  ctx1.fillRect(60, 60, 8, SIZE-120);
-
-  // Monogramma utente in alto a destra
-  const mono = initials || 'CP';
-  ctx1.fillStyle = 'rgba(245,230,66,.08)';
-  ctx1.font = `bold 420px system-ui, Arial`;
+  // Monogramma utente — watermark grande
+  ctx1.fillStyle = 'rgba(245,230,66,.10)';
+  ctx1.font = 'bold 380px system-ui, Arial';
   ctx1.textAlign = 'right';
-  ctx1.fillText(mono, SIZE - 40, SIZE - 60);
+  ctx1.fillText(initials, SIZE - 30, SIZE - 50);
   ctx1.textAlign = 'left';
 
   // Label "MY COLLECTION"
-  ctx1.font      = `bold 22px system-ui, Arial`;
+  ctx1.font      = 'bold 24px system-ui, Arial';
   ctx1.fillStyle = YELLOW;
-  ctx1.letterSpacing = '0.18em';
-  ctx1.fillText('MY COLLECTION', 92, 112);
+  ctx1.fillText('MY COLLECTION', 90, 310);
 
-  // Monogramma piccolo
-  ctx1.font      = `bold 22px system-ui, Arial`;
-  ctx1.fillStyle = 'rgba(255,255,255,.4)';
+  // Monogramma piccolo accanto al label
+  ctx1.font      = 'bold 22px system-ui, Arial';
+  ctx1.fillStyle = LIGHT;
   ctx1.textAlign = 'right';
-  ctx1.fillText(mono, SIZE - 72, 112);
+  ctx1.fillText(initials, SIZE - 90, 310);
   ctx1.textAlign = 'left';
 
   // Numero espansioni
-  ctx1.font      = `bold 220px system-ui, Arial`;
-  ctx1.fillStyle = '#fff';
-  ctx1.fillText(String(totSets), 92, 440);
+  ctx1.font      = 'bold 200px system-ui, Arial';
+  ctx1.fillStyle = WHITE;
+  ctx1.shadowColor = 'rgba(0,0,0,.5)';
+  ctx1.shadowBlur  = 18;
+  ctx1.fillText(String(totSets), 88, 540);
+  ctx1.shadowBlur  = 0;
 
-  ctx1.font      = `bold 32px system-ui, Arial`;
-  ctx1.fillStyle = 'rgba(255,255,255,.5)';
-  ctx1.fillText(totSets === 1 ? 'espansione' : 'espansioni', 96, 490);
+  ctx1.font      = 'bold 30px system-ui, Arial';
+  ctx1.fillStyle = LIGHT;
+  ctx1.fillText(totSets === 1 ? 'espansione' : 'espansioni', 92, 580);
 
-  // Linea divisoria
-  ctx1.fillStyle = 'rgba(255,255,255,.1)';
-  ctx1.fillRect(92, 530, SIZE - 164, 1);
+  // Linea
+  ctx1.fillStyle = 'rgba(255,255,255,.25)';
+  ctx1.fillRect(90, 620, SIZE - 180, 1);
 
   // Numero carte
-  ctx1.font      = `bold 220px system-ui, Arial`;
+  ctx1.font      = 'bold 200px system-ui, Arial';
   ctx1.fillStyle = YELLOW;
-  ctx1.fillText(String(totCarte), 92, 800);
+  ctx1.shadowColor = 'rgba(0,0,0,.5)';
+  ctx1.shadowBlur  = 18;
+  ctx1.fillText(String(totCarte), 88, 850);
+  ctx1.shadowBlur  = 0;
 
-  ctx1.font      = `bold 32px system-ui, Arial`;
-  ctx1.fillStyle = 'rgba(255,255,255,.5)';
-  ctx1.fillText(totCarte === 1 ? 'carta' : 'carte', 96, 848);
+  ctx1.font      = 'bold 30px system-ui, Arial';
+  ctx1.fillStyle = LIGHT;
+  ctx1.fillText(totCarte === 1 ? 'carta' : 'carte', 92, 890);
 
-  // Linea decorativa bassa
+  // Accent rosa
   ctx1.fillStyle = PINK;
-  ctx1.fillRect(92, 920, 80, 4);
+  ctx1.fillRect(90, 940, 70, 4);
 
-  // Brand
-  ctx1.font      = '500 22px system-ui, Arial';
-  ctx1.fillStyle = 'rgba(255,255,255,.3)';
-  ctx1.textAlign = 'right';
-  ctx1.fillText('cardpioneer.it', SIZE-60, SIZE-40);
-  ctx1.textAlign = 'left';
+  drawBrand(ctx1);
+  setTimeout(() => downloadCanvas(c1, 'mycollection_01_stats.jpg'), 100);
 
-  setTimeout(() => downloadCanvas(c1, 'mycollection_stats.jpg'), 100);
-
-  // ── PAGINE successive: una per espansione (max 30 carte per pagina) ──
-  const CARDS_PER_PAGE = 30;
-  const LINE_H = 30;
-  const MARGIN = 68;
-  const TOP    = 140;
-
-  let pageNum = 1;
-  sets.forEach((setName, si) => {
-    const cards  = grouped[setName];
-    const chunks = [];
-    for (let i = 0; i < cards.length; i += CARDS_PER_PAGE) {
-      chunks.push(cards.slice(i, i + CARDS_PER_PAGE));
-    }
-
-    chunks.forEach((chunk, ci) => {
-      const cn  = makeCanvas();
-      const ctx = cn.getContext('2d');
-      drawBg(ctx);
-
-      // Header set
-      ctx.fillStyle = DARK;
-      ctx.fillRect(MARGIN, 48, 8, 60);
-
-      ctx.font      = 'bold 44px system-ui, Arial';
-      ctx.fillStyle = DARK;
-      ctx.fillText(setName.toUpperCase(), MARGIN + 24, 94);
-
-      if (ci > 0) {
-        ctx.font      = '500 24px system-ui, Arial';
-        ctx.fillStyle = MUTED;
-        ctx.fillText(`(continua — parte ${ci+1})`, MARGIN + 24, 128);
-      }
-
-      // Linea
-      ctx.fillStyle = PINK;
-      ctx.fillRect(MARGIN, 112, 200, 3);
-
-      // Numero pagina
-      ctx.font      = '500 20px system-ui, Arial';
-      ctx.fillStyle = MUTED;
-      ctx.textAlign = 'right';
-      ctx.fillText(`${setName} · ${groupedIndex(sets, si, chunks.length, ci)}`, SIZE - MARGIN, 72);
-      ctx.textAlign = 'left';
-
-      // Carte in due colonne
-      const col1 = chunk.slice(0, Math.ceil(chunk.length / 2));
-      const col2 = chunk.slice(Math.ceil(chunk.length / 2));
-      const colW = (SIZE - MARGIN*2 - 40) / 2;
-
-      [[col1, 0], [col2, colW + 40]].forEach(([list, offsetX]) => {
-        list.forEach((c, idx) => {
-          const y = TOP + idx * LINE_H;
-          // Numero
-          ctx.font      = '600 20px system-ui, Arial';
-          ctx.fillStyle = PINK;
-          const num = c.numero ? c.numero.padStart(3, '0') : '???';
-          ctx.fillText(num, MARGIN + offsetX, y);
-          // Nome
-          ctx.font      = '500 22px system-ui, Arial';
-          ctx.fillStyle = DARK;
-          // Tronca nome se troppo lungo
-          let nome = c.nome;
-          while (ctx.measureText(nome).width > colW - 56 && nome.length > 3) nome = nome.slice(0,-1);
-          if (nome !== c.nome) nome += '…';
-          ctx.fillText(nome, MARGIN + offsetX + 56, y);
-          // Lingua badge
-          ctx.font      = '500 16px system-ui, Arial';
-          ctx.fillStyle = MUTED;
-          ctx.fillText(c.lingua, MARGIN + offsetX + colW - 36, y);
-        });
-      });
-
-      drawBrand(ctx);
-      const fname = `mycollection_${String(pageNum).padStart(2,'0')}_${setName.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase()}.jpg`;
-      setTimeout(() => downloadCanvas(cn, fname), 200 + pageNum * 150);
-      pageNum++;
+  // ── PAGINE successive: lista carte CONTINUA (non una per espansione) ──
+  // Tutte le carte in un'unica sequenza ordinata per espansione+numero
+  const allRows = [];
+  sets.forEach(setName => {
+    grouped[setName].forEach((c, idx) => {
+      allRows.push({ ...c, _setName: setName, _isFirstOfSet: idx === 0 });
     });
   });
-}
 
-function groupedIndex(sets, si, chunks, ci) {
-  let total = 0;
-  for (let i = 0; i < si; i++) total++;
-  total += ci + 1;
-  return `${total}`;
+  const MARGIN     = 80;
+  const TOP_START  = 130;
+  const BOTTOM_MAX = 990;
+  const LINE_H     = 32;
+  const SET_GAP    = 14; // spazio extra prima di un nuovo header set
+  const COL_W      = (SIZE - MARGIN*2 - 40) / 2;
+
+  let pageNum = 2;
+  let rowIdx  = 0;
+
+  while (rowIdx < allRows.length) {
+    const cn  = makeCanvas();
+    const ctx = cn.getContext('2d');
+    drawBg(ctx);
+    // Velo scuro per leggibilità testo
+    ctx.fillStyle = 'rgba(10,5,18,.45)';
+    ctx.fillRect(0, 0, SIZE, SIZE);
+
+    // Header pagina
+    ctx.fillStyle = YELLOW;
+    ctx.fillRect(MARGIN, 44, 7, 36);
+    ctx.font      = 'bold 26px system-ui, Arial';
+    ctx.fillStyle = WHITE;
+    ctx.fillText('MY COLLECTION', MARGIN + 22, 70);
+
+    ctx.font      = '500 18px system-ui, Arial';
+    ctx.fillStyle = LIGHT;
+    ctx.textAlign = 'right';
+    ctx.fillText(`pagina ${pageNum - 1}`, SIZE - MARGIN, 70);
+    ctx.textAlign = 'left';
+
+    // Due colonne, riempite in sequenza continua (non per espansione)
+    let colX   = [MARGIN, MARGIN + COL_W + 40];
+    let colY   = [TOP_START, TOP_START];
+    let col    = 0;
+
+    while (rowIdx < allRows.length) {
+      const row = allRows[rowIdx];
+      const needsHeader = row._isFirstOfSet;
+      const extraH = needsHeader ? (LINE_H + SET_GAP) : 0;
+
+      // Se non c'è più spazio in questa colonna, passa alla prossima o nuova pagina
+      if (colY[col] + LINE_H + extraH > BOTTOM_MAX) {
+        if (col === 0) {
+          col = 1; // passa a colonna 2
+          continue;
+        } else {
+          break; // pagina piena, esci e crea pagina successiva
+        }
+      }
+
+      const x = colX[col];
+
+      // Header set (se è la prima carta di una nuova espansione)
+      if (needsHeader) {
+        ctx.font      = 'bold 17px system-ui, Arial';
+        ctx.fillStyle = PINK;
+        let setLabel = row._setName.toUpperCase();
+        while (ctx.measureText(setLabel).width > COL_W && setLabel.length > 3) setLabel = setLabel.slice(0,-1);
+        ctx.fillText(setLabel, x, colY[col]);
+        colY[col] += LINE_H * 0.7 + SET_GAP;
+      }
+
+      // Riga carta: numero + nome + lingua
+      const y = colY[col];
+      ctx.font      = '600 19px system-ui, Arial';
+      ctx.fillStyle = YELLOW;
+      const num = row.numero && row.numero !== '—' ? row.numero.padStart(3,'0') : '—';
+      ctx.fillText(num, x, y);
+
+      ctx.font      = '500 20px system-ui, Arial';
+      ctx.fillStyle = WHITE;
+      let nomeC = row.nome;
+      while (ctx.measureText(nomeC).width > COL_W - 70 && nomeC.length > 3) nomeC = nomeC.slice(0,-1);
+      if (nomeC !== row.nome) nomeC += '…';
+      ctx.fillText(nomeC, x + 56, y);
+
+      ctx.font      = '500 14px system-ui, Arial';
+      ctx.fillStyle = LIGHT;
+      ctx.textAlign = 'right';
+      ctx.fillText(row.lingua||'', x + COL_W, y);
+      ctx.textAlign = 'left';
+
+      colY[col] += LINE_H;
+      rowIdx++;
+    }
+
+    drawBrand(ctx);
+    const fname = `mycollection_${String(pageNum).padStart(2,'0')}.jpg`;
+    setTimeout(() => downloadCanvas(cn, fname), 200 + pageNum * 180);
+    pageNum++;
+  }
 }
 window.esportaCollezioneJpg = esportaCollezioneJpg;
 
