@@ -192,10 +192,6 @@ async function loadSpedizione() {
     )).from('impostazioni').select('chiave, valore');
     if (data) data.forEach(r => {
       if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
-      if (r.chiave === 'peso_carte')      PESO_PER_CAT.carte = parseInt(r.valore) || 9;
-      if (r.chiave === 'peso_buste')      PESO_PER_CAT.buste = parseInt(r.valore) || 15;
-      if (r.chiave === 'peso_etb')        PESO_PER_CAT.etb   = parseInt(r.valore) || 500;
-      if (r.chiave === 'peso_altro')      PESO_PER_CAT.altro = parseInt(r.valore) || 100;
       if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
       if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
       if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
@@ -802,15 +798,45 @@ function initPayPal(totale, items) {
   paypal.Buttons({
     style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
 
-    createOrder: (data, actions) => {
+    createOrder: async (data, actions) => {
       const err = validateForm();
-      if (err) { showError(err); return Promise.reject(err); }
+      if (err) { showError(err); throw new Error(err); }
       showError(null);
 
-      const { totale: tot } = calcTotals(getCart());
+      const cart = getCart();
+
+      // ── Validazione server-side: il totale reale viene dal database, non dal browser ──
+      let validated;
+      try {
+        const res = await fetch(
+          'https://nzjwpdbljfwrspmepoqo.supabase.co/functions/v1/valida-ordine',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: cart.map(i => ({ sku: i.sku, qty: i.qty })),
+              codice_sconto: activeDiscount?.codice || null,
+              tipo_spedizione: document.querySelector('input[name="tipo_sped"]:checked')?.value || 'normale',
+            }),
+          }
+        );
+        validated = await res.json();
+      } catch (e) {
+        showError('Errore di connessione. Riprova.');
+        throw e;
+      }
+
+      if (validated.errori?.length) {
+        showError(validated.errori.join(' '));
+        throw new Error(validated.errori.join(' '));
+      }
+
+      // Salva il totale validato per usarlo dopo in onApprove
+      window._validatedTotals = validated;
+
       return actions.order.create({
         purchase_units: [{
-          amount: { value: tot.toFixed(2), currency_code: 'EUR' },
+          amount: { value: validated.totale.toFixed(2), currency_code: 'EUR' },
           description: 'Ordine CardPioneer',
         }],
         application_context: { shipping_preference: 'NO_SHIPPING' },
@@ -819,10 +845,11 @@ function initPayPal(totale, items) {
 
     onApprove: async (data, actions) => {
       try {
-        const details  = await actions.order.capture();
+        const details   = await actions.order.capture();
         const cartItems = getCart();
-        const totals   = calcTotals(cartItems);
-        const formData = getFormData();
+        // Usa il totale validato dal server (anti-manomissione), non un nuovo calcolo client-side
+        const totals    = window._validatedTotals || calcTotals(cartItems);
+        const formData  = getFormData();
 
         const ordineId = await saveOrder(cartItems, totals, formData, 'paypal', details.id);
         await decrementaStock(cartItems);  // ← decrementa stock subito (pagamento ricevuto)

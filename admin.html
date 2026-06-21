@@ -434,40 +434,16 @@
             <!-- PESI -->
             <div style="margin-bottom:32px">
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px">Pesi spedizione</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px">
                 <div>
                   <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso imballo fisso (g)</label>
                   <input type="number" id="set-peso-imballo" min="0" step="1"
                     class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 20">
                   <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Busta + bolletta + margine</div>
                 </div>
-                <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso carta singola (g)</label>
-                  <input type="number" id="set-peso-carte" min="0" step="1"
-                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 9">
-                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Categoria: carte</div>
-                </div>
-                <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso buste (g)</label>
-                  <input type="number" id="set-peso-buste" min="0" step="1"
-                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 15">
-                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Categoria: buste</div>
-                </div>
-                <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso ETB (g)</label>
-                  <input type="number" id="set-peso-etb" min="0" step="1"
-                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 500">
-                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Categoria: ETB</div>
-                </div>
-                <div>
-                  <label style="font-size:11px;color:rgba(255,255,255,.4);display:block;margin-bottom:6px">Peso altro/vario (g)</label>
-                  <input type="number" id="set-peso-altro" min="0" step="1"
-                    class="admin-search" style="width:100%;padding:10px 14px" placeholder="es. 100">
-                  <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Categoria: altro</div>
-                </div>
               </div>
               <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:10px;line-height:1.6">
-                ℹ️ Questi pesi si usano solo come <strong>fallback</strong> se un prodotto non ha un peso specifico impostato nel CSV (colonna <code>peso</code>).
+                ℹ️ Il peso di ogni prodotto si imposta nel CSV (colonna <code>peso</code>). Questo valore è solo l'imballo aggiunto a ogni spedizione.
               </div>
             </div>
 
@@ -1969,16 +1945,12 @@ async function saveBanner(id) {
 async function loadImpostazioni() {
   const { data } = await sb.from('impostazioni').select('chiave, valore');
   if (!data) return;
-  const defaults = { 'peso_imballo':'20','peso_carte':'9','peso_buste':'15','peso_etb':'500','peso_altro':'100','racc_1000':'7.95','racc_3000':'10.30','racc_max':'20.00','iva_percentuale':'22','paypal_perc':'3.5','paypal_fisso':'0.35','promo_sped_attiva':'false','promo_sped_soglia':'30','promo_sped_label':'' };
+  const defaults = { 'peso_imballo':'20','racc_1000':'7.95','racc_3000':'10.30','racc_max':'20.00','iva_percentuale':'22','paypal_perc':'3.5','paypal_fisso':'0.35','promo_sped_attiva':'false','promo_sped_soglia':'30','promo_sped_label':'' };
   const vals = { ...defaults };
   data.forEach(r => { vals[r.chiave] = r.valore; });
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
   set('set-peso-imballo', vals['peso_imballo']);
-  set('set-peso-carte',   vals['peso_carte']);
-  set('set-peso-buste',   vals['peso_buste']);
-  set('set-peso-etb',     vals['peso_etb']);
-  set('set-peso-altro',   vals['peso_altro']);
   set('set-racc-1000',    vals['racc_1000']);
   set('set-racc-3000',    vals['racc_3000']);
   set('set-racc-max',     vals['racc_max']);
@@ -1996,10 +1968,6 @@ async function saveImpostazioni() {
   const get = id => document.getElementById(id)?.value || '';
   const { error } = await sb.from('impostazioni').upsert([
     { chiave: 'peso_imballo',    valore: get('set-peso-imballo'),  nota: 'Peso fisso imballo in grammi' },
-    { chiave: 'peso_carte',      valore: get('set-peso-carte'),    nota: 'Peso default categoria carte in grammi' },
-    { chiave: 'peso_buste',      valore: get('set-peso-buste'),    nota: 'Peso default categoria buste in grammi' },
-    { chiave: 'peso_etb',        valore: get('set-peso-etb'),      nota: 'Peso default categoria ETB in grammi' },
-    { chiave: 'peso_altro',      valore: get('set-peso-altro'),    nota: 'Peso default categoria altro in grammi' },
     { chiave: 'racc_1000',       valore: get('set-racc-1000'),     nota: 'Raccomandata fino a 1000g' },
     { chiave: 'racc_3000',       valore: get('set-racc-3000'),     nota: 'Raccomandata 1001-3000g' },
     { chiave: 'racc_max',        valore: get('set-racc-max'),      nota: 'Raccomandata oltre 3000g' },
