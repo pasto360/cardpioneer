@@ -121,24 +121,20 @@
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-msg">&nbsp;</div>
+  <div class="topbar-msg">Spedizione gratuita per ordini sopra <strong>€ 50</strong></div>
   <div class="topbar-links">
     <a href="registrati.html">Crea account</a>
-    <a href="https://www.instagram.com/cardpioneer" target="_blank" rel="noopener">📸 Instagram</a>
+    <a href="https://www.instagram.com/cardpioneer" target="_blank">📸 Instagram</a>
+    <a href="https://www.facebook.com/cardpioneer" target="_blank">📘 Facebook</a>
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="cp-nav">
-  <a href="index.html" class="cp-logo">
-    <div class="cp-logo-icon"><img src="images/logo.png" alt="CardPioneer logo" width="30" height="30" style="object-fit:contain;display:block"></div>
-    Card<span style="color:#ff6b1a">Pioneer</span>
-  </a>
+  <a href="index.html" class="cp-logo"><div class="cp-logo-icon">⚡</div>Card<span>Pioneer</span></a>
   <button class="cp-nav-mobile" onclick="document.querySelector('.cp-nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
   <div class="cp-nav-links">
-    <a href="index.html" class="active">Home</a>
+    <a href="index.html">Home</a>
     <a href="acquista.html">Market</a>
     <a href="come-funziona.html">Come funziona</a>
     <a href="classificazione.html">Classificazione</a>
@@ -148,23 +144,8 @@
   </div>
   <div class="cp-nav-r">
     <a href="wishlist.html" class="cp-nav-icon" style="text-decoration:none" title="Wishlist">♡<span class="cp-nav-badge cp-wish-badge"></span></a>
-    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none" title="Carrello">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
-    <div class="cp-login-wrap" id="loginWrap">
-      <button class="cp-login-btn" onclick="document.getElementById('loginWrap').classList.toggle('open')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Accedi
-      </button>
-      <div class="cp-login-dropdown">
-        <div class="cp-login-title">Accedi a CardPioneer</div>
-        <div class="cp-login-form">
-          <div class="cp-login-field"><label class="cp-login-label">Email</label><input type="email" class="cp-login-input" placeholder="tua@email.it"></div>
-          <div class="cp-login-field"><label class="cp-login-label">Password</label><input type="password" class="cp-login-input" placeholder="••••••••"></div>
-          <div class="cp-login-forgot">Password dimenticata?</div>
-          <button class="cp-login-submit">Accedi</button>
-        </div>
-        <div class="cp-login-register">Non hai un account? <a href="registrati.html">Registrati</a></div>
-      </div>
-    </div>
+    <a href="carrello.html" class="cp-nav-icon" style="text-decoration:none">🛒<span class="cp-nav-badge" id="cartBadgeNav">0</span></a>
+    <div class="cp-login-wrap" id="loginWrap"></div>
   </div>
 </nav>
 
@@ -180,46 +161,13 @@
 
 <footer class="cp-footer">
   <div class="cp-footer-grid">
-    <div>
-      <div class="cp-footer-logo">
-        <img src="images/logo.png" alt="logo" width="24" style="border-radius:6px" onerror="this.style.display='none'">
-        Card<span>Pioneer</span>
-      </div>
-      <p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG. <br> 
-	  Acquista e vendi carte singole in modo sicuro e verificato. <br>
-	  Nel nostro market ciò che vedi è quello che realmente ti arriva a casa.</p>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Navigazione</div>
-      <div class="cp-footer-links">
-        <a href="acquista.html">Market</a>
-        <a href="come-funziona.html">Come funziona</a>
-        <a href="classificazione.html">Classificazione</a>
-        <a href="utility.html">Utility</a>
-        <a href="vendi.html">Vendi</a>
-    <a href="mycollection.html">🔮 My Collection</a>
-      </div>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Informazioni</div>
-      <div class="cp-footer-links">
-        <a href="norme-legali.html">Norme legali</a>
-        <a href="privacy.html">Privacy Policy</a><a href="cookie.html">Cookie Policy</a>
-        <a href="contatti.html">Contatti</a>
-      </div>
-    </div>
-    <div>
-      <div class="cp-footer-col-title">Contatti</div>
-      <div class="cp-footer-links">
-        <a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a>
-        <a href="https://instagram.com/cardpioneer" target="_blank">@cardpioneer</a>
-      </div>
-    </div>
+    <div><div class="cp-footer-logo">Card<span>Pioneer</span></div><p class="cp-footer-desc">Il marketplace italiano per collezionisti Pokémon TCG.</p></div>
+    <div><div class="cp-footer-col-title">Navigazione</div><div class="cp-footer-links"><a href="acquista.html">Market</a><a href="vendi.html">Vendi</a>
+    <a href="mycollection.html">🔮 My Collection</a></div></div>
+    <div><div class="cp-footer-col-title">Informazioni</div><div class="cp-footer-links"><a href="norme-legali.html">Norme legali</a><a href="privacy.html">Privacy</a><a href="contatti.html">Contatti</a></div></div>
+    <div><div class="cp-footer-col-title">Contatti</div><div class="cp-footer-links"><a href="mailto:info@cardpioneer.it">info@cardpioneer.it</a></div></div>
   </div>
-  <div class="cp-footer-bottom">
-    <div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div>
-    <div class="cp-footer-ig">📸 @cardpioneer</div>
-  </div>
+  <div class="cp-footer-bottom"><div class="cp-footer-copy">© 2026 LADEGU SRLS — P.IVA 04255650139</div></div>
 </footer>
 
 <script>
@@ -244,7 +192,10 @@ async function loadSpedizione() {
     )).from('impostazioni').select('chiave, valore');
     if (data) data.forEach(r => {
       if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
-      if (r.chiave === 'peso_carta')      PESO_CARTA      = parseInt(r.valore)   || 9;
+      if (r.chiave === 'peso_carte')      PESO_PER_CAT.carte = parseInt(r.valore) || 9;
+      if (r.chiave === 'peso_buste')      PESO_PER_CAT.buste = parseInt(r.valore) || 15;
+      if (r.chiave === 'peso_etb')        PESO_PER_CAT.etb   = parseInt(r.valore) || 500;
+      if (r.chiave === 'peso_altro')      PESO_PER_CAT.altro = parseInt(r.valore) || 100;
       if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
       if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
       if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
@@ -255,17 +206,6 @@ async function loadSpedizione() {
       if (r.chiave === 'promo_sped_soglia') PROMO_SPED_SOGLIA = parseFloat(r.valore) || 30;
       if (r.chiave === 'promo_sped_label')  PROMO_SPED_LABEL  = r.valore || '';
     });
-  } catch(e) {}
-} = await (window.sb || supabase.createClient(
-      'https://nzjwpdbljfwrspmepoqo.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
-    )).from('impostazioni').select('chiave, valore');
-    if (data) {
-      data.forEach(r => {
-        if (r.chiave === 'spedizione_soglia') SPEDIZIONE_SOGLIA = parseFloat(r.valore) || 50;
-        if (r.chiave === 'spedizione_costo')  SPEDIZIONE_COSTO  = parseFloat(r.valore) || 5.90;
-      });
-    }
   } catch(e) { console.warn('Impostazioni spedizione non caricate, uso default'); }
 }
 
@@ -275,46 +215,15 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
 // ══════════════════════════════════════════════════════
 //  CONFIGURAZIONE SPEDIZIONE
 // ══════════════════════════════════════════════════════
-let PESO_IMBALLO = 20;   // grammi fissi per imballo
-let PESO_CARTA   = 9;    // grammi per singola carta
-
-async function loadSpedizione() {
-  try {
-    const { data } = await (window.sb || supabase.createClient(
-      'https://nzjwpdbljfwrspmepoqo.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
-    )).from('impostazioni').select('chiave, valore');
-    if (data) data.forEach(r => {
-      if (r.chiave === 'peso_imballo')    PESO_IMBALLO    = parseInt(r.valore)   || 20;
-      if (r.chiave === 'peso_carta')      PESO_CARTA      = parseInt(r.valore)   || 9;
-      if (r.chiave === 'racc_1000')       RACC_1000       = parseFloat(r.valore) || 7.95;
-      if (r.chiave === 'racc_3000')       RACC_3000       = parseFloat(r.valore) || 10.30;
-      if (r.chiave === 'racc_max')        RACC_MAX        = parseFloat(r.valore) || 20.00;
-      if (r.chiave === 'iva_percentuale') IVA_PERC        = parseFloat(r.valore) || 22;
-      if (r.chiave === 'paypal_perc')     PAYPAL_PERC     = parseFloat(r.valore) || 3.5;
-      if (r.chiave === 'paypal_fisso')    PAYPAL_FISSO    = parseFloat(r.valore) || 0.35;
-      if (r.chiave === 'promo_sped_attiva') PROMO_SPED_ATTIVA = r.valore === 'true';
-      if (r.chiave === 'promo_sped_soglia') PROMO_SPED_SOGLIA = parseFloat(r.valore) || 30;
-      if (r.chiave === 'promo_sped_label')  PROMO_SPED_LABEL  = r.valore || '';
-    });
-  } catch(e) {}
-} = await (window.sb || supabase.createClient(
-      'https://nzjwpdbljfwrspmepoqo.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56andwZGJsamZ3cnNwbWVwb3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjM3OTIsImV4cCI6MjA5NTkzOTc5Mn0.-pYvXNjs-63OszfdMbdjiD2Harvgvl9L1D9UjgXa_Gs'
-    )).from('impostazioni').select('chiave, valore');
-    if (data) data.forEach(r => {
-      if (r.chiave === 'peso_imballo') PESO_IMBALLO = parseInt(r.valore) || 20;
-      if (r.chiave === 'peso_carta')   PESO_CARTA   = parseInt(r.valore) || 9;
-      if (r.chiave === 'racc_1000')    RACC_1000    = parseFloat(r.valore) || 7.95;
-      if (r.chiave === 'racc_3000')    RACC_3000    = parseFloat(r.valore) || 10.30;
-      if (r.chiave === 'racc_max')     RACC_MAX     = parseFloat(r.valore) || 20.00;
-    });
-  } catch(e) {}
-}
+let PESO_IMBALLO = 20;
+let PESO_PER_CAT = { carte: 9, buste: 15, etb: 500, altro: 100 };
 
 // Calcola peso totale ordine in grammi
 function calcolaPeso(items) {
-  const pesoArticoli = items.reduce((s, i) => s + (parseFloat(i.peso || PESO_CARTA) * (i.qty || 1)), 0);
+  const pesoArticoli = items.reduce((s, i) => {
+    const pesoItem = parseFloat(i.peso) || PESO_PER_CAT[i.categoria] || PESO_PER_CAT.carte;
+    return s + pesoItem * (i.qty || 1);
+  }, 0);
   return PESO_IMBALLO + pesoArticoli;
 }
 
