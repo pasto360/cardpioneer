@@ -6,6 +6,7 @@
   <title>Admin — CardPioneer</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     body { background: #0f0a1e; }
 
@@ -167,6 +168,58 @@
                background:#f5e642;color:#1a0a2e;border:none;padding:12px;
                border-radius:8px;cursor:pointer;margin-top:4px">
         Accedi all'admin
+      </button>
+      <button onclick="document.getElementById('forgotPwdBox').style.display='block';this.style.display='none'"
+        style="background:none;border:none;color:rgba(255,255,255,.35);font-size:11px;
+               cursor:pointer;text-decoration:underline;margin-top:6px">
+        Password dimenticata?
+      </button>
+    </div>
+
+    <!-- Box recupero password -->
+    <div id="forgotPwdBox" style="display:none;margin-top:14px;text-align:left">
+      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;line-height:1.5">
+        Ti invieremo un link per reimpostare la password all'email admin registrata.
+      </div>
+      <input type="email" id="forgotEmail" class="admin-search" style="width:100%;padding:11px 14px;margin-bottom:8px"
+             placeholder="Email admin" value="infocardpioneer@gmail.com">
+      <div id="forgotMsg" style="font-size:11px;display:none;margin-bottom:8px"></div>
+      <button onclick="sendResetPassword()"
+        style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;
+               background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);
+               padding:10px;border-radius:8px;cursor:pointer;width:100%">
+        Invia link di recupero
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 — VERIFICA CODICE OTP -->
+<div id="otpGate" class="admin-gate" style="display:none">
+  <div class="admin-gate-box">
+    <div style="font-size:36px;margin-bottom:16px">📧</div>
+    <div class="admin-gate-title">Verifica in due passaggi</div>
+    <div class="admin-gate-sub" id="otpSentTo">Codice inviato alla tua email</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input type="text" id="otpInput" class="admin-search" style="width:100%;padding:11px 14px;text-align:center;
+             font-size:22px;letter-spacing:.3em;font-family:monospace"
+             placeholder="• • • • • •" maxlength="6" inputmode="numeric"
+             onkeydown="if(event.key==='Enter')verifyOtp()">
+      <div id="otpError" style="font-size:11px;color:#f87171;display:none;text-align:left"></div>
+      <button onclick="verifyOtp()"
+        style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;
+               background:#f5e642;color:#1a0a2e;border:none;padding:12px;
+               border-radius:8px;cursor:pointer;margin-top:4px">
+        Verifica e accedi
+      </button>
+      <button onclick="resendOtp()" id="resendBtn"
+        style="background:none;border:none;color:rgba(255,255,255,.35);font-size:11px;
+               cursor:pointer;text-decoration:underline;margin-top:2px">
+        Non hai ricevuto il codice? Invia di nuovo
+      </button>
+      <button onclick="cancelOtp()"
+        style="background:none;border:none;color:rgba(255,255,255,.25);font-size:11px;cursor:pointer">
+        ← Torna al login
       </button>
     </div>
   </div>
@@ -687,6 +740,128 @@ const ADMIN_EMAIL   = 'infocardpioneer@gmail.com';  // ← solo questa email pu�
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ═══════════════════════════════════════════════════════
+//  RECUPERO PASSWORD ADMIN
+// ═══════════════════════════════════════════════════════
+async function sendResetPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const msg   = document.getElementById('forgotMsg');
+
+  if (!email) {
+    msg.style.display = 'block';
+    msg.style.color = '#f87171';
+    msg.textContent = 'Inserisci la tua email.';
+    return;
+  }
+
+  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    msg.style.display = 'block';
+    msg.style.color = '#f87171';
+    msg.textContent = 'Questa email non è autorizzata ad accedere all\'admin.';
+    return;
+  }
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname.replace('admin.html', 'reset-password.html'),
+  });
+
+  msg.style.display = 'block';
+  if (error) {
+    msg.style.color = '#f87171';
+    msg.textContent = 'Errore: ' + error.message;
+  } else {
+    msg.style.color = '#34d399';
+    msg.textContent = '✅ Email inviata! Controlla la tua casella di posta (anche lo spam).';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  2FA — CODICE OTP VIA EMAIL (EmailJS)
+// ═══════════════════════════════════════════════════════
+const EMAILJS_PUBLIC_KEY  = 'AIMSXswjcxqu6nfmF';
+const EMAILJS_SERVICE_ID  = 'service_k365rsh';
+const EMAILJS_OTP_TEMPLATE = 'template_c067axo'; // riusa template conferma — vedi nota sotto
+
+let _pendingUser = null;
+let _otpCode     = null;
+let _otpExpiry   = null;
+
+function generaOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 cifre
+}
+
+async function inviaOtpEmail(email, code) {
+  try {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_OTP_TEMPLATE, {
+      to_email: email,
+      nome: 'Admin',
+      messaggio_extra: `Il tuo codice di accesso CardPioneer è: ${code} — valido 5 minuti.`,
+      codice_otp: code,
+    });
+    return true;
+  } catch(e) {
+    console.error('Errore invio OTP:', e);
+    return false;
+  }
+}
+
+async function avviaOtp(user, email) {
+  _pendingUser = user;
+  _otpCode     = generaOtp();
+  _otpExpiry   = Date.now() + 5 * 60 * 1000; // 5 minuti
+
+  const ok = await inviaOtpEmail(email, _otpCode);
+
+  document.getElementById('adminGate').style.display = 'none';
+  document.getElementById('otpGate').style.display    = 'flex';
+  document.getElementById('otpSentTo').textContent    = ok
+    ? `Codice inviato a ${email}`
+    : 'Errore di invio — controlla la configurazione EmailJS';
+  document.getElementById('otpInput').value = '';
+  document.getElementById('otpInput').focus();
+}
+
+async function verifyOtp() {
+  const code = document.getElementById('otpInput').value.trim();
+  const err  = document.getElementById('otpError');
+
+  if (!_otpCode || Date.now() > _otpExpiry) {
+    err.style.display = 'block';
+    err.textContent   = 'Codice scaduto. Richiedine uno nuovo.';
+    return;
+  }
+  if (code !== _otpCode) {
+    err.style.display = 'block';
+    err.textContent   = 'Codice errato. Riprova.';
+    return;
+  }
+
+  err.style.display = 'none';
+  document.getElementById('otpGate').style.display = 'none';
+  showAdmin(_pendingUser);
+
+  // Reset stato OTP
+  _otpCode = null; _otpExpiry = null; _pendingUser = null;
+}
+
+async function resendOtp() {
+  if (!_pendingUser) return;
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Invio in corso...';
+  await avviaOtp(_pendingUser, _pendingUser.email);
+  btn.disabled = false;
+  btn.textContent = 'Non hai ricevuto il codice? Invia di nuovo';
+}
+
+function cancelOtp() {
+  _otpCode = null; _otpExpiry = null; _pendingUser = null;
+  sb.auth.signOut();
+  document.getElementById('otpGate').style.display   = 'none';
+  document.getElementById('adminGate').style.display  = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════
 //  AUTH ADMIN
 // ═══════════════════════════════════════════════════════
 async function adminLogin() {
@@ -707,7 +882,8 @@ async function adminLogin() {
     return;
   }
 
-  showAdmin(data.user);
+  // Step 1 superato — passa alla verifica OTP via email
+  await avviaOtp(data.user, email);
 }
 
 async function adminLogout() {

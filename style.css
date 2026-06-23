@@ -312,6 +312,7 @@ img { max-width: 100%; display: block; }
   top: -.05em;
 }
 .cp-mobile-cta { display: none; }
+.cp-hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -996,6 +997,7 @@ input[type="file"].form-input { cursor: pointer; }
   .faq-text { font-size: 13px; }
 }
 
+@media (max-width: 1024px) {
   .cp-hero-home { padding: 48px 20px 40px; }
   .cp-hero-inner { grid-template-columns: 1fr; }
   .cp-hero-cards { display: none; }
